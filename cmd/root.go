@@ -49,9 +49,10 @@ func Execute() {
 }
 
 const (
-	FlagConfig  = "config"
-	FlagDevel   = "devel"
-	FlagVerbose = "verbose"
+	FlagConfig   = "config"
+	FlagDevel    = "devel"
+	FlagRootPath = "rootpath"
+	FlagVerbose  = "verbose"
 )
 
 func init() {
@@ -61,19 +62,24 @@ func init() {
 
 	rootCmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
 	rootCmd.PersistentFlags().BoolP(FlagDevel, "d", false, "enable development mode")
+	rootCmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
+	_ = rootCmd.MarkPersistentFlagRequired(FlagRootPath)
+
 	mustBindToViper(rootCmd)
 
 	rootCmd.Version = getVcsRevision()
+
+	rootCmd.AddCommand(serviceCmd)
 }
 
-func newRootCfg(cmd *cobra.Command) nwctl.RootCfg {
-	verbose := cast.ToUint8(viper.GetUint(FlagVerbose))
-	devel := viper.GetBool(FlagDevel)
-
-	return nwctl.RootCfg{
-		Verbose: verbose,
-		Devel:   devel,
-	}
+func newRootCfg(cmd *cobra.Command) *nwctl.RootCfg {
+	cfg, err := nwctl.NewRootCfg(
+		nwctl.Verbose(cast.ToUint8(viper.GetUint(FlagVerbose))),
+		nwctl.Devel(viper.GetBool(FlagDevel)),
+		nwctl.RootPath(viper.GetString(FlagRootPath)),
+	)
+	cobra.CheckErr(err)
+	return cfg
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -92,7 +98,7 @@ func initConfig() {
 		viper.SetConfigName(".nwctl")
 	}
 
-	viper.SetEnvPrefix("SAMPLE")
+	viper.SetEnvPrefix("NWCTL")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

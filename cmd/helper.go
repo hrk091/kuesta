@@ -30,8 +30,8 @@ import (
 
 // mustBindToViper binds given cobra flags to viper.
 func mustBindToViper(cmd *cobra.Command) {
-	_ = viper.BindPFlags(cmd.PersistentFlags())
-	_ = viper.BindPFlags(cmd.Flags())
+	cobra.CheckErr(viper.BindPFlags(cmd.PersistentFlags()))
+	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
 }
 
 func getVcsRevision() string {
