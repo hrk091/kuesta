@@ -49,3 +49,12 @@ func TestServiceCompileCfgBuilder_Keys(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceCompileCfgBuilder_Build_multiTimes(t *testing.T) {
+	b := nwctl.NewServiceCompileCfg()
+	cfg, _ := b.Service("before").Keys([]string{"before"}).Build()
+
+	cfg2, _ := b.Keys([]string{"after"}).Build()
+	assert.Equal(t, &nwctl.ServiceCompileCfg{Service: "before", Keys: []string{"before"}}, cfg)
+	assert.Equal(t, &nwctl.ServiceCompileCfg{Service: "before", Keys: []string{"after"}}, cfg2)
+}
