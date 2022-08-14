@@ -36,7 +36,7 @@ type RootCfgBuilder struct {
 	Err error
 }
 
-// NewRootCfg creates RootCfg builder.
+// NewRootCfg creates new RootCfgBuilder.
 func NewRootCfg() *RootCfgBuilder {
 	return &RootCfgBuilder{
 		Err: nil,
@@ -44,6 +44,7 @@ func NewRootCfg() *RootCfgBuilder {
 	}
 }
 
+// Build creates new RootCfg.
 func (b *RootCfgBuilder) Build() (*RootCfg, error) {
 	if b.Err != nil {
 		return nil, b.Err
@@ -51,6 +52,7 @@ func (b *RootCfgBuilder) Build() (*RootCfg, error) {
 	return &(*b.cfg), nil
 }
 
+// AddErr appends error in a uber-go/multierr manner.
 func (b *RootCfgBuilder) AddErr(err error) {
 	b.Err = multierr.Append(b.Err, err)
 }
@@ -72,6 +74,9 @@ func (b *RootCfgBuilder) Devel(v bool) *RootCfgBuilder {
 
 // RootPath sets rootpath parameter to RootCfg.
 func (b *RootCfgBuilder) RootPath(v string) *RootCfgBuilder {
+	if v == "" {
+		b.AddErr(&ErrConfigValue{"rootpath must be set"})
+	}
 	b.cfg.RootPath = v
 	return b
 }
