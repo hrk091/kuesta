@@ -73,11 +73,11 @@ func init() {
 }
 
 func newRootCfg(cmd *cobra.Command) *nwctl.RootCfg {
-	cfg, err := nwctl.NewRootCfg(
-		nwctl.Verbose(cast.ToUint8(viper.GetUint(FlagVerbose))),
-		nwctl.Devel(viper.GetBool(FlagDevel)),
-		nwctl.RootPath(viper.GetString(FlagRootPath)),
-	)
+	verbose := cast.ToUint8(viper.GetUint(FlagVerbose))
+	devel := viper.GetBool(FlagDevel)
+	rootpath := viper.GetString(FlagRootPath)
+
+	cfg, err := nwctl.NewRootCfg().Verbose(verbose).Devel(devel).RootPath(rootpath).Build()
 	cobra.CheckErr(err)
 	return cfg
 }

@@ -19,23 +19,25 @@ func TestVerbose(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		cfg, err := nwctl.NewRootCfg(nwctl.Verbose(tt.given))
+		cfg, err := nwctl.NewRootCfg().Verbose(tt.given).Build()
 		assert.Equal(t, tt.want, cfg)
 		if tt.wantError {
 			var e *nwctl.ErrConfigValue
 			assert.ErrorAs(t, err, &e)
+		} else {
+			assert.Nil(t, err)
 		}
 	}
 }
 
 func TestDevel(t *testing.T) {
-	cfg, _ := nwctl.NewRootCfg(nwctl.Devel(true))
+	cfg, _ := nwctl.NewRootCfg().Devel(true).Build()
 	want := &nwctl.RootCfg{Devel: true}
 	assert.Equal(t, want, cfg)
 }
 
 func TestRootPath(t *testing.T) {
-	cfg, _ := nwctl.NewRootCfg(nwctl.RootPath("foo/bar"))
+	cfg, _ := nwctl.NewRootCfg().RootPath("foo/bar").Build()
 	want := &nwctl.RootCfg{RootPath: "foo/bar"}
 	assert.Equal(t, want, cfg)
 }

@@ -22,9 +22,7 @@
 
 package nwctl
 
-import (
-	"go.uber.org/multierr"
-)
+import "go.uber.org/multierr"
 
 type RootCfg struct {
 	Verbose  uint8
@@ -32,44 +30,48 @@ type RootCfg struct {
 	RootPath string
 }
 
-// NewRootCfg creates new RootCfg with given options.
-func NewRootCfg(opts ...RootCfgOpts) (*RootCfg, error) {
-	cfg := &RootCfg{}
-	var err error
-	for _, opt := range opts {
-		err = multierr.Append(err, opt(cfg))
-	}
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+type RootCfgBuilder struct {
+	cfg *RootCfg
+
+	Err error
 }
 
-type RootCfgOpts func(cfg *RootCfg) error
+// NewRootCfg creates RootCfg builder.
+func NewRootCfg() *RootCfgBuilder {
+	return &RootCfgBuilder{
+		Err: nil,
+		cfg: &RootCfg{},
+	}
+}
+
+func (b *RootCfgBuilder) Build() (*RootCfg, error) {
+	if b.Err != nil {
+		return nil, b.Err
+	}
+	return &(*b.cfg), nil
+}
+
+func (b *RootCfgBuilder) AddErr(err error) {
+	b.Err = multierr.Append(b.Err, err)
+}
 
 // Verbose sets verbose parameter to RootCfg.
-func Verbose(v uint8) RootCfgOpts {
-	return func(cfg *RootCfg) error {
-		if v > 3 {
-			return &ErrConfigValue{"verbose must be less than 4"}
-		}
-		cfg.Verbose = v
-		return nil
+func (b *RootCfgBuilder) Verbose(v uint8) *RootCfgBuilder {
+	if v > 3 {
+		b.AddErr(&ErrConfigValue{"verbose must be less than 4"})
 	}
+	b.cfg.Verbose = v
+	return b
 }
 
 // Devel sets devel parameter to RootCfg.
-func Devel(v bool) RootCfgOpts {
-	return func(cfg *RootCfg) error {
-		cfg.Devel = v
-		return nil
-	}
+func (b *RootCfgBuilder) Devel(v bool) *RootCfgBuilder {
+	b.cfg.Devel = v
+	return b
 }
 
 // RootPath sets rootpath parameter to RootCfg.
-func RootPath(v string) RootCfgOpts {
-	return func(cfg *RootCfg) error {
-		cfg.RootPath = v
-		return nil
-	}
+func (b *RootCfgBuilder) RootPath(v string) *RootCfgBuilder {
+	b.cfg.RootPath = v
+	return b
 }
