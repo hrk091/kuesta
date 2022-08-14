@@ -33,17 +33,14 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "nwctl",
-	Short: "nwctl controls Network Element Configurations.",
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	cmd := NewRootCmd()
+	cmd.SetOut(os.Stdout)
+	if err := cmd.Execute(); err != nil {
+		cmd.SetOut(os.Stderr)
+		cmd.Println(err)
 		os.Exit(1)
 	}
 }
@@ -55,21 +52,28 @@ const (
 	FlagVerbose  = "verbose"
 )
 
-func init() {
+// NewRootCmd creates command root.
+func NewRootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nwctl",
+		Short: "nwctl controls Network Element Configurations.",
+	}
+
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.nwctl.yaml)")
+	cmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.nwctl.yaml)")
 
-	rootCmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
-	rootCmd.PersistentFlags().BoolP(FlagDevel, "d", false, "enable development mode")
-	rootCmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
-	_ = rootCmd.MarkPersistentFlagRequired(FlagRootPath)
+	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
+	cmd.PersistentFlags().BoolP(FlagDevel, "d", false, "enable development mode")
+	cmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
+	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
 
-	mustBindToViper(rootCmd)
+	mustBindToViper(cmd)
+	cmd.Version = getVcsRevision()
 
-	rootCmd.Version = getVcsRevision()
+	cmd.AddCommand(NewServiceCmd())
 
-	rootCmd.AddCommand(serviceCmd)
+	return cmd
 }
 
 func newRootCfg(cmd *cobra.Command) *nwctl.RootCfg {
