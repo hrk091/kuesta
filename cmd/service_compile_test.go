@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestNewServiceCompileCmd(t *testing.T) {
+func TestNewRootCmd_ServiceCompile(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    []string

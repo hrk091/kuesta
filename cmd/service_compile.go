@@ -5,7 +5,6 @@ import (
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // NewServiceCompileCmd creates the service-compile command
@@ -18,11 +17,9 @@ func NewServiceCompileCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			logger.Setup(cfg.Devel, cfg.Verbose)
-			ctx := logger.WithLogger(cmd.Context(), logger.NewLogger())
 
-			if err := nwctl.RunServiceCompile(ctx, os.Stdout, cfg); err != nil {
+			if err := nwctl.RunServiceCompile(cmd.Context(), cfg); err != nil {
 				return err
 			}
 			return nil

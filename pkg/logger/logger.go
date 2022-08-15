@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type keyLogger struct{}
+type _keyLogger struct{}
 
 var (
 	config     zap.Config
@@ -39,9 +39,14 @@ func NewLogger() *zap.SugaredLogger {
 }
 
 func WithLogger(parent context.Context, logger *zap.SugaredLogger) context.Context {
-	return context.WithValue(parent, keyLogger{}, logger)
+	return context.WithValue(parent, _keyLogger{}, logger)
 }
 
 func FromContext(ctx context.Context) *zap.SugaredLogger {
-	return ctx.Value(keyLogger{}).(*zap.SugaredLogger)
+	v, ok := ctx.Value(_keyLogger{}).(*zap.SugaredLogger)
+	if !ok {
+		return NewLogger()
+	} else {
+		return v
+	}
 }
