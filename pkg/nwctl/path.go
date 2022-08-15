@@ -73,3 +73,12 @@ func (p *ServicePath) ServiceTransformPath(t PathType) string {
 	el := append(p.servicePathElem(), FileTransformCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
+
+// ReadServiceTransform loads the specified service's transform file.
+func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
+	buf, err := os.ReadFile(p.ServiceTransformPath(IncludeRoot))
+	if err != nil {
+		return nil, err
+	}
+	return buf, err
+}

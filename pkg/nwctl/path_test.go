@@ -89,7 +89,7 @@ func TestServicePath_ServiceInputPath(t *testing.T) {
 }
 
 func TestServicePath_ReadServiceInput(t *testing.T) {
-	dir, err := os.MkdirTemp("", "repo-*")
+	dir, err := os.MkdirTemp("", "nwctl-path-*")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,4 +135,47 @@ func TestServicePath_ServiceTransformPath(t *testing.T) {
 	p := newValidServicePath()
 	assert.Equal(t, "services/foo/transform.cue", p.ServiceTransformPath(nwctl.ExcludeRoot))
 	assert.Equal(t, "tmproot/services/foo/transform.cue", p.ServiceTransformPath(nwctl.IncludeRoot))
+}
+
+func TestServiceTransform_ReadServiceInput(t *testing.T) {
+	dir, err := os.MkdirTemp("", "nwctl-path-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	t.Run("file exists", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		want := []byte("foobar")
+		os.MkdirAll(filepath.Join(dir, "services", "foo"), 0750)
+		os.WriteFile(filepath.Join(dir, "services", "foo", "transform.cue"), want, 0644)
+
+		r, err := p.ReadServiceTransform()
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
+	t.Run("file not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+
+		_, err := p.ReadServiceTransform()
+		assert.Error(t, err)
+	})
+
+	t.Run("dir not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		p.Keys = []string{"not", "exist"}
+
+		_, err := p.ReadServiceTransform()
+		assert.Error(t, err)
+	})
 }
