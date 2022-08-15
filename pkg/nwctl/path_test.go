@@ -83,9 +83,9 @@ func TestServicePath_RootPath(t *testing.T) {
 }
 
 func TestServicePath_ServiceInputPath(t *testing.T) {
-	want := "tmproot/services/foo/one/two/input.cue"
 	p := newValidServicePath()
-	assert.Equal(t, want, p.ServiceInputPath())
+	assert.Equal(t, "services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceInput(t *testing.T) {
@@ -132,7 +132,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 }
 
 func TestServicePath_ServiceTransformPath(t *testing.T) {
-	want := "tmproot/services/foo/one/two/transform.cue"
 	p := newValidServicePath()
-	assert.Equal(t, want, p.ServiceTransformPath())
+	assert.Equal(t, "services/foo/transform.cue", p.ServiceTransformPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/transform.cue", p.ServiceTransformPath(nwctl.IncludeRoot))
 }
