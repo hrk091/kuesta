@@ -22,7 +22,7 @@ type ServiceCompileCfgBuilder struct {
 	Err error
 }
 
-func RunServiceCompile(ctx context.Context, config ServiceCompileCfg) error {
+func RunServiceCompile(ctx context.Context, config *ServiceCompileCfg) error {
 	l := logger.FromContext(ctx)
 	l.Info("service compile called")
 

@@ -37,10 +37,8 @@ var cfgFile string
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	cmd := NewRootCmd()
-	cmd.SetOut(os.Stdout)
 	if err := cmd.Execute(); err != nil {
-		cmd.SetOut(os.Stderr)
-		cmd.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

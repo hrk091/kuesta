@@ -15,19 +15,22 @@ func NewServiceCompileCmd() *cobra.Command {
 		Short: "Compile service config to partial device config",
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg := newServiceCompileCfg(cmd, args)
+
 			logger.Setup(cfg.Devel, cfg.Verbose)
 			ctx := logger.WithLogger(context.Background(), logger.NewLogger())
-			cobra.CheckErr(nwctl.RunServiceCompile(ctx, cfg))
+
+			err := nwctl.RunServiceCompile(ctx, cfg)
+			cobra.CheckErr(err)
 		},
 	}
 	return cmd
 }
 
-func newServiceCompileCfg(cmd *cobra.Command, args []string) nwctl.ServiceCompileCfg {
+func newServiceCompileCfg(cmd *cobra.Command, args []string) *nwctl.ServiceCompileCfg {
 	if len(args) == 0 {
-		cobra.CheckErr(fmt.Errorf(""))
+		cobra.CheckErr(fmt.Errorf("args must be at least one"))
 	}
-	cfg := nwctl.ServiceCompileCfg{
+	cfg := &nwctl.ServiceCompileCfg{
 		RootCfg: *newRootCfg(cmd),
 		Service: args[0],
 		Keys:    args[1:],
