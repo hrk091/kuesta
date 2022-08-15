@@ -6,52 +6,49 @@ import (
 	"testing"
 )
 
-func TestRootCfgBuilder_Verbose(t *testing.T) {
-	tests := []struct {
-		name      string
-		given     uint8
-		want      *nwctl.RootCfg
-		wantError bool
-	}{
-		{"warn level", 0, &nwctl.RootCfg{Verbose: 0}, false},
-		{"debug level", 3, &nwctl.RootCfg{Verbose: 3}, false},
-		{"invalid: over range", 4, nil, true},
-	}
+func TestRootCfg_Validate(t *testing.T) {
 
-	for _, tt := range tests {
-		cfg, err := nwctl.NewRootCfg().Verbose(tt.given).Build()
-		assert.Equal(t, tt.want, cfg)
-		if tt.wantError {
-			var e *nwctl.ErrConfigValue
-			assert.ErrorAs(t, err, &e)
-		} else {
-			assert.Nil(t, err)
+	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
+		cfg := &nwctl.RootCfg{
+			Verbose:  0,
+			Devel:    false,
+			RootPath: "./",
 		}
+		t(cfg)
+		return cfg
 	}
-}
 
-func TestRootCfgBuilder_Devel(t *testing.T) {
-	cfg, _ := nwctl.NewRootCfg().Devel(true).Build()
-	want := &nwctl.RootCfg{Devel: true}
-	assert.Equal(t, want, cfg)
-}
-
-func TestRootCfgBuilder_RootPath(t *testing.T) {
 	tests := []struct {
 		name      string
-		given     string
-		want      *nwctl.RootCfg
+		transform func(cfg *nwctl.RootCfg)
 		wantError bool
 	}{
-		{"filled", "foo/bar", &nwctl.RootCfg{RootPath: "foo/bar"}, false},
-		{"invalid: empty", "", nil, true},
+		{
+			"valid",
+			func(cfg *nwctl.RootCfg) {},
+			false,
+		},
+		{
+			"invalid: verbose is over range",
+			func(cfg *nwctl.RootCfg) {
+				cfg.Verbose = 4
+			},
+			true,
+		},
+		{
+			"invalid: rootpath is empty",
+			func(cfg *nwctl.RootCfg) {
+				cfg.RootPath = ""
+			},
+			true,
+		},
 	}
+
 	for _, tt := range tests {
-		cfg, err := nwctl.NewRootCfg().RootPath(tt.given).Build()
-		assert.Equal(t, tt.want, cfg)
+		cfg := newValidStruct(tt.transform)
+		err := cfg.Validate()
 		if tt.wantError {
-			var e *nwctl.ErrConfigValue
-			assert.ErrorAs(t, err, &e)
+			assert.Error(t, err)
 		} else {
 			assert.Nil(t, err)
 		}

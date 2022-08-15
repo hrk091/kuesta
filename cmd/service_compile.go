@@ -27,7 +27,11 @@ func newServiceCompileCfg(cmd *cobra.Command, args []string) nwctl.ServiceCompil
 	if len(args) == 0 {
 		cobra.CheckErr(fmt.Errorf(""))
 	}
-	return nwctl.ServiceCompileCfg{
+	cfg := nwctl.ServiceCompileCfg{
 		RootCfg: *newRootCfg(cmd),
+		Service: args[0],
+		Keys:    args[1:],
 	}
+	cobra.CheckErr(cfg.Validate())
+	return cfg
 }

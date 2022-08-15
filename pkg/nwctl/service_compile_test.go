@@ -6,55 +6,61 @@ import (
 	"testing"
 )
 
-func TestServiceCompileCfgBuilder_Service(t *testing.T) {
+func TestServiceCompileCfg_Validate(t *testing.T) {
+
+	newValidStruct := func(t func(cfg *nwctl.ServiceCompileCfg)) *nwctl.ServiceCompileCfg {
+		cfg := &nwctl.ServiceCompileCfg{
+			RootCfg: nwctl.RootCfg{
+				Verbose:  0,
+				Devel:    false,
+				RootPath: "./",
+			},
+			Service: "foo",
+			Keys:    []string{"one", "two"},
+		}
+		t(cfg)
+		return cfg
+	}
+
 	tests := []struct {
 		name      string
-		given     string
-		want      *nwctl.ServiceCompileCfg
+		transform func(cfg *nwctl.ServiceCompileCfg)
 		wantError bool
 	}{
-		{"filled", "test", &nwctl.ServiceCompileCfg{Service: "test"}, false},
-		{"invalid: empty", "", nil, true},
+		{
+			"valid",
+			func(cfg *nwctl.ServiceCompileCfg) {},
+			false,
+		},
+		{
+			"invalid: service is empty",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Service = ""
+			},
+			true,
+		},
+		{
+			"invalid: keys length is 0",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Keys = nil
+			},
+			true,
+		},
+		{
+			"invalid: one of keys is empty",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Keys = []string{"one", ""}
+			},
+			true,
+		},
 	}
 	for _, tt := range tests {
-		cfg, err := nwctl.NewServiceCompileCfg().Service(tt.given).Build()
-		assert.Equal(t, tt.want, cfg)
+		cfg := newValidStruct(tt.transform)
+		err := cfg.Validate()
 		if tt.wantError {
-			var e *nwctl.ErrConfigValue
-			assert.ErrorAs(t, err, &e)
+			assert.Error(t, err)
 		} else {
 			assert.Nil(t, err)
 		}
 	}
-}
-
-func TestServiceCompileCfgBuilder_Keys(t *testing.T) {
-	tests := []struct {
-		name      string
-		given     []string
-		want      *nwctl.ServiceCompileCfg
-		wantError bool
-	}{
-		{"filled", []string{"foo", "bar"}, &nwctl.ServiceCompileCfg{Keys: []string{"foo", "bar"}}, false},
-		{"invalid: empty", nil, nil, true},
-	}
-	for _, tt := range tests {
-		cfg, err := nwctl.NewServiceCompileCfg().Keys(tt.given).Build()
-		assert.Equal(t, tt.want, cfg)
-		if tt.wantError {
-			var e *nwctl.ErrConfigValue
-			assert.ErrorAs(t, err, &e)
-		} else {
-			assert.Nil(t, err)
-		}
-	}
-}
-
-func TestServiceCompileCfgBuilder_Build_multiTimes(t *testing.T) {
-	b := nwctl.NewServiceCompileCfg()
-	cfg, _ := b.Service("before").Keys([]string{"before"}).Build()
-
-	cfg2, _ := b.Keys([]string{"after"}).Build()
-	assert.Equal(t, &nwctl.ServiceCompileCfg{Service: "before", Keys: []string{"before"}}, cfg)
-	assert.Equal(t, &nwctl.ServiceCompileCfg{Service: "before", Keys: []string{"after"}}, cfg2)
 }

@@ -22,61 +22,12 @@
 
 package nwctl
 
-import "go.uber.org/multierr"
-
 type RootCfg struct {
-	Verbose  uint8
+	Verbose  uint8 `validate:"min=0,max=3"`
 	Devel    bool
-	RootPath string
+	RootPath string `validate:"required,dir"`
 }
 
-type RootCfgBuilder struct {
-	cfg *RootCfg
-
-	Err error
-}
-
-// NewRootCfg creates new RootCfgBuilder.
-func NewRootCfg() *RootCfgBuilder {
-	return &RootCfgBuilder{
-		Err: nil,
-		cfg: &RootCfg{},
-	}
-}
-
-// Build creates new RootCfg.
-func (b *RootCfgBuilder) Build() (*RootCfg, error) {
-	if b.Err != nil {
-		return nil, b.Err
-	}
-	return &(*b.cfg), nil
-}
-
-// AddErr appends error in a uber-go/multierr manner.
-func (b *RootCfgBuilder) AddErr(err error) {
-	b.Err = multierr.Append(b.Err, err)
-}
-
-// Verbose sets verbose parameter to RootCfg.
-func (b *RootCfgBuilder) Verbose(v uint8) *RootCfgBuilder {
-	if v > 3 {
-		b.AddErr(&ErrConfigValue{"verbose must be less than 4"})
-	}
-	b.cfg.Verbose = v
-	return b
-}
-
-// Devel sets devel parameter to RootCfg.
-func (b *RootCfgBuilder) Devel(v bool) *RootCfgBuilder {
-	b.cfg.Devel = v
-	return b
-}
-
-// RootPath sets rootpath parameter to RootCfg.
-func (b *RootCfgBuilder) RootPath(v string) *RootCfgBuilder {
-	if v == "" {
-		b.AddErr(&ErrConfigValue{"rootpath must be set"})
-	}
-	b.cfg.RootPath = v
-	return b
+func (c *RootCfg) Validate() error {
+	return validate(c)
 }

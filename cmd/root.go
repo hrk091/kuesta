@@ -77,12 +77,13 @@ func NewRootCmd() *cobra.Command {
 }
 
 func newRootCfg(cmd *cobra.Command) *nwctl.RootCfg {
-	verbose := cast.ToUint8(viper.GetUint(FlagVerbose))
-	devel := viper.GetBool(FlagDevel)
-	rootpath := viper.GetString(FlagRootPath)
-
-	cfg, err := nwctl.NewRootCfg().Verbose(verbose).Devel(devel).RootPath(rootpath).Build()
-	cobra.CheckErr(err)
+	// TODO flag parameter validation
+	cfg := &nwctl.RootCfg{
+		Verbose:  cast.ToUint8(viper.GetUint(FlagVerbose)),
+		Devel:    viper.GetBool(FlagDevel),
+		RootPath: viper.GetString(FlagRootPath),
+	}
+	cobra.CheckErr(cfg.Validate())
 	return cfg
 }
 
