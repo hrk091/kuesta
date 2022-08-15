@@ -1,40 +1,48 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // NewServiceCompileCmd creates the service-compile command
 func NewServiceCompileCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "compile",
+		Use:   "compile <service> <key>...",
 		Short: "Compile service config to partial device config",
-		Run: func(cmd *cobra.Command, args []string) {
-			cfg := newServiceCompileCfg(cmd, args)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := newServiceCompileCfg(cmd, args)
+			if err != nil {
+				return err
+			}
 
 			logger.Setup(cfg.Devel, cfg.Verbose)
-			ctx := logger.WithLogger(context.Background(), logger.NewLogger())
+			ctx := logger.WithLogger(cmd.Context(), logger.NewLogger())
 
-			err := nwctl.RunServiceCompile(ctx, cfg)
-			cobra.CheckErr(err)
+			if err := nwctl.RunServiceCompile(ctx, os.Stdout, cfg); err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 	return cmd
 }
 
-func newServiceCompileCfg(cmd *cobra.Command, args []string) *nwctl.ServiceCompileCfg {
+func newServiceCompileCfg(cmd *cobra.Command, args []string) (*nwctl.ServiceCompileCfg, error) {
 	if len(args) == 0 {
-		cobra.CheckErr(fmt.Errorf("args must be at least one"))
+		return nil, fmt.Errorf("service is not specified")
+	}
+	rootCfg, err := newRootCfg(cmd)
+	if err != nil {
+		return nil, err
 	}
 	cfg := &nwctl.ServiceCompileCfg{
-		RootCfg: *newRootCfg(cmd),
+		RootCfg: *rootCfg,
 		Service: args[0],
 		Keys:    args[1:],
 	}
-	cobra.CheckErr(cfg.Validate())
-	return cfg
+	return cfg, cfg.Validate()
 }

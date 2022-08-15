@@ -3,6 +3,7 @@ package nwctl
 import (
 	"context"
 	"github.com/hrk091/nwctl/pkg/logger"
+	"io"
 )
 
 type ServiceCompileCfg struct {
@@ -22,7 +23,7 @@ type ServiceCompileCfgBuilder struct {
 	Err error
 }
 
-func RunServiceCompile(ctx context.Context, config *ServiceCompileCfg) error {
+func RunServiceCompile(ctx context.Context, buf io.Writer, config *ServiceCompileCfg) error {
 	l := logger.FromContext(ctx)
 	l.Info("service compile called")
 

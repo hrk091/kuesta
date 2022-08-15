@@ -38,7 +38,7 @@ var cfgFile string
 func Execute() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		// NOTE add show cmd.UsageString() for the specific error if needed
 		os.Exit(1)
 	}
 }
@@ -53,8 +53,9 @@ const (
 // NewRootCmd creates command root.
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "nwctl",
-		Short: "nwctl controls Network Element Configurations.",
+		Use:          "nwctl",
+		Short:        "nwctl controls Network Element Configurations.",
+		SilenceUsage: true,
 	}
 
 	cobra.OnInitialize(initConfig)
@@ -74,15 +75,14 @@ func NewRootCmd() *cobra.Command {
 	return cmd
 }
 
-func newRootCfg(cmd *cobra.Command) *nwctl.RootCfg {
+func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	// TODO flag parameter validation
 	cfg := &nwctl.RootCfg{
 		Verbose:  cast.ToUint8(viper.GetUint(FlagVerbose)),
 		Devel:    viper.GetBool(FlagDevel),
 		RootPath: viper.GetString(FlagRootPath),
 	}
-	cobra.CheckErr(cfg.Validate())
-	return cfg
+	return cfg, cfg.Validate()
 }
 
 // initConfig reads in config file and ENV variables if set.
