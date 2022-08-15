@@ -2,7 +2,6 @@ package nwctl
 
 import (
 	"context"
-	"fmt"
 	"github.com/hrk091/nwctl/pkg/logger"
 )
 
@@ -13,21 +12,14 @@ type ServiceCompileCfg struct {
 	Keys    []string `validate:"gt=0,dive,required"`
 }
 
+// Validate validates exposed fields according to the `validate` tag.
 func (c *ServiceCompileCfg) Validate() error {
 	return validate(c)
 }
 
-type ServiceCompileCfgBuilder struct {
-	cfg *ServiceCompileCfg
-
-	Err error
-}
-
-func RunServiceCompile(ctx context.Context, config *ServiceCompileCfg) error {
+func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 	l := logger.FromContext(ctx)
-	out := WriterFromContext(ctx)
 	l.Info("service compile called")
-	fmt.Fprintln(out, "service compile called")
 
 	return nil
 }

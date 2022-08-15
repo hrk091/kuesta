@@ -55,12 +55,14 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		cfg := newValidStruct(tt.transform)
-		err := cfg.Validate()
-		if tt.wantError {
-			assert.Error(t, err)
-		} else {
-			assert.Nil(t, err)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := newValidStruct(tt.transform)
+			err := cfg.Validate()
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }

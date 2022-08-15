@@ -13,25 +13,27 @@ func TestNewRootCmd_ServiceCompile(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"service is not set",
+			"service not set",
 			[]string{"service", "compile", "-r=./"},
 			true,
 		},
 		{
-			"keys is not set",
+			"keys not set",
 			[]string{"service", "compile", "abc", "-r=./"},
 			true,
 		},
 	}
 
 	for _, tt := range tests {
-		c := cmd.NewRootCmd()
-		c.SetArgs(tt.args)
-		err := c.Execute()
-		if tt.wantErr {
-			assert.Error(t, err)
-		} else {
-			assert.Nil(t, err)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			c := cmd.NewRootCmd()
+			c.SetArgs(tt.args)
+			err := c.Execute()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }

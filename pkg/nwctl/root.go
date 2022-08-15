@@ -28,6 +28,7 @@ type RootCfg struct {
 	RootPath string `validate:"required,dir"`
 }
 
+// Validate validates exposed fields according to the `validate` tag.
 func (c *RootCfg) Validate() error {
 	return validate(c)
 }
