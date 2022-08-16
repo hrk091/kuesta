@@ -7,8 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewServiceCompileCmd creates the service-compile command
-func NewServiceCompileCmd() *cobra.Command {
+func newServiceCompileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compile <service> <key>...",
 		Short: "Compile service config to partial device config",
@@ -19,7 +18,10 @@ func NewServiceCompileCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			if err := nwctl.RunServiceCompile(cmd.Context(), cfg); err != nil {
+			ctx := cmd.Context()
+			l := logger.FromContext(ctx)
+			if err := nwctl.RunServiceCompile(ctx, cfg); err != nil {
+				l.Error(err)
 				return err
 			}
 			return nil

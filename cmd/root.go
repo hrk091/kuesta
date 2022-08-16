@@ -70,7 +70,7 @@ func NewRootCmd() *cobra.Command {
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()
 
-	cmd.AddCommand(NewServiceCmd())
+	cmd.AddCommand(newServiceCmd())
 
 	return cmd
 }
