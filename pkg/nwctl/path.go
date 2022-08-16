@@ -99,7 +99,16 @@ func (p *ServicePath) ServiceComputedPath(device string, t PathType) string {
 	return p.addRoot(filepath.Join(el...), t)
 }
 
-// WriteServiceComputedFile writes partial device config computed from service to the corresponding computed dir.
+// ReadServiceComputedFile loads the partial device config computed from specified service.
+func (p *ServicePath) ReadServiceComputedFile(device string) ([]byte, error) {
+	buf, err := os.ReadFile(p.ServiceComputedPath(device, IncludeRoot))
+	if err != nil {
+		return nil, err
+	}
+	return buf, err
+}
+
+// WriteServiceComputedFile writes the partial device config computed from service to the corresponding computed dir.
 func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error {
 	return WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
 }

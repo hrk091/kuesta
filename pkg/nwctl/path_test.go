@@ -186,6 +186,46 @@ func TestServicePath_ServiceComputedPath(t *testing.T) {
 	assert.Equal(t, "tmproot/services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", nwctl.IncludeRoot))
 }
 
+func TestServicePath_ReadServiceComputedFile(t *testing.T) {
+	dir := t.TempDir()
+
+	t.Run("file exists", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		want := []byte("foobar")
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
+		ExitOnErr(t, err)
+
+		r, err := p.ReadServiceComputedFile("device1")
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
+	t.Run("file not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two", "computed"), 0750)
+		ExitOnErr(t, err)
+
+		_, err = p.ReadServiceTransform()
+		assert.Error(t, err)
+	})
+
+	t.Run("dir not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		p.Keys = []string{"not", "exist"}
+
+		_, err := p.ReadServiceTransform()
+		assert.Error(t, err)
+	})
+}
+
 func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 	dir := t.TempDir()
 	buf := []byte("foobar")
