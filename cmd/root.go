@@ -71,6 +71,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.Version = getVcsRevision()
 
 	cmd.AddCommand(newServiceCmd())
+	cmd.AddCommand(newDeviceCmd())
 
 	return cmd
 }

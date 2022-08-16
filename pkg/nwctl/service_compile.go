@@ -20,6 +20,7 @@ func (c *ServiceCompileCfg) Validate() error {
 	return validate(c)
 }
 
+// RunServiceCompile runs the main process of the `service compile` command.
 func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("service compile called")

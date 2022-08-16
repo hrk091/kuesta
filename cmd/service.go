@@ -5,7 +5,7 @@ import (
 )
 
 func newServiceCmd() *cobra.Command {
-	var serviceCmd = &cobra.Command{
+	serviceCmd := &cobra.Command{
 		Use:   "service",
 		Short: "Manage services",
 	}
