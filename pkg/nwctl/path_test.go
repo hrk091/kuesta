@@ -89,11 +89,7 @@ func TestServicePath_ServiceInputPath(t *testing.T) {
 }
 
 func TestServicePath_ReadServiceInput(t *testing.T) {
-	dir, err := os.MkdirTemp("", "nwctl-path-*")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	t.Run("file exists", func(t *testing.T) {
 		p := newValidServicePath()
@@ -138,11 +134,7 @@ func TestServicePath_ServiceTransformPath(t *testing.T) {
 }
 
 func TestServiceTransform_ReadServiceInput(t *testing.T) {
-	dir, err := os.MkdirTemp("", "nwctl-path-*")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	t.Run("file exists", func(t *testing.T) {
 		p := newValidServicePath()
