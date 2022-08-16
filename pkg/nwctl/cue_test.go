@@ -17,7 +17,7 @@ var (
 	noShut: true
 	mtu:    9000
 }`)
-	invalid         = []byte(`{port: 1`)
+	invalidInput    = []byte(`{port: 1`)
 	missingRequired = []byte(`{
 	port:   1
     mtu: 9000
@@ -67,12 +67,13 @@ package foo
 var (
 	device = []byte(`
 config: {
-	Interface: "Ethernet1": {
+	Interface: Ethernet1: {
 		Name:    1
 		Enabled: true
 		Mtu:     9000
 	}
 }`)
+	keyMissing = []byte(`something: {foo: "bar"}`)
 )
 
 func TestNewValueFromBuf(t *testing.T) {
@@ -90,7 +91,7 @@ func TestNewValueFromBuf(t *testing.T) {
 		},
 		{
 			"invalid: cue format",
-			invalid,
+			invalidInput,
 			"",
 			true,
 		},
@@ -188,19 +189,32 @@ func TestApplyTemplate(t *testing.T) {
 
 func TestExtractDeviceConfig(t *testing.T) {
 	cctx := cuecontext.New()
-	want := cctx.CompileBytes([]byte(`{
+
+	t.Run("valid", func(t *testing.T) {
+		want := cctx.CompileBytes([]byte(`{
 	Interface: "Ethernet1": {
 		Name:    1
 		Enabled: true
 		Mtu:     9000
 	}
 }`))
-	ExitOnErr(t, want.Err())
+		ExitOnErr(t, want.Err())
 
-	v := cctx.CompileBytes(device)
-	ExitOnErr(t, v.Err())
+		v := cctx.CompileBytes(device)
+		ExitOnErr(t, v.Err())
 
-	got, err := nwctl.ExtractDeviceConfig(v)
-	assert.Nil(t, err)
-	assert.True(t, want.Equals(cctx.CompileBytes(got)))
+		got, err := nwctl.ExtractDeviceConfig(v)
+		assert.Nil(t, err)
+		assert.True(t, want.Equals(cctx.CompileBytes(got)))
+	})
+
+	t.Run("invalid: cue format", func(t *testing.T) {
+		v := cctx.CompileBytes(keyMissing)
+		ExitOnErr(t, v.Err())
+
+		got, err := nwctl.ExtractDeviceConfig(v)
+		assert.Nil(t, got)
+		assert.Error(t, err)
+	})
+
 }

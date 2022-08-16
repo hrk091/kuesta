@@ -72,6 +72,9 @@ func ApplyTransform(cctx *cue.Context, in cue.Value, transform cue.Value) (*cue.
 
 func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
 	cfg := v.LookupPath(cue.ParsePath(CuePathConfig))
+	if cfg.Err() != nil {
+		return nil, cfg.Err()
+	}
 	syn := cfg.Syntax(cue.Final())
 	return format.Node(syn)
 }
