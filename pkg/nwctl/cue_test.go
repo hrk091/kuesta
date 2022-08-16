@@ -6,28 +6,34 @@ import (
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"path/filepath"
 	"testing"
 )
 
+// testdata: input
 var (
 	input = []byte(`{
-	device: "oc01"
-	noShut: true
 	port:   1
+	noShut: true
 	mtu:    9000
 }`)
+	invalid         = []byte(`{port: 1`)
+	missingRequired = []byte(`{
+	port:   1
+    mtu: 9000
+}`)
+	missingOptinoal = []byte(`{
+	port:   1
+	noShut: true
+}`)
+)
 
-	invalid = []byte(`{
-	device: "oc01"
-`)
-
+// testdata: transform
+var (
 	transform = []byte(`
 package foo
 
 #Input: {
-	device: string
 	port:   uint16
 	noShut: bool
 	mtu:    uint16 | *9000
@@ -38,12 +44,33 @@ package foo
 
 	let _portName = "Ethernet\(input.port)"
 
-	output: devices: "\(input.device)": config: {
-		Interface: "\(_portName)": {
-			Name:        _portName
-			Enabled:     input.noShut
-			Mtu:         input.mtu
+	output: devices: {
+		"device1": config: {
+			Interface: "\(_portName)": {
+				Name:        _portName
+				Enabled:     input.noShut
+				Mtu:         input.mtu
+			}
 		}
+		"device2": config: {
+			Interface: "\(_portName)": {
+				Name:        _portName
+				Enabled:     input.noShut
+				Mtu:         input.mtu
+			}
+		}
+	}
+}`)
+)
+
+// testdata: device
+var (
+	device = []byte(`
+config: {
+	Interface: "Ethernet1": {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
 	}
 }`)
 )
@@ -82,7 +109,8 @@ func TestNewValueFromBuf(t *testing.T) {
 
 func TestNewValueWithInstance(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "transform.cue"), transform, 0644)
+	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	ExitOnErr(t, err)
 
 	tests := []struct {
 		name    string
@@ -115,4 +143,64 @@ func TestNewValueWithInstance(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApplyTemplate(t *testing.T) {
+	dir := t.TempDir()
+	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	ExitOnErr(t, err)
+
+	cctx := cuecontext.New()
+
+	tr, err := nwctl.NewValueWithInstance(cctx, []string{"transform.cue"}, &load.Config{Dir: dir})
+	ExitOnErr(t, err)
+
+	t.Run("valid", func(t *testing.T) {
+		in := cctx.CompileBytes(input)
+		ExitOnErr(t, in.Err())
+
+		it, err := nwctl.ApplyTransform(cctx, in, tr)
+		ExitOnErr(t, err)
+
+		assert.True(t, it.Next())
+		assert.Equal(t, "device1", it.Label())
+		assert.True(t, it.Next())
+		assert.Equal(t, "device2", it.Label())
+		assert.False(t, it.Next())
+	})
+
+	t.Run("valid: missing optional fields", func(t *testing.T) {
+		in := cctx.CompileBytes(missingOptinoal)
+		ExitOnErr(t, in.Err())
+
+		_, err = nwctl.ApplyTransform(cctx, in, tr)
+		assert.Nil(t, err)
+	})
+
+	t.Run("invalid: missing required fields", func(t *testing.T) {
+		in := cctx.CompileBytes(missingRequired)
+		ExitOnErr(t, in.Err())
+
+		_, err = nwctl.ApplyTransform(cctx, in, tr)
+		assert.Error(t, err)
+	})
+}
+
+func TestExtractDeviceConfig(t *testing.T) {
+	cctx := cuecontext.New()
+	want := cctx.CompileBytes([]byte(`{
+	Interface: "Ethernet1": {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`))
+	ExitOnErr(t, want.Err())
+
+	v := cctx.CompileBytes(device)
+	ExitOnErr(t, v.Err())
+
+	got, err := nwctl.ExtractDeviceConfig(v)
+	assert.Nil(t, err)
+	assert.True(t, want.Equals(cctx.CompileBytes(got)))
 }

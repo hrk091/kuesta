@@ -2,8 +2,17 @@ package nwctl
 
 import (
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/format"
 	"cuelang.org/go/cue/load"
 	"fmt"
+)
+
+var (
+	CueSrcStrTemplate = "#Template"
+	CuePathInput      = "input"
+	CuePathOutput     = "output"
+	CuePathDevice     = "devices"
+	CuePathConfig     = "config"
 )
 
 // NewValueFromBuf creates cue.Value from given []byte.
@@ -34,4 +43,35 @@ func NewValueWithInstance(cctx *cue.Context, entrypoints []string, loadcfg *load
 		return cue.Value{}, v.Err()
 	}
 	return v, nil
+}
+
+func ApplyTransform(cctx *cue.Context, in cue.Value, transform cue.Value) (*cue.Iterator, error) {
+	template := cctx.CompileString(CueSrcStrTemplate, cue.Scope(transform))
+	if template.Err() != nil {
+		return nil, template.Err()
+	}
+	filled := template.FillPath(cue.ParsePath(CuePathInput), in)
+	if filled.Err() != nil {
+		return nil, filled.Err()
+	}
+	filledIn := filled.LookupPath(cue.ParsePath(CuePathOutput))
+	if err := filledIn.Validate(cue.Concrete(true)); err != nil {
+		return nil, err
+	}
+
+	out := filled.LookupPath(cue.ParsePath(CuePathOutput)).Eval()
+	if out.Err() != nil {
+		return nil, out.Err()
+	}
+	it, err := out.LookupPath(cue.ParsePath(CuePathDevice)).Fields()
+	if err != nil {
+		return nil, err
+	}
+	return it, nil
+}
+
+func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
+	cfg := v.LookupPath(cue.ParsePath(CuePathConfig))
+	syn := cfg.Syntax(cue.Final())
+	return format.Node(syn)
 }
