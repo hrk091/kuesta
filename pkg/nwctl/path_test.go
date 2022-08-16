@@ -236,7 +236,7 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 	err := p.WriteServiceComputedFile("device1", buf)
 	ExitOnErr(t, err)
 
-	got, err := os.ReadFile(filepath.Join(dir, "services/foo/one/two/computed/device1.cue"))
+	got, err := os.ReadFile(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"))
 	assert.Nil(t, err)
 	assert.Equal(t, buf, got)
 }
