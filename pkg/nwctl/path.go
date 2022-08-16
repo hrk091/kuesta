@@ -1,6 +1,7 @@
 package nwctl
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -45,6 +46,10 @@ func (p *ServicePath) serviceItemPathElem() []string {
 	return append(p.servicePathElem(), p.Keys...)
 }
 
+func (p *ServicePath) serviceComputedPathElem() []string {
+	return append(p.serviceItemPathElem(), DirComputed)
+}
+
 func (p *ServicePath) addRoot(path string, t PathType) string {
 	if t == ExcludeRoot {
 		return path
@@ -53,7 +58,7 @@ func (p *ServicePath) addRoot(path string, t PathType) string {
 	}
 }
 
-// ServiceInputPath returns the path to specified service's input file.
+// ServiceInputPath returns path to the specified service's input file.
 func (p *ServicePath) ServiceInputPath(t PathType) string {
 	el := append(p.serviceItemPathElem(), FileInputCue)
 	return p.addRoot(filepath.Join(el...), t)
@@ -68,7 +73,7 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 	return buf, err
 }
 
-// ServiceTransformPath returns the path to specified service's transform file.
+// ServiceTransformPath returns path to the specified service's transform file.
 func (p *ServicePath) ServiceTransformPath(t PathType) string {
 	el := append(p.servicePathElem(), FileTransformCue)
 	return p.addRoot(filepath.Join(el...), t)
@@ -81,4 +86,20 @@ func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
 		return nil, err
 	}
 	return buf, err
+}
+
+// ServiceComputedDirPath returns path to the specified service's computed dir.
+func (p *ServicePath) ServiceComputedDirPath(t PathType) string {
+	return p.addRoot(filepath.Join(p.serviceComputedPathElem()...), t)
+}
+
+// ServiceComputedPath returns path to the specified service's computed result of given device.
+func (p *ServicePath) ServiceComputedPath(device string, t PathType) string {
+	el := append(p.serviceComputedPathElem(), fmt.Sprintf("%s.cue", device))
+	return p.addRoot(filepath.Join(el...), t)
+}
+
+// WriteServiceComputedFile writes partial device config computed from service to the corresponding computed dir.
+func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error {
+	return WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
 }

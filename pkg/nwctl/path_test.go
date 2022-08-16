@@ -95,8 +95,8 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		os.MkdirAll(filepath.Join(dir, "services", "foo", "one", "two"), 0750)
-		os.WriteFile(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want, 0644)
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
+		ExitOnErr(t, err)
 
 		r, err := p.ReadServiceInput()
 		if err != nil {
@@ -110,9 +110,10 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
-		os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two"), 0750)
+		ExitOnErr(t, err)
 
-		_, err := p.ReadServiceInput()
+		_, err = p.ReadServiceInput()
 		assert.Error(t, err)
 	})
 
@@ -133,15 +134,15 @@ func TestServicePath_ServiceTransformPath(t *testing.T) {
 	assert.Equal(t, "tmproot/services/foo/transform.cue", p.ServiceTransformPath(nwctl.IncludeRoot))
 }
 
-func TestServiceTransform_ReadServiceInput(t *testing.T) {
+func TestServicePath_ReadServiceTransform(t *testing.T) {
 	dir := t.TempDir()
 
 	t.Run("file exists", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		os.MkdirAll(filepath.Join(dir, "services", "foo"), 0750)
-		os.WriteFile(filepath.Join(dir, "services", "foo", "transform.cue"), want, 0644)
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), want)
+		ExitOnErr(t, err)
 
 		r, err := p.ReadServiceTransform()
 		if err != nil {
@@ -155,9 +156,10 @@ func TestServiceTransform_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
-		os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		ExitOnErr(t, err)
 
-		_, err := p.ReadServiceTransform()
+		_, err = p.ReadServiceTransform()
 		assert.Error(t, err)
 	})
 
@@ -170,4 +172,31 @@ func TestServiceTransform_ReadServiceInput(t *testing.T) {
 		_, err := p.ReadServiceTransform()
 		assert.Error(t, err)
 	})
+}
+
+func TestServicePath_ServiceComputedDirPath(t *testing.T) {
+	p := newValidServicePath()
+	assert.Equal(t, "services/foo/one/two/computed", p.ServiceComputedDirPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/computed", p.ServiceComputedDirPath(nwctl.IncludeRoot))
+}
+
+func TestServicePath_ServiceComputedPath(t *testing.T) {
+	p := newValidServicePath()
+	assert.Equal(t, "services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", nwctl.IncludeRoot))
+}
+
+func TestServicePath_WriteServiceComputedFile(t *testing.T) {
+	dir := t.TempDir()
+	buf := []byte("foobar")
+
+	p := newValidServicePath()
+	p.RootDir = dir
+
+	err := p.WriteServiceComputedFile("device1", buf)
+	ExitOnErr(t, err)
+
+	got, err := os.ReadFile(filepath.Join(dir, "services/foo/one/two/computed/device1.cue"))
+	assert.Nil(t, err)
+	assert.Equal(t, buf, got)
 }
