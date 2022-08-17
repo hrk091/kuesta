@@ -358,3 +358,54 @@ func TestDevicePath_WriteDeviceConfigFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, buf, got)
 }
+
+func TestParseServiceInputPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    string
+		wantSvc  string
+		wantKeys []string
+		wantErr  bool
+	}{
+		{
+			"ok",
+			"services/foo/one/input.cue",
+			"foo",
+			[]string{"one"},
+			false,
+		},
+		{
+			"ok",
+			"services/foo/one/two/three/four/input.cue",
+			"foo",
+			[]string{"one", "two", "three", "four"},
+			false,
+		},
+		{
+			"bad: not start from services",
+			"devices/device1/config.cue",
+			"",
+			[]string{},
+			true,
+		},
+		{
+			"bad: file is not input.cue",
+			"services/foo/one/computed/device1.cue",
+			"",
+			[]string{},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service, keys, err := nwctl.ParseServiceInputPath(tt.given)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tt.wantSvc, service)
+				assert.Equal(t, tt.wantKeys, keys)
+				assert.Nil(t, err)
+			}
+		})
+	}
+}

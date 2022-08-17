@@ -5,6 +5,7 @@ import (
 	"github.com/hrk091/nwctl/pkg/common"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -174,4 +175,27 @@ func (p *DevicePath) ReadDeviceConfigFile() ([]byte, error) {
 // WriteDeviceConfigFile writes the merged device config to the corresponding device dir.
 func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
 	return WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
+}
+
+// ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.
+func ParseServiceInputPath(path string) (string, []string, error) {
+	if !isServiceInputPath(path) {
+		return "", nil, fmt.Errorf("invalid path: %s", path)
+	}
+	sep := string(filepath.Separator)
+	dir, _ := filepath.Split(path)
+	dirElem := strings.Split(strings.TrimRight(dir, sep), sep)
+	return dirElem[1], dirElem[2:], nil
+}
+
+func isServiceInputPath(path string) bool {
+	dir, file := filepath.Split(path)
+	dirElem := strings.Split(dir, string(filepath.Separator))
+	if dirElem[0] != "services" {
+		return false
+	}
+	if file != "input.cue" {
+		return false
+	}
+	return true
 }
