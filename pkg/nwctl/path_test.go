@@ -29,33 +29,33 @@ func TestServicePath_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{
-			"valid",
+			"ok",
 			func(cfg *nwctl.ServicePath) {},
 			false,
 		},
 		{
-			"invalid: rootpath is empty",
+			"bad: rootpath is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.RootDir = ""
 			},
 			true,
 		},
 		{
-			"invalid: service is empty",
+			"bad: service is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Service = ""
 			},
 			true,
 		},
 		{
-			"invalid: keys length is 0",
+			"bad: keys length is 0",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Keys = nil
 			},
 			true,
 		},
 		{
-			"invalid: one of keys is empty",
+			"bad: one of keys is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Keys = []string{"one", ""}
 			},
@@ -97,7 +97,7 @@ func TestServicePath_ServiceInputPath(t *testing.T) {
 func TestServicePath_ReadServiceInput(t *testing.T) {
 	dir := t.TempDir()
 
-	t.Run("file exists", func(t *testing.T) {
+	t.Run("ok: file exists", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
@@ -112,7 +112,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		}
 	})
 
-	t.Run("file not exist", func(t *testing.T) {
+	t.Run("bad: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -123,7 +123,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("dir not exist", func(t *testing.T) {
+	t.Run("bad: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -143,7 +143,7 @@ func TestServicePath_ServiceTransformPath(t *testing.T) {
 func TestServicePath_ReadServiceTransform(t *testing.T) {
 	dir := t.TempDir()
 
-	t.Run("file exists", func(t *testing.T) {
+	t.Run("ok: file exists", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
@@ -158,7 +158,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		}
 	})
 
-	t.Run("file not exist", func(t *testing.T) {
+	t.Run("bad: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -169,7 +169,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("dir not exist", func(t *testing.T) {
+	t.Run("bad: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -195,7 +195,7 @@ func TestServicePath_ServiceComputedPath(t *testing.T) {
 func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 	dir := t.TempDir()
 
-	t.Run("file exists", func(t *testing.T) {
+	t.Run("ok: file exists", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
@@ -210,7 +210,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		}
 	})
 
-	t.Run("file not exist", func(t *testing.T) {
+	t.Run("bad: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -221,7 +221,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("dir not exist", func(t *testing.T) {
+	t.Run("bad: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"

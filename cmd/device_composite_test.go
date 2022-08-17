@@ -13,7 +13,7 @@ func TestNewRootCmd_DeviceComposite(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"device not set",
+			"bad: device not set",
 			[]string{"service", "compile", "-r=./"},
 			true,
 		},

@@ -30,26 +30,26 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{
-			"valid",
+			"ok",
 			func(cfg *nwctl.ServiceCompileCfg) {},
 			false,
 		},
 		{
-			"invalid: service is empty",
+			"bad: service is empty",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Service = ""
 			},
 			true,
 		},
 		{
-			"invalid: keys length is 0",
+			"bad: keys length is 0",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Keys = nil
 			},
 			true,
 		},
 		{
-			"invalid: one of keys is empty",
+			"bad: one of keys is empty",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Keys = []string{"one", ""}
 			},

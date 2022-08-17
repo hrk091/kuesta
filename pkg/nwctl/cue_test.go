@@ -84,13 +84,13 @@ func TestNewValueFromBuf(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"valid",
+			"ok",
 			input,
 			string(input),
 			false,
 		},
 		{
-			"invalid: cue format",
+			"bad: cue format",
 			invalidInput,
 			"",
 			true,
@@ -119,17 +119,17 @@ func TestNewValueWithInstance(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"valid",
+			"ok",
 			[]string{"transform.cue"},
 			false,
 		},
 		{
-			"invalid: not exist",
+			"bad: not exist",
 			[]string{"notExist.cue"},
 			true,
 		},
 		{
-			"invalid: no file given",
+			"bad: no file given",
 			[]string{},
 			true,
 		},
@@ -156,7 +156,7 @@ func TestApplyTemplate(t *testing.T) {
 	tr, err := nwctl.NewValueWithInstance(cctx, []string{"transform.cue"}, &load.Config{Dir: dir})
 	ExitOnErr(t, err)
 
-	t.Run("valid", func(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		in := cctx.CompileBytes(input)
 		ExitOnErr(t, in.Err())
 
@@ -170,7 +170,7 @@ func TestApplyTemplate(t *testing.T) {
 		assert.False(t, it.Next())
 	})
 
-	t.Run("valid: missing optional fields", func(t *testing.T) {
+	t.Run("ok: missing optional fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingOptinoal)
 		ExitOnErr(t, in.Err())
 
@@ -178,7 +178,7 @@ func TestApplyTemplate(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("invalid: missing required fields", func(t *testing.T) {
+	t.Run("bad: missing required fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingRequired)
 		ExitOnErr(t, in.Err())
 
@@ -190,7 +190,7 @@ func TestApplyTemplate(t *testing.T) {
 func TestExtractDeviceConfig(t *testing.T) {
 	cctx := cuecontext.New()
 
-	t.Run("valid", func(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		want := cctx.CompileBytes([]byte(`{
 	Interface: "Ethernet1": {
 		Name:    1
@@ -208,7 +208,7 @@ func TestExtractDeviceConfig(t *testing.T) {
 		assert.True(t, want.Equals(cctx.CompileBytes(got)))
 	})
 
-	t.Run("invalid: cue format", func(t *testing.T) {
+	t.Run("bad: cue format", func(t *testing.T) {
 		v := cctx.CompileBytes(keyMissing)
 		ExitOnErr(t, v.Err())
 

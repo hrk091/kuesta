@@ -25,12 +25,12 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{
-			"valid",
+			"ok",
 			func(cfg *nwctl.DeviceCompositeCfg) {},
 			false,
 		},
 		{
-			"invalid: service is empty",
+			"bad: service is empty",
 			func(cfg *nwctl.DeviceCompositeCfg) {
 				cfg.Device = ""
 			},

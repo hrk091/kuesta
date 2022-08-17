@@ -18,7 +18,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	dir := t.TempDir()
 	buf := []byte("foobar")
 
-	t.Run("valid: new dir", func(t *testing.T) {
+	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err := nwctl.WriteFileWithMkdir(path, buf)
 		ExitOnErr(t, err)
@@ -28,7 +28,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		assert.Equal(t, buf, got)
 	})
 
-	t.Run("valid: existing dir", func(t *testing.T) {
+	t.Run("ok: existing dir", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
 		ExitOnErr(t, err)
 
@@ -41,7 +41,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		assert.Equal(t, buf, got)
 	})
 
-	t.Run("valid: write multiple times", func(t *testing.T) {
+	t.Run("ok: write multiple times", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
 		ExitOnErr(t, err)
 

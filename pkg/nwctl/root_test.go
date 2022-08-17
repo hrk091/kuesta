@@ -24,19 +24,19 @@ func TestRootCfg_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{
-			"valid",
+			"ok",
 			func(cfg *nwctl.RootCfg) {},
 			false,
 		},
 		{
-			"invalid: verbose is over range",
+			"bad: verbose is over range",
 			func(cfg *nwctl.RootCfg) {
 				cfg.Verbose = 4
 			},
 			true,
 		},
 		{
-			"invalid: rootpath is empty",
+			"bad: rootpath is empty",
 			func(cfg *nwctl.RootCfg) {
 				cfg.RootPath = ""
 			},
