@@ -208,7 +208,7 @@ func TestExtractDeviceConfig(t *testing.T) {
 		assert.True(t, want.Equals(cctx.CompileBytes(got)))
 	})
 
-	t.Run("bad: cue format", func(t *testing.T) {
+	t.Run("bad: config missing", func(t *testing.T) {
 		v := cctx.CompileBytes(keyMissing)
 		ExitOnErr(t, v.Err())
 
@@ -217,4 +217,20 @@ func TestExtractDeviceConfig(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+}
+
+func TestFormatCue(t *testing.T) {
+	cctx := cuecontext.New()
+	want := cctx.CompileBytes([]byte(`{
+	Interface: "Ethernet1": {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`))
+	ExitOnErr(t, want.Err())
+
+	got, err := nwctl.FormatCue(want)
+	assert.Nil(t, err)
+	assert.True(t, want.Equals(cctx.CompileBytes(got)))
 }

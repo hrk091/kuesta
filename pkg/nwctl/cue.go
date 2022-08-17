@@ -78,6 +78,11 @@ func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
 	if cfg.Err() != nil {
 		return nil, cfg.Err()
 	}
-	syn := cfg.Syntax(cue.Final())
+	return FormatCue(cfg, cue.Final())
+}
+
+// FormatCue formats cue.Value in canonical cue fmt style.
+func FormatCue(v cue.Value, opts ...cue.Option) ([]byte, error) {
+	syn := v.Syntax(opts...)
 	return format.Node(syn)
 }
