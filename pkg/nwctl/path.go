@@ -12,6 +12,7 @@ const (
 	DirComputed      = "computed"
 	FileInputCue     = "input.cue"
 	FileTransformCue = "transform.cue"
+	FileConfigCue    = "config.cue"
 )
 
 type PathType string
@@ -24,8 +25,8 @@ const (
 type ServicePath struct {
 	RootDir string `validate:"required"`
 
-	Service string   `validate:"required"`
-	Keys    []string `validate:"gt=0,dive,required"`
+	Service string
+	Keys    []string `validate:"dive,required"`
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -120,4 +121,56 @@ func (p *ServicePath) ReadServiceComputedFile(device string) ([]byte, error) {
 // WriteServiceComputedFile writes the partial device config computed from service to the corresponding computed dir.
 func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error {
 	return WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
+}
+
+type DevicePath struct {
+	RootDir string `validate:"required"`
+
+	Device string
+}
+
+// Validate validates exposed fields according to the `validate` tag.
+func (p *DevicePath) Validate() error {
+	return validate(p)
+}
+
+// RootPath returns the path to repository root.
+func (p *DevicePath) RootPath() string {
+	return filepath.FromSlash(p.RootDir)
+}
+
+func (p *DevicePath) deviceDirElem() []string {
+	return []string{DirDevices}
+}
+
+func (p *DevicePath) devicePathElem() []string {
+	return append(p.deviceDirElem(), p.Device)
+}
+
+func (p *DevicePath) addRoot(path string, t PathType) string {
+	if t == ExcludeRoot {
+		return path
+	} else {
+		return filepath.Join(p.RootPath(), path)
+	}
+}
+
+// DeviceConfigPath returns the path to specified device config.
+func (p *DevicePath) DeviceConfigPath(t PathType) string {
+	el := append(p.devicePathElem(), FileConfigCue)
+	return p.addRoot(filepath.Join(el...), t)
+}
+
+// ReadDeviceConfigFile loads the device config.
+func (p *DevicePath) ReadDeviceConfigFile() ([]byte, error) {
+	buf, err := os.ReadFile(p.DeviceConfigPath(IncludeRoot))
+	if err != nil {
+		return nil, err
+	}
+	return buf, err
+}
+
+// WriteDeviceConfigFile writes the merged device config to the corresponding device dir.
+func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
+	return WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
 }

@@ -34,23 +34,23 @@ func TestServicePath_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: rootpath is empty",
-			func(cfg *nwctl.ServicePath) {
-				cfg.RootDir = ""
-			},
-			true,
-		},
-		{
-			"bad: service is empty",
+			"ok: service is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Service = ""
 			},
-			true,
+			false,
 		},
 		{
-			"bad: keys length is 0",
+			"ok: keys length is 0",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Keys = nil
+			},
+			false,
+		},
+		{
+			"bad: rootpath is empty",
+			func(cfg *nwctl.ServicePath) {
+				cfg.RootDir = ""
 			},
 			true,
 		},
@@ -243,6 +243,118 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 	ExitOnErr(t, err)
 
 	got, err := os.ReadFile(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"))
+	assert.Nil(t, err)
+	assert.Equal(t, buf, got)
+}
+
+func newValidDevicePath() *nwctl.DevicePath {
+	return &nwctl.DevicePath{
+		RootDir: "./tmproot",
+		Device:  "device1",
+	}
+}
+
+func TestDevicePath_Validate(t *testing.T) {
+	newValidStruct := func(t func(cfg *nwctl.DevicePath)) *nwctl.DevicePath {
+		cfg := newValidDevicePath()
+		t(cfg)
+		return cfg
+	}
+
+	tests := []struct {
+		name      string
+		transform func(cfg *nwctl.DevicePath)
+		wantError bool
+	}{
+		{
+			"ok",
+			func(cfg *nwctl.DevicePath) {},
+			false,
+		},
+		{
+			"ok: service is empty",
+			func(cfg *nwctl.DevicePath) {
+				cfg.Device = ""
+			},
+			false,
+		},
+		{
+			"bad: rootpath is empty",
+			func(cfg *nwctl.DevicePath) {
+				cfg.RootDir = ""
+			},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := newValidStruct(tt.transform)
+			err := v.Validate()
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestDevicePath_DeviceConfigPath(t *testing.T) {
+	p := newValidDevicePath()
+	assert.Equal(t, "devices/device1/config.cue", p.DeviceConfigPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1/config.cue", p.DeviceConfigPath(nwctl.IncludeRoot))
+}
+
+func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
+	dir := t.TempDir()
+
+	t.Run("ok: file exists", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.RootDir = dir
+		want := []byte("foobar")
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
+		ExitOnErr(t, err)
+
+		r, err := p.ReadDeviceConfigFile()
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
+	t.Run("bad: file not exist", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.RootDir = dir
+		p.Device = "device2"
+		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750)
+		ExitOnErr(t, err)
+
+		_, err = p.ReadDeviceConfigFile()
+		assert.Error(t, err)
+	})
+
+	t.Run("bad: dir not exist", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.Device = "notExist"
+		p.RootDir = dir
+
+		_, err := p.ReadDeviceConfigFile()
+		assert.Error(t, err)
+	})
+}
+
+func TestDevicePath_WriteDeviceConfigFile(t *testing.T) {
+	dir := t.TempDir()
+	buf := []byte("foobar")
+
+	p := newValidDevicePath()
+	p.RootDir = dir
+
+	err := p.WriteDeviceConfigFile(buf)
+	ExitOnErr(t, err)
+
+	got, err := os.ReadFile(filepath.Join(dir, "devices", "device1", "config.cue"))
 	assert.Nil(t, err)
 	assert.Equal(t, buf, got)
 }
