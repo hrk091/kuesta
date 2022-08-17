@@ -1,6 +1,7 @@
 package gogit_test
 
 import (
+	extgogit "github.com/go-git/go-git/v5"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/stretchr/testify/assert"
@@ -103,4 +104,53 @@ func TestGit_Checkout(t *testing.T) {
 	}
 	_, err = g.Checkout("main")
 	assert.Nil(t, err)
+}
+
+func TestIsTrackedAndChanged(t *testing.T) {
+	tests := []struct {
+		given extgogit.StatusCode
+		want  bool
+	}{
+		{extgogit.Unmodified, false},
+		{extgogit.Untracked, false},
+		{extgogit.Modified, true},
+		{extgogit.Added, true},
+		{extgogit.Deleted, true},
+		{extgogit.Renamed, true},
+		{extgogit.Copied, true},
+		{extgogit.UpdatedButUnmerged, true},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, gogit.IsTrackedAndChanged(tt.given))
+	}
+}
+
+func TestIsBothWorktreeAndStagingTrackedAndChanged(t *testing.T) {
+	tests := []struct {
+		given extgogit.FileStatus
+		want  bool
+	}{
+		{extgogit.FileStatus{Staging: extgogit.Modified, Worktree: extgogit.Modified}, true},
+		{extgogit.FileStatus{Staging: extgogit.Modified, Worktree: extgogit.Unmodified}, false},
+		{extgogit.FileStatus{Staging: extgogit.Unmodified, Worktree: extgogit.Modified}, false},
+		{extgogit.FileStatus{Staging: extgogit.Unmodified, Worktree: extgogit.Unmodified}, false},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, gogit.IsBothWorktreeAndStagingTrackedAndChanged(tt.given))
+	}
+}
+
+func TestIsEitherWorktreeOrStagingTrackedAndChanged(t *testing.T) {
+	tests := []struct {
+		given extgogit.FileStatus
+		want  bool
+	}{
+		{extgogit.FileStatus{Staging: extgogit.Modified, Worktree: extgogit.Modified}, true},
+		{extgogit.FileStatus{Staging: extgogit.Modified, Worktree: extgogit.Unmodified}, true},
+		{extgogit.FileStatus{Staging: extgogit.Unmodified, Worktree: extgogit.Modified}, true},
+		{extgogit.FileStatus{Staging: extgogit.Unmodified, Worktree: extgogit.Unmodified}, false},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, gogit.IsEitherWorktreeOrStagingTrackedAndChanged(tt.given))
+	}
 }

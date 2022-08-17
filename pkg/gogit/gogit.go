@@ -19,10 +19,12 @@ const (
 	DefaultUser = "anonymous"
 )
 
+// Validate validates exposed fields according to the `validate` tag.
 func (g *Git) Validate() error {
 	return common.Validate(g)
 }
 
+// BasicAuth returns the go-git BasicAuth if git token is provided, otherwise nil.
 func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 	// TODO integrate with k8s secret
 	// ref: https://github.com/fluxcd/source-controller/blob/main/pkg/git/options.go
@@ -47,6 +49,7 @@ func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 	}
 }
 
+// Checkout switches git branch to the given one.
 func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
 	repo, err := extgogit.PlainOpen(g.Path)
 	if err != nil {
@@ -74,4 +77,21 @@ func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
 	}
 
 	return w, nil
+}
+
+// IsTrackedAndChanged returns true if git file status is neither untracked nor unmodified.
+func IsTrackedAndChanged(c extgogit.StatusCode) bool {
+	return c != extgogit.Untracked && c != extgogit.Unmodified
+}
+
+// IsBothWorktreeAndStagingTrackedAndChanged returns true if both stating and worktree statuses
+// of the given file are tracked and changed.
+func IsBothWorktreeAndStagingTrackedAndChanged(st extgogit.FileStatus) bool {
+	return IsTrackedAndChanged(st.Worktree) && IsTrackedAndChanged(st.Staging)
+}
+
+// IsEitherWorktreeOrStagingTrackedAndChanged returns true if either stating or worktree status
+// of the given file is tracked and changed.
+func IsEitherWorktreeOrStagingTrackedAndChanged(st extgogit.FileStatus) bool {
+	return IsTrackedAndChanged(st.Worktree) || IsTrackedAndChanged(st.Staging)
 }
