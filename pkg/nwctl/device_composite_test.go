@@ -15,7 +15,8 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.DeviceCompositeCfg)) *nwctl.DeviceCompositeCfg {
 		cfg := &nwctl.DeviceCompositeCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				RootPath:  "./",
+				GitBranch: "main",
 			},
 			Device: "device1",
 		}

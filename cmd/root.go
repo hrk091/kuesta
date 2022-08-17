@@ -44,10 +44,12 @@ func Execute() {
 }
 
 const (
-	FlagConfig   = "config"
-	FlagDevel    = "devel"
-	FlagRootPath = "rootpath"
-	FlagVerbose  = "verbose"
+	FlagConfig    = "config"
+	FlagDevel     = "devel"
+	FlagRootPath  = "rootpath"
+	FlagVerbose   = "verbose"
+	FlagGitBranch = "git-branch"
+	FlagGitToken  = "git-token"
 )
 
 // NewRootCmd creates command root.
@@ -66,6 +68,8 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolP(FlagDevel, "d", false, "enable development mode")
 	cmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
 	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
+	cmd.PersistentFlags().StringP(FlagGitBranch, "b", "main", "git target branch")
+	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
 
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()
@@ -79,9 +83,11 @@ func NewRootCmd() *cobra.Command {
 func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	// TODO flag parameter validation
 	cfg := &nwctl.RootCfg{
-		Verbose:  cast.ToUint8(viper.GetUint(FlagVerbose)),
-		Devel:    viper.GetBool(FlagDevel),
-		RootPath: viper.GetString(FlagRootPath),
+		Verbose:   cast.ToUint8(viper.GetUint(FlagVerbose)),
+		Devel:     viper.GetBool(FlagDevel),
+		RootPath:  viper.GetString(FlagRootPath),
+		GitBranch: viper.GetString(FlagGitBranch),
+		GitToken:  viper.GetString(FlagGitToken),
 	}
 	return cfg, cfg.Validate()
 }
