@@ -1,4 +1,4 @@
-package nwctl
+package common
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ var (
 	_validator = validator.New()
 )
 
-func validate(v any) error {
+func Validate(v any) error {
 	return handleError(_validator.Struct(v))
 }
 

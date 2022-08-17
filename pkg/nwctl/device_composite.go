@@ -5,6 +5,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
 )
 
@@ -16,7 +17,7 @@ type DeviceCompositeCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *DeviceCompositeCfg) Validate() error {
-	return validate(c)
+	return common.Validate(c)
 }
 
 // RunDeviceComposite runs the main process of the `device composite` command.

@@ -2,6 +2,7 @@ package nwctl
 
 import (
 	"fmt"
+	"github.com/hrk091/nwctl/pkg/common"
 	"os"
 	"path/filepath"
 )
@@ -31,7 +32,7 @@ type ServicePath struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (p *ServicePath) Validate() error {
-	return validate(p)
+	return common.Validate(p)
 }
 
 // RootPath returns the path to repository root.
@@ -131,7 +132,7 @@ type DevicePath struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (p *DevicePath) Validate() error {
-	return validate(p)
+	return common.Validate(p)
 }
 
 // RootPath returns the path to repository root.

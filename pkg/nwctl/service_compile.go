@@ -5,6 +5,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"fmt"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
 )
 
@@ -17,7 +18,7 @@ type ServiceCompileCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *ServiceCompileCfg) Validate() error {
-	return validate(c)
+	return common.Validate(c)
 }
 
 // RunServiceCompile runs the main process of the `service compile` command.

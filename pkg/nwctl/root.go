@@ -22,6 +22,8 @@
 
 package nwctl
 
+import "github.com/hrk091/nwctl/pkg/common"
+
 type RootCfg struct {
 	Verbose   uint8 `validate:"min=0,max=3"`
 	Devel     bool
@@ -32,5 +34,5 @@ type RootCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *RootCfg) Validate() error {
-	return validate(c)
+	return common.Validate(c)
 }
