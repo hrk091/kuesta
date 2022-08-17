@@ -10,5 +10,6 @@ func newServiceCmd() *cobra.Command {
 		Short: "Manage services",
 	}
 	serviceCmd.AddCommand(newServiceCompileCmd())
+	serviceCmd.AddCommand(newServiceApplyCmd())
 	return serviceCmd
 }
