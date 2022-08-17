@@ -2,17 +2,17 @@ package gogit
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5"
+	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/hrk091/nwctl/pkg/common"
 	"strings"
 )
 
 type Git struct {
-	Token  string
-	Path   string `validate:"required"`
-	Branch string `validate:"required"`
+	Token      string
+	Path       string `validate:"required"`
+	MainBranch string `validate:"required"`
 }
 
 const (
@@ -23,7 +23,7 @@ func (g *Git) Validate() error {
 	return common.Validate(g)
 }
 
-func (g *Git) BasicAuth() *githttp.BasicAuth {
+func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 	// TODO integrate with k8s secret
 	// ref: https://github.com/fluxcd/source-controller/blob/main/pkg/git/options.go
 	token := g.Token
@@ -41,46 +41,37 @@ func (g *Git) BasicAuth() *githttp.BasicAuth {
 		password = token
 	}
 
-	return &githttp.BasicAuth{
+	return &gogithttp.BasicAuth{
 		Username: user,
 		Password: password,
 	}
 }
 
-func (g *Git) Pull(singleBranch bool) error {
-	repo, err := git.PlainOpen(g.Path)
+func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
+	repo, err := extgogit.PlainOpen(g.Path)
 	if err != nil {
-		return fmt.Errorf("open git repo: %w", err)
+		return nil, fmt.Errorf("open git repo: %w", err)
 	}
-
+	fmt.Printf("%+v\n", repo)
 	w, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("get worktree: %w", err)
+		return nil, fmt.Errorf("get worktree: %w", err)
 	}
+	fmt.Printf("%+v\n", w)
 
-	if err := w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.Branch),
+	if err := w.Checkout(&extgogit.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
 	}); err != nil {
-		return fmt.Errorf("checkout to %s: %w", g.Branch, err)
+		return nil, fmt.Errorf("checkout to %s: %w", branch, err)
 	}
 
 	ref, err := repo.Head()
 	if err != nil {
-		return fmt.Errorf("resolve head: %w", err)
+		return nil, fmt.Errorf("resolve head: %w", err)
 	}
-	if ref.Name() != plumbing.NewBranchReferenceName(g.Branch) {
-		return fmt.Errorf("head is not main: %s", ref.Name())
-	}
-
-	pullOpts := git.PullOptions{
-		SingleBranch: singleBranch,
-		Auth:         g.BasicAuth(),
-	}
-	if err := w.Pull(&pullOpts); err != nil {
-		if err != git.NoErrAlreadyUpToDate {
-			return fmt.Errorf("pull: %w", err)
-		}
+	if ref.Name() != plumbing.NewBranchReferenceName(branch) {
+		return nil, fmt.Errorf("head is not %s: %s", branch, ref.Name())
 	}
 
-	return nil
+	return w, nil
 }

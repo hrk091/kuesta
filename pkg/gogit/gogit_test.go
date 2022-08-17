@@ -5,13 +5,14 @@ import (
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestGit_Validate(t *testing.T) {
 	newValidStruct := func(t func(git *gogit.Git)) *gogit.Git {
 		g := &gogit.Git{
-			Path:   "./",
-			Branch: "main",
+			Path:       "./",
+			MainBranch: "main",
 		}
 		t(g)
 		return g
@@ -37,7 +38,7 @@ func TestGit_Validate(t *testing.T) {
 		{
 			"bad: branch is empty",
 			func(g *gogit.Git) {
-				g.Branch = ""
+				g.MainBranch = ""
 			},
 			true,
 		},
@@ -89,4 +90,17 @@ func TestGit_BasicAuth(t *testing.T) {
 			assert.Equal(t, tt.want, g.BasicAuth())
 		})
 	}
+}
+
+func TestGit_Checkout(t *testing.T) {
+	repo, dir := initRepo(t)
+	_, err := commitFile(repo, "branch", "init", time.Now())
+	ExitOnErr(t, err)
+	ExitOnErr(t, createBranch(repo, "main"))
+
+	g := gogit.Git{
+		Path: dir,
+	}
+	_, err = g.Checkout("main")
+	assert.Nil(t, err)
 }
