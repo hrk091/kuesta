@@ -33,37 +33,37 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 		Keys:    cfg.Keys,
 	}
 	if err := sp.Validate(); err != nil {
-		return fmt.Errorf("validate ServicePath: %v", err)
+		return fmt.Errorf("validate ServicePath: %w", err)
 	}
 
 	buf, err := sp.ReadServiceInput()
 	if err != nil {
-		return fmt.Errorf("read input file: %v", err)
+		return fmt.Errorf("read input file: %w", err)
 	}
 	inputVal, err := NewValueFromBuf(cctx, buf)
 	if err != nil {
-		return fmt.Errorf("load input file: %v", err)
+		return fmt.Errorf("load input file: %w", err)
 	}
 
 	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
 	if err != nil {
-		return fmt.Errorf("load transform file: %v", err)
+		return fmt.Errorf("load transform file: %w", err)
 	}
 
 	it, err := ApplyTransform(cctx, inputVal, transformVal)
 	if err != nil {
-		return fmt.Errorf("apply transform: %v", err)
+		return fmt.Errorf("apply transform: %w", err)
 	}
 
 	for it.Next() {
 		device := it.Label()
 		buf, err := ExtractDeviceConfig(it.Value())
 		if err != nil {
-			return fmt.Errorf("extract device config: %v", err)
+			return fmt.Errorf("extract device config: %w", err)
 		}
 
 		if err := sp.WriteServiceComputedFile(device, buf); err != nil {
-			return fmt.Errorf("save partial device config: %v", err)
+			return fmt.Errorf("save partial device config: %w", err)
 		}
 	}
 
