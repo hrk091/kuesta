@@ -27,7 +27,7 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 
 	cctx := cuecontext.New()
 
-	sp := &ServicePath{
+	sp := ServicePath{
 		RootDir: cfg.RootPath,
 		Service: cfg.Service,
 		Keys:    cfg.Keys,
