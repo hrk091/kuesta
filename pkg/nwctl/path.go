@@ -38,8 +38,12 @@ func (p *ServicePath) RootPath() string {
 	return filepath.FromSlash(p.RootDir)
 }
 
+func (p *ServicePath) serviceDirElem() []string {
+	return []string{DirServices}
+}
+
 func (p *ServicePath) servicePathElem() []string {
-	return []string{DirServices, p.Service}
+	return append(p.serviceDirElem(), p.Service)
 }
 
 func (p *ServicePath) serviceItemPathElem() []string {
@@ -58,7 +62,12 @@ func (p *ServicePath) addRoot(path string, t PathType) string {
 	}
 }
 
-// ServiceInputPath returns path to the specified service's input file.
+// ServiceDirPath returns the path to the service directory.
+func (p *ServicePath) ServiceDirPath(t PathType) string {
+	return p.addRoot(filepath.Join(p.serviceDirElem()...), t)
+}
+
+// ServiceInputPath returns the path to the specified service's input file.
 func (p *ServicePath) ServiceInputPath(t PathType) string {
 	el := append(p.serviceItemPathElem(), FileInputCue)
 	return p.addRoot(filepath.Join(el...), t)
@@ -73,7 +82,7 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 	return buf, err
 }
 
-// ServiceTransformPath returns path to the specified service's transform file.
+// ServiceTransformPath returns the path to the specified service's transform file.
 func (p *ServicePath) ServiceTransformPath(t PathType) string {
 	el := append(p.servicePathElem(), FileTransformCue)
 	return p.addRoot(filepath.Join(el...), t)
@@ -88,12 +97,12 @@ func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
 	return buf, err
 }
 
-// ServiceComputedDirPath returns path to the specified service's computed dir.
+// ServiceComputedDirPath returns the path to the specified service's computed dir.
 func (p *ServicePath) ServiceComputedDirPath(t PathType) string {
 	return p.addRoot(filepath.Join(p.serviceComputedPathElem()...), t)
 }
 
-// ServiceComputedPath returns path to the specified service's computed result of given device.
+// ServiceComputedPath returns the path to the specified service's computed result of given device.
 func (p *ServicePath) ServiceComputedPath(device string, t PathType) string {
 	el := append(p.serviceComputedPathElem(), fmt.Sprintf("%s.cue", device))
 	return p.addRoot(filepath.Join(el...), t)

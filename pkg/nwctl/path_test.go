@@ -82,6 +82,12 @@ func TestServicePath_RootPath(t *testing.T) {
 	assert.Equal(t, want, p.RootPath())
 }
 
+func TestServicePath_ServiceDirPath(t *testing.T) {
+	p := newValidServicePath()
+	assert.Equal(t, "services", p.ServiceDirPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services", p.ServiceDirPath(nwctl.IncludeRoot))
+}
+
 func TestServicePath_ServiceInputPath(t *testing.T) {
 	p := newValidServicePath()
 	assert.Equal(t, "services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.ExcludeRoot))
