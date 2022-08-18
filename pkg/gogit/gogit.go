@@ -49,7 +49,7 @@ func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 	}
 }
 
-// Checkout switches git branch to the given one.
+// Checkout switches git branch to the given one and returns git worktree.
 func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
 	repo, err := extgogit.PlainOpen(g.Path)
 	if err != nil {

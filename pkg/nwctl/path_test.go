@@ -398,12 +398,57 @@ func TestParseServiceInputPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, keys, err := nwctl.ParseServiceInputPath(tt.given)
+			gotSvc, gotKeys, err := nwctl.ParseServiceInputPath(tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.Equal(t, tt.wantSvc, service)
-				assert.Equal(t, tt.wantKeys, keys)
+				assert.Equal(t, tt.wantSvc, gotSvc)
+				assert.Equal(t, tt.wantKeys, gotKeys)
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestParseServiceComputedFilePath(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   string
+		want    string
+		wantErr bool
+	}{
+		{
+			"ok",
+			"services/foo/one/computed/device1.cue",
+			"device1",
+			false,
+		},
+		{
+			"ok",
+			"services/foo/one/two/three/four/computed/device2.cue",
+			"device2",
+			false,
+		},
+		{
+			"bad: not start from services",
+			"devices/device1/config.cue",
+			"",
+			true,
+		},
+		{
+			"bad: file is not in computed dir",
+			"services/foo/one/input.cue",
+			"",
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := nwctl.ParseServiceComputedFilePath(tt.given)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tt.want, got)
 				assert.Nil(t, err)
 			}
 		})

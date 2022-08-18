@@ -24,6 +24,10 @@ const (
 	IncludeRoot PathType = "INCLUDE_ROOT"
 )
 
+var (
+	_sep = string(filepath.Separator)
+)
+
 type ServicePath struct {
 	RootDir string `validate:"required"`
 
@@ -180,11 +184,10 @@ func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
 // ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.
 func ParseServiceInputPath(path string) (string, []string, error) {
 	if !isServiceInputPath(path) {
-		return "", nil, fmt.Errorf("invalid path: %s", path)
+		return "", nil, fmt.Errorf("invalid service input path: %s", path)
 	}
-	sep := string(filepath.Separator)
 	dir, _ := filepath.Split(path)
-	dirElem := strings.Split(strings.TrimRight(dir, sep), sep)
+	dirElem := strings.Split(strings.TrimRight(dir, _sep), _sep)
 	return dirElem[1], dirElem[2:], nil
 }
 
@@ -198,4 +201,28 @@ func isServiceInputPath(path string) bool {
 		return false
 	}
 	return true
+}
+
+// ParseServiceComputedFilePath parses service computed filepath and returns its device name.
+func ParseServiceComputedFilePath(path string) (string, error) {
+	if !isServiceComputedFilePath(path) {
+		return "", fmt.Errorf("invalid service computed path: %s", path)
+	}
+	return getFileNameNoExt(path), nil
+}
+
+func isServiceComputedFilePath(path string) bool {
+	dir, _ := filepath.Split(path)
+	dirElem := strings.Split(strings.TrimRight(dir, _sep), _sep)
+	if dirElem[0] != DirServices {
+		return false
+	}
+	if dirElem[len(dirElem)-1] != DirComputed {
+		return false
+	}
+	return true
+}
+
+func getFileNameNoExt(path string) string {
+	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
 }
