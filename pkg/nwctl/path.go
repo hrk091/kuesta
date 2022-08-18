@@ -3,6 +3,7 @@ package nwctl
 import (
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,9 +85,9 @@ func (p *ServicePath) ServiceInputPath(t PathType) string {
 func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 	buf, err := os.ReadFile(p.ServiceInputPath(IncludeRoot))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	return buf, err
+	return buf, nil
 }
 
 // ServiceTransformPath returns the path to the specified service's transform file.
@@ -99,9 +100,9 @@ func (p *ServicePath) ServiceTransformPath(t PathType) string {
 func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
 	buf, err := os.ReadFile(p.ServiceTransformPath(IncludeRoot))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	return buf, err
+	return buf, nil
 }
 
 // ServiceComputedDirPath returns the path to the specified service's computed dir.
@@ -119,9 +120,9 @@ func (p *ServicePath) ServiceComputedPath(device string, t PathType) string {
 func (p *ServicePath) ReadServiceComputedFile(device string) ([]byte, error) {
 	buf, err := os.ReadFile(p.ServiceComputedPath(device, IncludeRoot))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	return buf, err
+	return buf, nil
 }
 
 // WriteServiceComputedFile writes the partial device config computed from service to the corresponding computed dir.
@@ -171,9 +172,9 @@ func (p *DevicePath) DeviceConfigPath(t PathType) string {
 func (p *DevicePath) ReadDeviceConfigFile() ([]byte, error) {
 	buf, err := os.ReadFile(p.DeviceConfigPath(IncludeRoot))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	return buf, err
+	return buf, nil
 }
 
 // WriteDeviceConfigFile writes the merged device config to the corresponding device dir.
@@ -184,7 +185,7 @@ func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
 // ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.
 func ParseServiceInputPath(path string) (string, []string, error) {
 	if !isServiceInputPath(path) {
-		return "", nil, fmt.Errorf("invalid service input path: %s", path)
+		return "", nil, errors.WithStack(fmt.Errorf("invalid service input path: %s", path))
 	}
 	dir, _ := filepath.Split(path)
 	dirElem := strings.Split(strings.TrimRight(dir, _sep), _sep)
@@ -206,7 +207,7 @@ func isServiceInputPath(path string) bool {
 // ParseServiceComputedFilePath parses service computed filepath and returns its device name.
 func ParseServiceComputedFilePath(path string) (string, error) {
 	if !isServiceComputedFilePath(path) {
-		return "", fmt.Errorf("invalid service computed path: %s", path)
+		return "", errors.WithStack(fmt.Errorf("invalid service computed path: %s", path))
 	}
 	return getFileNameNoExt(path), nil
 }

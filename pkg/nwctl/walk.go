@@ -3,6 +3,7 @@ package nwctl
 import (
 	"errors"
 	"fmt"
+	errs "github.com/pkg/errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -12,7 +13,7 @@ func CollectPartialDeviceConfig(dir, device string) ([]string, error) {
 	var files []string
 	walkDirFunc := func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("walk dir: %w", err)
+			return errs.WithStack(fmt.Errorf("walk dir: %w", err))
 		}
 		if !info.IsDir() {
 			return nil
@@ -26,7 +27,7 @@ func CollectPartialDeviceConfig(dir, device string) ([]string, error) {
 			if errors.Is(err, os.ErrNotExist) {
 				return filepath.SkipDir
 			}
-			return fmt.Errorf("check if file exists: %w", err)
+			return errs.WithStack(fmt.Errorf("check if file exists: %w", err))
 		}
 		files = append(files, p)
 		return filepath.SkipDir

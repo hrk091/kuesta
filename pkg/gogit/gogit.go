@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -53,27 +54,26 @@ func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
 	repo, err := extgogit.PlainOpen(g.Path)
 	if err != nil {
-		return nil, fmt.Errorf("open git repo: %w", err)
+		return nil, errors.WithStack(fmt.Errorf("open git repo: %w", err))
 	}
-	fmt.Printf("%+v\n", repo)
+
 	w, err := repo.Worktree()
 	if err != nil {
-		return nil, fmt.Errorf("get worktree: %w", err)
+		return nil, errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
-	fmt.Printf("%+v\n", w)
 
 	if err := w.Checkout(&extgogit.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branch),
 	}); err != nil {
-		return nil, fmt.Errorf("checkout to %s: %w", branch, err)
+		return nil, errors.WithStack(fmt.Errorf("checkout to %s: %w", branch, err))
 	}
 
 	ref, err := repo.Head()
 	if err != nil {
-		return nil, fmt.Errorf("resolve head: %w", err)
+		return nil, errors.WithStack(fmt.Errorf("resolve head: %w", err))
 	}
 	if ref.Name() != plumbing.NewBranchReferenceName(branch) {
-		return nil, fmt.Errorf("head is not %s: %s", branch, ref.Name())
+		return nil, errors.WithStack(fmt.Errorf("head is not %s: %s", branch, ref.Name()))
 	}
 
 	return w, nil

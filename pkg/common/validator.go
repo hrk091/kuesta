@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -11,7 +12,7 @@ var (
 )
 
 func Validate(v any) error {
-	return handleError(_validator.Struct(v))
+	return errors.WithStack(handleError(_validator.Struct(v)))
 }
 
 func handleError(err error) error {
