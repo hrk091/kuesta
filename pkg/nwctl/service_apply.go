@@ -44,9 +44,14 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		err = multierr.Append(err, CheckGitFileStatus(path, *st))
 	}
 	if err != nil {
-		return fmt.Errorf("check git status: %w", err)
+		msg := []string{"check git status:"}
+		for _, err := range multierr.Errors(err) {
+			msg = append(msg, err.Error())
+		}
+		return fmt.Errorf("%s", strings.Join(msg, "\n "))
 	}
 
+	var modified []string
 	for path, st := range stmap {
 		if !gogit.IsTrackedAndChanged(st.Staging) {
 			continue
@@ -58,13 +63,14 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		}
 		sp := ServicePath{RootDir: cfg.RootPath, Service: service, Keys: keys}
 
+		modified = append(modified, path)
 		if st.Staging == extgogit.Deleted {
-			l.Debugw("service deleting", "service", service, "path", path)
+			fmt.Printf("Service deleted: %s\n", path)
 			if _, err := w.Remove(sp.ServiceComputedDirPath(ExcludeRoot)); err != nil {
 				return fmt.Errorf("git remove: %w", err)
 			}
 		} else {
-			l.Debugw("service compiling", "service", service, "path", path)
+			fmt.Printf("Service updated: %s\n", path)
 			scCfg := &ServiceCompileCfg{RootCfg: cfg.RootCfg, Service: service, Keys: keys}
 			if err := RunServiceCompile(ctx, scCfg); err != nil {
 				return fmt.Errorf("service updating: %w", err)
@@ -73,6 +79,10 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 				return fmt.Errorf("git add: %w", err)
 			}
 		}
+	}
+	if len(modified) == 0 {
+		fmt.Printf("No services updated.\n")
+		return nil
 	}
 
 	stmap, err = w.Status()
@@ -90,8 +100,12 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		}
 		updated.Add(device)
 	}
+	if len(updated.List()) == 0 {
+		fmt.Printf("No devices updated.\n")
+		return nil
+	}
+
 	for _, name := range updated.List() {
-		l.Debugw("device composite executing", "name", name)
 		dp := DevicePath{RootDir: cfg.RootPath, Device: name}
 		dcCfg := &DeviceCompositeCfg{RootCfg: cfg.RootCfg, Device: name}
 		if err := RunDeviceComposite(ctx, dcCfg); err != nil {
@@ -100,8 +114,8 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		if _, err := w.Add(dp.DeviceConfigPath(ExcludeRoot)); err != nil {
 			return fmt.Errorf("git add: %w", err)
 		}
+		fmt.Printf("Config updated: device=%s\n", name)
 	}
-
 	return nil
 }
 

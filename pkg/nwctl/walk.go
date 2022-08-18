@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 )
 
+// CollectPartialDeviceConfig returns list of partial device configs for the given device.
 func CollectPartialDeviceConfig(dir, device string) ([]string, error) {
 	var files []string
 	walkDirFunc := func(path string, info fs.DirEntry, err error) error {

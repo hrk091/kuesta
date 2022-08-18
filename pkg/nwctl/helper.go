@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// WriteFileWithMkdir writes data to the named file, along with any necessary parent directories.
 func WriteFileWithMkdir(path string, buf []byte) error {
 	dir, _ := filepath.Split(path)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

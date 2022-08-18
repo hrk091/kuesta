@@ -62,18 +62,19 @@ func (g *Git) Checkout(branch string) (*extgogit.Worktree, error) {
 		return nil, errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 
-	if err := w.Checkout(&extgogit.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
-	}); err != nil {
-		return nil, errors.WithStack(fmt.Errorf("checkout to %s: %w", branch, err))
-	}
-
 	ref, err := repo.Head()
 	if err != nil {
 		return nil, errors.WithStack(fmt.Errorf("resolve head: %w", err))
 	}
-	if ref.Name() != plumbing.NewBranchReferenceName(branch) {
-		return nil, errors.WithStack(fmt.Errorf("head is not %s: %s", branch, ref.Name()))
+	if ref.Name() == plumbing.NewBranchReferenceName(branch) {
+		return w, nil
+	}
+
+	if err := w.Checkout(&extgogit.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
+		Keep:   true,
+	}); err != nil {
+		return nil, errors.WithStack(fmt.Errorf("checkout to %s: %w", branch, err))
 	}
 
 	return w, nil
