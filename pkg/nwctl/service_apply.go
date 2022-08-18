@@ -3,8 +3,13 @@ package nwctl
 import (
 	"context"
 	"fmt"
+	extgogit "github.com/go-git/go-git/v5"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/logger"
+	"go.uber.org/multierr"
+	"path/filepath"
+	"strings"
 )
 
 type ServiceApplyCfg struct {
@@ -30,10 +35,94 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		return fmt.Errorf("git checkout: %w", err)
 	}
 
-	_, err = w.Status()
+	stmap, err := w.Status()
 	if err != nil {
 		return fmt.Errorf("git status: %w", err)
 	}
 
+	for path, st := range stmap {
+		err = multierr.Append(err, CheckGitFileStatus(path, *st))
+	}
+	if err != nil {
+		return fmt.Errorf("check git status: %w", err)
+	}
+
+	for path, st := range stmap {
+		if !gogit.IsTrackedAndChanged(st.Staging) {
+			continue
+		}
+
+		service, keys, err := ParseServiceInputPath(path)
+		if err != nil {
+			continue
+		}
+		sp := ServicePath{RootDir: cfg.RootPath, Service: service, Keys: keys}
+
+		if st.Staging == extgogit.Deleted {
+			l.Debugw("service deleting", "service", service, "path", path)
+			if _, err := w.Remove(sp.ServiceComputedDirPath(ExcludeRoot)); err != nil {
+				return fmt.Errorf("git remove: %w", err)
+			}
+		} else {
+			l.Debugw("service compiling", "service", service, "path", path)
+			scCfg := &ServiceCompileCfg{RootCfg: cfg.RootCfg, Service: service, Keys: keys}
+			if err := RunServiceCompile(ctx, scCfg); err != nil {
+				return fmt.Errorf("service updating: %w", err)
+			}
+			if _, err := w.Add(sp.ServiceComputedDirPath(ExcludeRoot)); err != nil {
+				return fmt.Errorf("git add: %w", err)
+			}
+		}
+	}
+
+	stmap, err = w.Status()
+	if err != nil {
+		return fmt.Errorf("git status %w", err)
+	}
+	updated := common.NewSet[string]()
+	for path, st := range stmap {
+		if st.Staging == extgogit.Unmodified {
+			continue
+		}
+		device, err := ParseServiceComputedFilePath(path)
+		if err != nil {
+			continue
+		}
+		updated.Add(device)
+	}
+	for _, name := range updated.List() {
+		l.Debugw("device composite executing", "name", name)
+		dp := DevicePath{RootDir: cfg.RootPath, Device: name}
+		dcCfg := &DeviceCompositeCfg{RootCfg: cfg.RootCfg, Device: name}
+		if err := RunDeviceComposite(ctx, dcCfg); err != nil {
+			return fmt.Errorf("device composite: %w", err)
+		}
+		if _, err := w.Add(dp.DeviceConfigPath(ExcludeRoot)); err != nil {
+			return fmt.Errorf("git add: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func CheckGitFileStatus(path string, st extgogit.FileStatus) error {
+	dir, file := filepath.Split(path)
+	dir = strings.TrimRight(dir, string(filepath.Separator))
+	if strings.HasSuffix(dir, DirComputed) {
+		if gogit.IsEitherWorktreeOrStagingTrackedAndChanged(st) {
+			return fmt.Errorf("changes in compilation result is not allowd, you need to reset it: %s", path)
+		}
+	}
+	if strings.HasPrefix(dir, DirDevices) && file == FileConfigCue {
+		if gogit.IsEitherWorktreeOrStagingTrackedAndChanged(st) {
+			return fmt.Errorf("changes in device config is not allowd, you need to reset it: %s", path)
+		}
+	}
+	if gogit.IsBothWorktreeAndStagingTrackedAndChanged(st) {
+		return fmt.Errorf("both worktree and staging are modified, only change in worktree or staging is allowed: %s", path)
+	}
+	if st.Worktree == extgogit.UpdatedButUnmerged {
+		return fmt.Errorf("updated but unmerged changes remain. you have to solve it in advance: %s", path)
+	}
 	return nil
 }
