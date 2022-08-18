@@ -18,13 +18,7 @@ func newServiceCompileCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			ctx := cmd.Context()
-			l := logger.FromContext(ctx)
-			if err := nwctl.RunServiceCompile(ctx, cfg); err != nil {
-				l.Error(err)
-				return err
-			}
-			return nil
+			return nwctl.RunServiceCompile(cmd.Context(), cfg)
 		},
 	}
 	return cmd

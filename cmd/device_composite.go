@@ -18,13 +18,7 @@ func newDeviceCompositeCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			ctx := cmd.Context()
-			l := logger.FromContext(ctx)
-			if err := nwctl.RunDeviceComposite(ctx, cfg); err != nil {
-				l.Error(err)
-				return err
-			}
-			return nil
+			return nwctl.RunDeviceComposite(cmd.Context(), cfg)
 		},
 	}
 	return cmd
