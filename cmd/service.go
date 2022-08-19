@@ -5,11 +5,11 @@ import (
 )
 
 func newServiceCmd() *cobra.Command {
-	serviceCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "service",
 		Short: "Manage services",
 	}
-	serviceCmd.AddCommand(newServiceCompileCmd())
-	serviceCmd.AddCommand(newServiceApplyCmd())
-	return serviceCmd
+	cmd.AddCommand(newServiceCompileCmd())
+	cmd.AddCommand(newServiceApplyCmd())
+	return cmd
 }

@@ -46,12 +46,13 @@ func Execute() {
 }
 
 const (
-	FlagConfig    = "config"
-	FlagDevel     = "devel"
-	FlagRootPath  = "rootpath"
-	FlagVerbose   = "verbose"
-	FlagGitBranch = "git-branch"
-	FlagGitToken  = "git-token"
+	FlagConfig     = "config"
+	FlagDevel      = "devel"
+	FlagRootPath   = "rootpath"
+	FlagVerbose    = "verbose"
+	FlagGitBranch  = "git-branch"
+	FlagGitToken   = "git-token"
+	FlagPushToMain = "push-to-main"
 )
 
 // NewRootCmd creates command root.
@@ -78,6 +79,7 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.AddCommand(newServiceCmd())
 	cmd.AddCommand(newDeviceCmd())
+	cmd.AddCommand(newGitCmd())
 
 	return cmd
 }
