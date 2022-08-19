@@ -144,10 +144,7 @@ func deleteFile(repo *extgogit.Repository, path string) error {
 	if err != nil {
 		return err
 	}
-	if err := wt.Filesystem.Remove(path); err != nil {
-		return err
-	}
-	if _, err = wt.Add(path); err != nil {
+	if _, err = wt.Remove(path); err != nil {
 		return err
 	}
 	return nil

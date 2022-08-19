@@ -8,9 +8,9 @@ import (
 	"testing"
 )
 
-func TestGit_Validate(t *testing.T) {
-	newValidStruct := func(t func(git *gogit.Git)) *gogit.Git {
-		g := &gogit.Git{
+func TestGitOptions_Validate(t *testing.T) {
+	newValidStruct := func(t func(git *gogit.GitOptions)) *gogit.GitOptions {
+		g := &gogit.GitOptions{
 			Path:       "./",
 			MainBranch: "main",
 		}
@@ -20,24 +20,24 @@ func TestGit_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(g *gogit.Git)
+		transform func(g *gogit.GitOptions)
 		wantErr   bool
 	}{
 		{
 			"ok",
-			func(g *gogit.Git) {},
+			func(g *gogit.GitOptions) {},
 			false,
 		},
 		{
 			"bad: path is empty",
-			func(g *gogit.Git) {
+			func(g *gogit.GitOptions) {
 				g.Path = ""
 			},
 			true,
 		},
 		{
 			"bad: branch is empty",
-			func(g *gogit.Git) {
+			func(g *gogit.GitOptions) {
 				g.MainBranch = ""
 			},
 			true,
@@ -86,7 +86,12 @@ func TestGit_BasicAuth(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := gogit.Git{Token: tt.token}
+			g, err := gogit.NewGitWithoutRepo(gogit.GitOptions{
+				Path:       "./",
+				MainBranch: "main",
+				Token:      tt.token,
+			})
+			ExitOnErr(t, err)
 			assert.Equal(t, tt.want, g.BasicAuth())
 		})
 	}
@@ -94,10 +99,12 @@ func TestGit_BasicAuth(t *testing.T) {
 
 func TestGit_Checkout(t *testing.T) {
 	_, dir := initRepo(t, "main")
-	g := gogit.Git{
-		Path: dir,
-	}
-	_, err := g.Checkout("main")
+	g, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dir,
+		MainBranch: "main",
+	})
+	ExitOnErr(t, err)
+	_, err = g.Checkout()
 	assert.Nil(t, err)
 }
 

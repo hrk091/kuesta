@@ -26,16 +26,19 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("service apply called")
 
-	git := gogit.Git{
+	opts := gogit.GitOptions{
 		Path:       cfg.RootPath,
 		MainBranch: cfg.GitBranch,
 		Token:      cfg.GitToken,
+		User:       cfg.GitUser,
+		Email:      cfg.GitEmail,
 	}
-	if err := git.Validate(); err != nil {
-		return fmt.Errorf("validate git struct: %w", err)
+	git, err := gogit.NewGit(opts)
+	if err != nil {
+		return fmt.Errorf("setup git: %w", err)
 	}
 
-	w, err := git.Checkout(git.MainBranch)
+	w, err := git.Checkout()
 	if err != nil {
 		return fmt.Errorf("git checkout: %w", err)
 	}

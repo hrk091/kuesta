@@ -25,6 +25,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -52,7 +53,12 @@ const (
 	FlagVerbose    = "verbose"
 	FlagGitBranch  = "git-branch"
 	FlagGitToken   = "git-token"
+	FlagGitUser    = "git-user"
+	FlagGitEmail   = "git-email"
 	FlagPushToMain = "push-to-main"
+
+	DefaultGitUser  = gogit.DefaultGitUser
+	DefaultGitEmail = gogit.DefaultGitEmail
 )
 
 // NewRootCmd creates command root.
@@ -73,6 +79,8 @@ func NewRootCmd() *cobra.Command {
 	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
 	cmd.PersistentFlags().StringP(FlagGitBranch, "b", "main", "git target branch")
 	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
+	cmd.PersistentFlags().StringP(FlagGitUser, "", DefaultGitUser, "git username")
+	cmd.PersistentFlags().StringP(FlagGitEmail, "", DefaultGitEmail, "git email")
 
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()
@@ -86,12 +94,20 @@ func NewRootCmd() *cobra.Command {
 
 func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	// TODO flag parameter validation
+	gitUser := viper.GetString(FlagGitUser)
+	gitEmail := viper.GetString(FlagGitEmail)
+	if gitUser != DefaultGitUser && gitEmail == DefaultGitEmail {
+		gitEmail = fmt.Sprintf("%s@example.com", gitUser)
+	}
+
 	cfg := &nwctl.RootCfg{
 		Verbose:   cast.ToUint8(viper.GetUint(FlagVerbose)),
 		Devel:     viper.GetBool(FlagDevel),
 		RootPath:  viper.GetString(FlagRootPath),
 		GitBranch: viper.GetString(FlagGitBranch),
 		GitToken:  viper.GetString(FlagGitToken),
+		GitUser:   gitUser,
+		GitEmail:  gitEmail,
 	}
 	return cfg, cfg.Validate()
 }

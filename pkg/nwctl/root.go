@@ -30,6 +30,8 @@ type RootCfg struct {
 	RootPath  string `validate:"required,dir"`
 	GitBranch string `validate:"required"`
 	GitToken  string
+	GitUser   string
+	GitEmail  string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
