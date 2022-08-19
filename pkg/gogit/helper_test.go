@@ -26,45 +26,64 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"runtime/debug"
 	"testing"
 	"time"
 )
 
 func ExitOnErr(t *testing.T, err error) {
 	if err != nil {
+		t.Log(string(debug.Stack()))
 		t.Fatal(err)
 	}
 }
 
-func initRepo(t *testing.T) (*extgogit.Repository, string) {
+func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
 	if err != nil {
 		t.Fatalf("init repo: %v", err)
 	}
+	if err := addFile(repo, "README.md", "# test"); err != nil {
+		t.Fatalf("add file on init: %v", err)
+	}
+	if _, err := commit(repo, time.Now()); err != nil {
+		t.Fatalf("commit on init: %v", err)
+	}
+	if err := createBranch(repo, branch); err != nil {
+		t.Fatalf("create init branch: %v", err)
+	}
 	return repo, dir
 }
 
-func commitFile(repo *extgogit.Repository, path, content string, time time.Time) (plumbing.Hash, error) {
+func addFile(repo *extgogit.Repository, path, content string) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+	f, err := wt.Filesystem.Create(path)
+	if err != nil {
+		return err
+	}
+	if _, err = f.Write([]byte(content)); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	if _, err = wt.Add(path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return plumbing.Hash{}, err
 	}
-	f, err := wt.Filesystem.Create(path)
-	if err != nil {
-		return plumbing.Hash{}, err
-	}
-	if _, err = f.Write([]byte(content)); err != nil {
-		f.Close()
-		return plumbing.Hash{}, err
-	}
-	if err = f.Close(); err != nil {
-		return plumbing.Hash{}, err
-	}
-	if _, err = wt.Add(path); err != nil {
-		return plumbing.Hash{}, err
-	}
-	return wt.Commit("Adding: "+path, &extgogit.CommitOptions{
+	return wt.Commit("Updated", &extgogit.CommitOptions{
 		Author:    mockSignature(time),
 		Committer: mockSignature(time),
 	})

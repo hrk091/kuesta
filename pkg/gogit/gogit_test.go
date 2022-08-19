@@ -6,7 +6,6 @@ import (
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
 func TestGit_Validate(t *testing.T) {
@@ -94,15 +93,11 @@ func TestGit_BasicAuth(t *testing.T) {
 }
 
 func TestGit_Checkout(t *testing.T) {
-	repo, dir := initRepo(t)
-	_, err := commitFile(repo, "branch", "init", time.Now())
-	ExitOnErr(t, err)
-	ExitOnErr(t, createBranch(repo, "main"))
-
+	_, dir := initRepo(t, "main")
 	g := gogit.Git{
 		Path: dir,
 	}
-	_, err = g.Checkout("main")
+	_, err := g.Checkout("main")
 	assert.Nil(t, err)
 }
 

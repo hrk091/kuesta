@@ -35,7 +35,7 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: service is empty",
+			"bad: device is empty",
 			func(cfg *nwctl.DeviceCompositeCfg) {
 				cfg.Device = ""
 			},

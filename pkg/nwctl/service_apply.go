@@ -48,7 +48,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		return fmt.Errorf("check git status: %w", err)
 	}
 
-	scPlan := NewServiceCompilePlan(stmap, cfg)
+	scPlan := NewServiceCompilePlan(stmap, cfg.RootPath)
 	if scPlan.IsEmpty() {
 		fmt.Printf("No services updated.\n")
 		return nil
@@ -80,7 +80,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	if err != nil {
 		return fmt.Errorf("git status %w", err)
 	}
-	dcPlan := NewDeviceCompositePlan(stmap, cfg)
+	dcPlan := NewDeviceCompositePlan(stmap, cfg.RootPath)
 	if dcPlan.IsEmpty() {
 		fmt.Printf("No devices updated.\n")
 		return nil
@@ -144,12 +144,16 @@ func CheckGitFileStatus(path string, st extgogit.FileStatus) error {
 	return nil
 }
 
+type ServiceFunc func(ctx context.Context, sp ServicePath) error
+type DeviceFunc func(ctx context.Context, sp DevicePath) error
+
 type ServiceCompilePlan struct {
 	update []ServicePath
 	delete []ServicePath
 }
 
-func NewServiceCompilePlan(stmap extgogit.Status, cfg *ServiceApplyCfg) *ServiceCompilePlan {
+// NewServiceCompilePlan creates new ServiceCompilePlan from the given git file statuses.
+func NewServiceCompilePlan(stmap extgogit.Status, root string) *ServiceCompilePlan {
 	plan := &ServiceCompilePlan{}
 
 	for path, st := range stmap {
@@ -161,7 +165,7 @@ func NewServiceCompilePlan(stmap extgogit.Status, cfg *ServiceApplyCfg) *Service
 			continue
 		}
 
-		sp := ServicePath{RootDir: cfg.RootPath, Service: service, Keys: keys}
+		sp := ServicePath{RootDir: root, Service: service, Keys: keys}
 		if st.Staging == extgogit.Deleted {
 			plan.delete = append(plan.delete, sp)
 		} else {
@@ -171,8 +175,7 @@ func NewServiceCompilePlan(stmap extgogit.Status, cfg *ServiceApplyCfg) *Service
 	return plan
 }
 
-type ServiceFunc func(ctx context.Context, sp ServicePath) error
-
+// Do executes given delete ServiceFunc and update ServiceFunc according to its execution plan.
 func (p *ServiceCompilePlan) Do(ctx context.Context, deleteFunc ServiceFunc, updateFunc ServiceFunc) error {
 	for _, sp := range p.delete {
 		if err := deleteFunc(ctx, sp); err != nil {
@@ -187,6 +190,7 @@ func (p *ServiceCompilePlan) Do(ctx context.Context, deleteFunc ServiceFunc, upd
 	return nil
 }
 
+// IsEmpty returns True when there are no planned targets.
 func (p *ServiceCompilePlan) IsEmpty() bool {
 	return len(p.update)+len(p.delete) == 0
 }
@@ -195,7 +199,8 @@ type DeviceCompositePlan struct {
 	composite []DevicePath
 }
 
-func NewDeviceCompositePlan(stmap extgogit.Status, cfg *ServiceApplyCfg) *DeviceCompositePlan {
+// NewDeviceCompositePlan creates new DeviceCompositePlan from the given git file statuses.
+func NewDeviceCompositePlan(stmap extgogit.Status, root string) *DeviceCompositePlan {
 	updated := common.NewSet[DevicePath]()
 	for path, st := range stmap {
 		if st.Staging == extgogit.Unmodified {
@@ -205,14 +210,13 @@ func NewDeviceCompositePlan(stmap extgogit.Status, cfg *ServiceApplyCfg) *Device
 		if err != nil {
 			continue
 		}
-		updated.Add(DevicePath{RootDir: cfg.RootPath, Device: device})
+		updated.Add(DevicePath{RootDir: root, Device: device})
 	}
 	plan := &DeviceCompositePlan{composite: updated.List()}
 	return plan
 }
 
-type DeviceFunc func(ctx context.Context, sp DevicePath) error
-
+// Do executes given composite DeviceFunc according to its execution plan.
 func (p *DeviceCompositePlan) Do(ctx context.Context, compositeFunc DeviceFunc) error {
 	for _, dp := range p.composite {
 		if err := compositeFunc(ctx, dp); err != nil {
@@ -222,6 +226,7 @@ func (p *DeviceCompositePlan) Do(ctx context.Context, compositeFunc DeviceFunc) 
 	return nil
 }
 
+// IsEmpty returns True when there are no planned targets.
 func (p *DeviceCompositePlan) IsEmpty() bool {
 	return len(p.composite) == 0
 }
