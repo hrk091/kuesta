@@ -86,26 +86,120 @@ func TestGit_BasicAuth(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g, err := gogit.NewGitWithoutRepo(gogit.GitOptions{
-				Path:       "./",
-				MainBranch: "main",
-				Token:      tt.token,
+			g := gogit.NewGitWithoutRepo(gogit.GitOptions{
+				Token: tt.token,
 			})
-			ExitOnErr(t, err)
 			assert.Equal(t, tt.want, g.BasicAuth())
 		})
 	}
 }
 
-func TestGit_Checkout(t *testing.T) {
-	_, dir := initRepo(t, "main")
-	g, err := gogit.NewGit(gogit.GitOptions{
-		Path:       dir,
-		MainBranch: "main",
+func TestGit_Signature(t *testing.T) {
+	t.Run("given user/email", func(t *testing.T) {
+		g := gogit.NewGitWithoutRepo(gogit.GitOptions{
+			User:  "test-user",
+			Email: "test-email",
+		})
+		got := g.Signature()
+		assert.Equal(t, "test-user", got.Name)
+		assert.Equal(t, "test-email", got.Email)
 	})
-	ExitOnErr(t, err)
-	_, err = g.Checkout()
-	assert.Nil(t, err)
+	t.Run("default", func(t *testing.T) {
+		g := gogit.NewGitWithoutRepo(gogit.GitOptions{})
+		got := g.Signature()
+		assert.Equal(t, gogit.DefaultGitUser, got.Name)
+		assert.Equal(t, gogit.DefaultGitEmail, got.Email)
+	})
+}
+
+func TestGit_Checkout(t *testing.T) {
+	t.Run("ok: checkout to main", func(t *testing.T) {
+		_, dir := initRepo(t, "main")
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+
+		_, err = g.Checkout()
+		ExitOnErr(t, err)
+
+		b, err := g.Branch()
+		ExitOnErr(t, err)
+		assert.Equal(t, "main", b)
+	})
+
+	t.Run("ok: checkout to new branch", func(t *testing.T) {
+		_, dir := initRepo(t, "main")
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+
+		_, err = g.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+		ExitOnErr(t, err)
+
+		b, err := g.Branch()
+		ExitOnErr(t, err)
+		assert.Equal(t, "test", b)
+	})
+
+	t.Run("bad: checkout to existing branch with create opt", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+		ExitOnErr(t, createBranch(repo, "test"))
+
+		_, err = g.Checkout(gogit.CheckoutOptsTo("main"), gogit.CheckoutOptsCreateNew())
+		assert.Error(t, err)
+	})
+
+	t.Run("bad: checkout to new branch without create opt", func(t *testing.T) {
+		_, dir := initRepo(t, "main")
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+
+		_, err = g.Checkout(gogit.CheckoutOptsTo("test"))
+		assert.Error(t, err)
+	})
+}
+
+func TestGit_Commit(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		ExitOnErr(t, addFile(repo, "test", "dummy"))
+
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+		err = g.Commit("added: test")
+		assert.Nil(t, err)
+	})
+
+	t.Run("ok: commit even when no change", func(t *testing.T) {
+		_, dir := initRepo(t, "main")
+
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			MainBranch: "main",
+		})
+		ExitOnErr(t, err)
+		err = g.Commit("no change")
+		assert.Nil(t, err)
+	})
+}
+
+func TestGit_Push(t *testing.T) {
+	t.Fatal("TODO: implement test referring go-git reepository_test.go")
 }
 
 func TestIsTrackedAndChanged(t *testing.T) {

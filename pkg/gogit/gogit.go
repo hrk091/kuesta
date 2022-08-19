@@ -40,10 +40,10 @@ type Git struct {
 
 // NewGit creates Git with an open git repository.
 func NewGit(opts GitOptions) (*Git, error) {
-	g, err := NewGitWithoutRepo(opts)
-	if err != nil {
-		return nil, err
+	if err := opts.Validate(); err != nil {
+		return nil, fmt.Errorf("validate GitOptions struct: %w", err)
 	}
+	g := NewGitWithoutRepo(opts)
 	repo, err := extgogit.PlainOpen(g.opts.Path)
 	if err != nil {
 		return nil, errors.WithStack(fmt.Errorf("open git repo: %w", err))
@@ -53,14 +53,10 @@ func NewGit(opts GitOptions) (*Git, error) {
 }
 
 // NewGitWithoutRepo creates Git without setting up an open git repository.
-func NewGitWithoutRepo(opts GitOptions) (*Git, error) {
-	if err := opts.Validate(); err != nil {
-		return nil, fmt.Errorf("validate GitOptions struct: %w", err)
-	}
-	g := &Git{
+func NewGitWithoutRepo(opts GitOptions) *Git {
+	return &Git{
 		opts: opts,
 	}
-	return g, nil
 }
 
 // BasicAuth returns the go-git BasicAuth if git token is provided, otherwise nil.
@@ -95,6 +91,15 @@ func (g *Git) Signature() *object.Signature {
 		Email: common.Or(g.opts.Email, DefaultGitEmail),
 		When:  time.Now(),
 	}
+}
+
+// Branch returns the current branch name.
+func (g *Git) Branch() (string, error) {
+	ref, err := g.repo.Head()
+	if err != nil {
+		return "", errors.WithStack(fmt.Errorf("resolve head: %w", err))
+	}
+	return ref.Name().Short(), nil
 }
 
 // Checkout switches git branch to the given one and returns git worktree.
