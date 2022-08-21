@@ -15,11 +15,11 @@ import (
 )
 
 type GitOptions struct {
-	Token      string
-	Path       string `validate:"required"`
-	MainBranch string `validate:"required"`
-	User       string
-	Email      string
+	Token       string
+	Path        string `validate:"required"`
+	TrunkBranch string `validate:"required"`
+	User        string
+	Email       string
 }
 
 const (
@@ -124,7 +124,7 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 	}
 
 	o := &extgogit.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.opts.MainBranch),
+		Branch: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
 		Keep:   true,
 	}
 	for _, tr := range opts {

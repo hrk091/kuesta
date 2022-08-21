@@ -27,11 +27,11 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	l.Debug("service apply called")
 
 	opts := gogit.GitOptions{
-		Path:       cfg.RootPath,
-		MainBranch: cfg.GitBranch,
-		Token:      cfg.GitToken,
-		User:       cfg.GitUser,
-		Email:      cfg.GitEmail,
+		Path:        cfg.RootPath,
+		TrunkBranch: cfg.GitTrunk,
+		Token:       cfg.GitToken,
+		User:        cfg.GitUser,
+		Email:       cfg.GitEmail,
 	}
 	git, err := gogit.NewGit(opts)
 	if err != nil {

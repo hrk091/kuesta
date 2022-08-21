@@ -10,10 +10,10 @@ func TestRootCfg_Validate(t *testing.T) {
 
 	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
 		cfg := &nwctl.RootCfg{
-			Verbose:   0,
-			Devel:     false,
-			RootPath:  "./",
-			GitBranch: "main",
+			Verbose:  0,
+			Devel:    false,
+			RootPath: "./",
+			GitTrunk: "main",
 		}
 		t(cfg)
 		return cfg
@@ -44,9 +44,9 @@ func TestRootCfg_Validate(t *testing.T) {
 			true,
 		},
 		{
-			"bad: GitBranch is empty",
+			"bad: GitTrunk is empty",
 			func(cfg *nwctl.RootCfg) {
-				cfg.GitBranch = ""
+				cfg.GitTrunk = ""
 			},
 			true,
 		},

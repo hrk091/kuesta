@@ -25,13 +25,13 @@ package nwctl
 import "github.com/hrk091/nwctl/pkg/common"
 
 type RootCfg struct {
-	Verbose   uint8 `validate:"min=0,max=3"`
-	Devel     bool
-	RootPath  string `validate:"required,dir"`
-	GitBranch string `validate:"required"`
-	GitToken  string
-	GitUser   string
-	GitEmail  string
+	Verbose  uint8 `validate:"min=0,max=3"`
+	Devel    bool
+	RootPath string `validate:"required,dir"`
+	GitTrunk string `validate:"required"`
+	GitToken string
+	GitUser  string
+	GitEmail string
 }
 
 // Validate validates exposed fields according to the `validate` tag.

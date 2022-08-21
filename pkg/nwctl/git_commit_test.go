@@ -76,8 +76,8 @@ Devices:
 		repo, dir := setup(t)
 		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  dir,
-				GitBranch: "main",
+				RootPath: dir,
+				GitTrunk: "main",
 			},
 			PushToMain: true,
 		})
@@ -85,8 +85,8 @@ Devices:
 		assert.Equal(t, "main", getBranch(t, repo))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dir,
-			MainBranch: "main",
+			Path:        dir,
+			TrunkBranch: "main",
 		})
 		ExitOnErr(t, err)
 		h, err := g.Head()
@@ -98,8 +98,8 @@ Devices:
 		repo, dir := setup(t)
 		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  dir,
-				GitBranch: "main",
+				RootPath: dir,
+				GitTrunk: "main",
 			},
 			PushToMain: false,
 		})
@@ -107,8 +107,8 @@ Devices:
 		assert.True(t, strings.HasPrefix(getBranch(t, repo), "REV-"))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dir,
-			MainBranch: "main",
+			Path:        dir,
+			TrunkBranch: "main",
 		})
 		ExitOnErr(t, err)
 		h, err := g.Head()

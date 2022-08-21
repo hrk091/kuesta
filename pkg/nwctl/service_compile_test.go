@@ -15,8 +15,8 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.ServiceCompileCfg)) *nwctl.ServiceCompileCfg {
 		cfg := &nwctl.ServiceCompileCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  "./",
-				GitBranch: "main",
+				RootPath: "./",
+				GitTrunk: "main",
 			},
 			Service: "foo",
 			Keys:    []string{"one", "two"},
