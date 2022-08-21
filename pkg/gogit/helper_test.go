@@ -56,6 +56,15 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	return repo, dir
 }
 
+func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
+	dir := t.TempDir()
+	repo, err := extgogit.PlainInit(dir, true)
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
+	return repo, dir
+}
+
 func addFile(repo *extgogit.Repository, path, content string) error {
 	wt, err := repo.Worktree()
 	if err != nil {
@@ -111,4 +120,27 @@ func mockSignature(time time.Time) *object.Signature {
 		Email: "test@example.com",
 		When:  time,
 	}
+}
+
+func deleteFile(repo *extgogit.Repository, path string) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+	if _, err = wt.Remove(path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getStatus(t *testing.T, repo *extgogit.Repository) extgogit.Status {
+	w, err := repo.Worktree()
+	if err != nil {
+		t.Fatalf("git worktree: %v", err)
+	}
+	stmap, err := w.Status()
+	if err != nil {
+		t.Fatalf("git status: %v", err)
+	}
+	return stmap
 }

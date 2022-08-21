@@ -84,7 +84,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 		}
 	}
 
-	if err := git.Commit(commitMsg); err != nil {
+	if _, err := git.Commit(commitMsg); err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}
 	if err := git.Push(branchName); err != nil {

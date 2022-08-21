@@ -2,10 +2,13 @@ package gogit_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestGitOptions_Validate(t *testing.T) {
@@ -112,6 +115,23 @@ func TestGit_Signature(t *testing.T) {
 	})
 }
 
+func TestGit_Head(t *testing.T) {
+	repo, dir := initRepo(t, "main")
+	ExitOnErr(t, addFile(repo, "test", "hash"))
+	want, err := commit(repo, time.Now())
+	ExitOnErr(t, err)
+
+	g, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dir,
+		MainBranch: "main",
+	})
+	ExitOnErr(t, err)
+
+	c, err := g.Head()
+	ExitOnErr(t, err)
+	assert.Equal(t, want, c.Hash)
+}
+
 func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to main", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
@@ -181,7 +201,7 @@ func TestGit_Commit(t *testing.T) {
 			MainBranch: "main",
 		})
 		ExitOnErr(t, err)
-		err = g.Commit("added: test")
+		_, err = g.Commit("added: test")
 		assert.Nil(t, err)
 	})
 
@@ -193,13 +213,40 @@ func TestGit_Commit(t *testing.T) {
 			MainBranch: "main",
 		})
 		ExitOnErr(t, err)
-		err = g.Commit("no change")
+		_, err = g.Commit("no change")
 		assert.Nil(t, err)
 	})
 }
 
 func TestGit_Push(t *testing.T) {
-	t.Fatal("TODO: implement test referring go-git reepository_test.go")
+	remoteRepo, url := initBareRepo(t)
+
+	repo, dir := initRepo(t, "main")
+	_, err := repo.CreateRemote(&config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{url},
+	})
+	ExitOnErr(t, err)
+
+	g, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dir,
+		MainBranch: "main",
+	})
+	ExitOnErr(t, err)
+	ExitOnErr(t, addFile(repo, "test", "push"))
+	wantMsg := "git commit which should be pushed to remote"
+	_, err = g.Commit(wantMsg)
+	ExitOnErr(t, err)
+
+	err = g.Push("main")
+	ExitOnErr(t, err)
+
+	ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
+	ExitOnErr(t, err)
+	c, err := repo.CommitObject(ref.Hash())
+	ExitOnErr(t, err)
+
+	assert.Equal(t, wantMsg, c.Message)
 }
 
 func TestIsTrackedAndChanged(t *testing.T) {

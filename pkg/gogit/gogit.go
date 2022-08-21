@@ -102,6 +102,20 @@ func (g *Git) Branch() (string, error) {
 	return ref.Name().Short(), nil
 }
 
+// Head returns the object.Commit of the current repository head.
+func (g *Git) Head() (*object.Commit, error) {
+	ref, err := g.repo.Head()
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("resolve head: %w", err))
+	}
+	h := ref.Hash()
+	c, err := g.repo.CommitObject(h)
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("create commit object: %w", err))
+	}
+	return c, nil
+}
+
 // Checkout switches git branch to the given one and returns git worktree.
 func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 	w, err := g.repo.Worktree()
@@ -148,10 +162,10 @@ func CheckoutOptsTo(branch string) CheckoutOpts {
 }
 
 // Commit execute `git commit -m` with given message.
-func (g *Git) Commit(msg string, opts ...CommitOpts) error {
+func (g *Git) Commit(msg string, opts ...CommitOpts) (plumbing.Hash, error) {
 	w, err := g.repo.Worktree()
 	if err != nil {
-		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
+		return plumbing.ZeroHash, errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 
 	o := &extgogit.CommitOptions{
@@ -161,10 +175,11 @@ func (g *Git) Commit(msg string, opts ...CommitOpts) error {
 	for _, tr := range opts {
 		tr(o)
 	}
-	if _, err := w.Commit(msg, o); err != nil {
-		return errors.WithStack(fmt.Errorf("git commit: %w", err))
+	h, err := w.Commit(msg, o)
+	if err != nil {
+		return plumbing.ZeroHash, errors.WithStack(fmt.Errorf("git commit: %w", err))
 	}
-	return nil
+	return h, nil
 }
 
 // CommitOpts enables modification of the go-git CommitOptions.
