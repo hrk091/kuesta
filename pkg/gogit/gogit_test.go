@@ -139,6 +139,23 @@ func TestGit_Checkout(t *testing.T) {
 		assert.Equal(t, "main", b)
 	})
 
+	t.Run("ok: checkout to specified trunk", func(t *testing.T) {
+		branchName := "test-branch"
+		_, dir := initRepo(t, branchName)
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:        dir,
+			TrunkBranch: branchName,
+		})
+		ExitOnErr(t, err)
+
+		_, err = g.Checkout()
+		ExitOnErr(t, err)
+
+		b, err := g.Branch()
+		ExitOnErr(t, err)
+		assert.Equal(t, branchName, b)
+	})
+
 	t.Run("ok: checkout to new branch", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(gogit.GitOptions{
@@ -192,20 +209,20 @@ func TestGit_Commit(t *testing.T) {
 	})
 
 	t.Run("ok: other trunk branch", func(t *testing.T) {
-		trunk := "test-branch"
-		repo, dir := initRepo(t, trunk)
+		testTrunk := "test-branch"
+		repo, dir := initRepo(t, testTrunk)
 		ExitOnErr(t, addFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path:        dir,
-			TrunkBranch: trunk,
+			TrunkBranch: testTrunk,
 		})
 		ExitOnErr(t, err)
 		h, err := g.Commit("added: test")
 		assert.Nil(t, err)
 
 		b, err := g.Branch()
-		assert.Equal(t, trunk, b)
+		assert.Equal(t, testTrunk, b)
 
 		c, err := g.Head()
 		assert.Equal(t, h, c.Hash)
@@ -226,31 +243,52 @@ func TestGit_Commit(t *testing.T) {
 func TestGit_Push(t *testing.T) {
 	remoteRepo, url := initBareRepo(t)
 
-	repo, dir := initRepo(t, "main")
-	_, err := repo.CreateRemote(&config.RemoteConfig{
-		Name: "origin",
-		URLs: []string{url},
+	t.Run("ok", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		testRemote := "test-remote"
+		_, err := repo.CreateRemote(&config.RemoteConfig{
+			Name: testRemote,
+			URLs: []string{url},
+		})
+		ExitOnErr(t, err)
+
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			RemoteName: testRemote,
+		})
+		ExitOnErr(t, err)
+		ExitOnErr(t, addFile(repo, "test", "push"))
+		wantMsg := "git commit which should be pushed to remote"
+		_, err = g.Commit(wantMsg)
+		ExitOnErr(t, err)
+
+		err = g.Push("main")
+		ExitOnErr(t, err)
+
+		ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
+		ExitOnErr(t, err)
+		c, err := repo.CommitObject(ref.Hash())
+		ExitOnErr(t, err)
+
+		assert.Equal(t, wantMsg, c.Message)
 	})
-	ExitOnErr(t, err)
 
-	g, err := gogit.NewGit(gogit.GitOptions{
-		Path: dir,
+	t.Run("bad: remote not exist", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		noExistRemote := "not-exist"
+
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:       dir,
+			RemoteName: noExistRemote,
+		})
+		ExitOnErr(t, err)
+		ExitOnErr(t, addFile(repo, "test", "push"))
+		_, err = g.Commit("added: test")
+		ExitOnErr(t, err)
+
+		err = g.Push("main")
+		assert.Error(t, err)
 	})
-	ExitOnErr(t, err)
-	ExitOnErr(t, addFile(repo, "test", "push"))
-	wantMsg := "git commit which should be pushed to remote"
-	_, err = g.Commit(wantMsg)
-	ExitOnErr(t, err)
-
-	err = g.Push("main")
-	ExitOnErr(t, err)
-
-	ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
-	ExitOnErr(t, err)
-	c, err := repo.CommitObject(ref.Hash())
-	ExitOnErr(t, err)
-
-	assert.Equal(t, wantMsg, c.Message)
 }
 
 func TestIsTrackedAndChanged(t *testing.T) {
