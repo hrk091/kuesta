@@ -16,7 +16,6 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 		cfg := &nwctl.ServiceCompileCfg{
 			RootCfg: nwctl.RootCfg{
 				RootPath: "./",
-				GitTrunk: "main",
 			},
 			Service: "foo",
 			Keys:    []string{"one", "two"},

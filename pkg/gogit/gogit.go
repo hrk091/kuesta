@@ -17,15 +17,18 @@ import (
 type GitOptions struct {
 	Token       string
 	Path        string `validate:"required"`
-	TrunkBranch string `validate:"required"`
+	TrunkBranch string
+	RemoteName  string
 	User        string
 	Email       string
 }
 
 const (
-	DefaultAuthUser = "anonymous"
-	DefaultGitUser  = "nwctl"
-	DefaultGitEmail = "nwctl@example.com"
+	DefaultAuthUser    = "anonymous"
+	DefaultTrunkBranch = "main"
+	DefaultRemoteName  = "origin"
+	DefaultGitUser     = "nwctl"
+	DefaultGitEmail    = "nwctl@example.com"
 )
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -123,8 +126,9 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 		return nil, errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 
+	branch := common.Or(g.opts.TrunkBranch, DefaultTrunkBranch)
 	o := &extgogit.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
+		Branch: plumbing.NewBranchReferenceName(branch),
 		Keep:   true,
 	}
 	for _, tr := range opts {
@@ -188,7 +192,7 @@ type CommitOpts func(o *extgogit.CommitOptions)
 // Push pushes the specified git branch to remote.
 func (g *Git) Push(branch string, opts ...PushOpts) error {
 	o := &extgogit.PushOptions{
-		RemoteName: "origin",
+		RemoteName: common.Or(g.opts.RemoteName, DefaultRemoteName),
 		Progress:   os.Stdout,
 		RefSpecs: []config.RefSpec{
 			config.RefSpec(plumbing.NewBranchReferenceName(branch) + ":" + plumbing.NewBranchReferenceName(branch)),

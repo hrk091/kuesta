@@ -16,7 +16,6 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 		cfg := &nwctl.DeviceCompositeCfg{
 			RootCfg: nwctl.RootCfg{
 				RootPath: "./",
-				GitTrunk: "main",
 			},
 			Device: "device1",
 		}

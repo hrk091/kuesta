@@ -55,6 +55,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	git, err := gogit.NewGit(gogit.GitOptions{
 		Path:        cfg.RootPath,
 		TrunkBranch: cfg.GitTrunk,
+		RemoteName:  cfg.GitRemote,
 		Token:       cfg.GitToken,
 		User:        cfg.GitUser,
 		Email:       cfg.GitEmail,

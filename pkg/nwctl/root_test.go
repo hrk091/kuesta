@@ -13,7 +13,6 @@ func TestRootCfg_Validate(t *testing.T) {
 			Verbose:  0,
 			Devel:    false,
 			RootPath: "./",
-			GitTrunk: "main",
 		}
 		t(cfg)
 		return cfg
@@ -40,13 +39,6 @@ func TestRootCfg_Validate(t *testing.T) {
 			"bad: RootPath is empty",
 			func(cfg *nwctl.RootCfg) {
 				cfg.RootPath = ""
-			},
-			true,
-		},
-		{
-			"bad: GitTrunk is empty",
-			func(cfg *nwctl.RootCfg) {
-				cfg.GitTrunk = ""
 			},
 			true,
 		},

@@ -14,8 +14,7 @@ import (
 func TestGitOptions_Validate(t *testing.T) {
 	newValidStruct := func(t func(git *gogit.GitOptions)) *gogit.GitOptions {
 		g := &gogit.GitOptions{
-			Path:        "./",
-			TrunkBranch: "main",
+			Path: "./",
 		}
 		t(g)
 		return g
@@ -35,13 +34,6 @@ func TestGitOptions_Validate(t *testing.T) {
 			"bad: path is empty",
 			func(g *gogit.GitOptions) {
 				g.Path = ""
-			},
-			true,
-		},
-		{
-			"bad: branch is empty",
-			func(g *gogit.GitOptions) {
-				g.TrunkBranch = ""
 			},
 			true,
 		},
@@ -122,8 +114,7 @@ func TestGit_Head(t *testing.T) {
 	ExitOnErr(t, err)
 
 	g, err := gogit.NewGit(gogit.GitOptions{
-		Path:        dir,
-		TrunkBranch: "main",
+		Path: dir,
 	})
 	ExitOnErr(t, err)
 
@@ -136,8 +127,7 @@ func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to main", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 
@@ -152,8 +142,7 @@ func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to new branch", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 
@@ -168,8 +157,7 @@ func TestGit_Checkout(t *testing.T) {
 	t.Run("bad: checkout to existing branch with create opt", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 		ExitOnErr(t, createBranch(repo, "test"))
@@ -181,8 +169,7 @@ func TestGit_Checkout(t *testing.T) {
 	t.Run("bad: checkout to new branch without create opt", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 
@@ -197,20 +184,38 @@ func TestGit_Commit(t *testing.T) {
 		ExitOnErr(t, addFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 		_, err = g.Commit("added: test")
 		assert.Nil(t, err)
 	})
 
+	t.Run("ok: other trunk branch", func(t *testing.T) {
+		trunk := "test-branch"
+		repo, dir := initRepo(t, trunk)
+		ExitOnErr(t, addFile(repo, "test", "dummy"))
+
+		g, err := gogit.NewGit(gogit.GitOptions{
+			Path:        dir,
+			TrunkBranch: trunk,
+		})
+		ExitOnErr(t, err)
+		h, err := g.Commit("added: test")
+		assert.Nil(t, err)
+
+		b, err := g.Branch()
+		assert.Equal(t, trunk, b)
+
+		c, err := g.Head()
+		assert.Equal(t, h, c.Hash)
+	})
+
 	t.Run("ok: commit even when no change", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 
 		g, err := gogit.NewGit(gogit.GitOptions{
-			Path:        dir,
-			TrunkBranch: "main",
+			Path: dir,
 		})
 		ExitOnErr(t, err)
 		_, err = g.Commit("no change")
@@ -229,8 +234,7 @@ func TestGit_Push(t *testing.T) {
 	ExitOnErr(t, err)
 
 	g, err := gogit.NewGit(gogit.GitOptions{
-		Path:        dir,
-		TrunkBranch: "main",
+		Path: dir,
 	})
 	ExitOnErr(t, err)
 	ExitOnErr(t, addFile(repo, "test", "push"))
