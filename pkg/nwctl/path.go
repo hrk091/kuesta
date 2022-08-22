@@ -23,9 +23,11 @@
 package nwctl
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -158,6 +160,24 @@ type DevicePath struct {
 	Device string
 }
 
+// NewDevicePathList returns the slice of DevicePath placed in the given root dir.
+func NewDevicePathList(dir string) ([]*DevicePath, error) {
+	dp := DevicePath{RootDir: dir}
+	path := filepath.Join(dp.deviceDirElem()...)
+	devices, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("read devices dir: %w", err)
+	}
+	var dpList []*DevicePath
+	for _, d := range devices {
+		if !d.IsDir() {
+			continue
+		}
+		dpList = append(dpList, &DevicePath{RootDir: dir, Device: d.Name()})
+	}
+	return dpList, nil
+}
+
 // Validate validates exposed fields according to the `validate` tag.
 func (p *DevicePath) Validate() error {
 	return common.Validate(p)
@@ -202,6 +222,25 @@ func (p *DevicePath) ReadDeviceConfigFile() ([]byte, error) {
 // WriteDeviceConfigFile writes the merged device config to the corresponding device dir.
 func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
 	return WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
+}
+
+// CheckSum returns the checksum of the device config.
+func (p *DevicePath) CheckSum() (string, error) {
+	f, err := os.Open(p.DeviceConfigPath(IncludeRoot))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		} else {
+			return "", errors.WithStack(err)
+		}
+	}
+	hasher := sha256.New()
+	_, err = io.Copy(hasher, f)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
+	return checksum, nil
 }
 
 // ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.
