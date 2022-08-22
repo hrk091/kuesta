@@ -41,6 +41,10 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 )
 
+const (
+	EnvSourceHost = "SOURCE_HOST"
+)
+
 // GitRepositoryWatcher watches GitRepository objects for revision changes
 type GitRepositoryWatcher struct {
 	client.Client
@@ -151,7 +155,7 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// for local run:
 	// kubectl -n flux-system port-forward svc/source-controller 8080:80
 	// export SOURCE_HOST=localhost:8080
-	if hostname := os.Getenv("SOURCE_HOST"); hostname != "" {
+	if hostname := os.Getenv(EnvSourceHost); hostname != "" {
 		url = fmt.Sprintf("http://%s/gitrepository/%s/%s/latest.tar.gz", hostname, repository.Namespace, repository.Name)
 	}
 
@@ -182,7 +186,7 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// extract
 	summary, err := untar.Untar(&buf, dir)
 	if err != nil {
-		return "", fmt.Errorf("faild to untar artifact, error: %w", err)
+		return "", fmt.Errorf("failed to untar artifact, error: %w", err)
 	}
 
 	return summary, nil

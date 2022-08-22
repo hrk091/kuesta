@@ -23,11 +23,31 @@
 package controllers_test
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
+	"crypto/sha256"
 	"fmt"
 	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	"io"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"runtime/debug"
+	"testing"
 )
+
+func ExitOnErr(t *testing.T, err error) {
+	if err != nil {
+		t.Log(string(debug.Stack()))
+		t.Fatal(err)
+	}
+}
+
+func Must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func NewDeviceRolloutTestData(name string) nwctlv1alpha1.DeviceRollout {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("./fixtures/%s.yaml", name))
@@ -40,4 +60,28 @@ func NewDeviceRolloutTestData(name string) nwctlv1alpha1.DeviceRollout {
 		panic(err)
 	}
 	return o
+}
+
+func mustGenTgzArchive(path, content string) (string, io.Reader) {
+	var buf bytes.Buffer
+
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+	if err := tw.WriteHeader(&tar.Header{Name: path, Mode: 0600, Size: int64(len(content))}); err != nil {
+		panic(err)
+	}
+	if _, err := tw.Write([]byte(content)); err != nil {
+		panic(err)
+	}
+	Must(tw.Close())
+	Must(gw.Close())
+
+	hasher := sha256.New()
+	var out bytes.Buffer
+	if _, err := io.Copy(io.MultiWriter(hasher, &out), &buf); err != nil {
+		panic(err)
+	}
+	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
+
+	return checksum, &out
 }
