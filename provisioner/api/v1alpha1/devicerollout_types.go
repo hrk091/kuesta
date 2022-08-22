@@ -265,3 +265,51 @@ func (s *DeviceRolloutStatus) GetDeviceStatus(name string) DeviceStatus {
 func (s *DeviceRolloutStatus) SetDeviceStatus(name string, status DeviceStatus) {
 	s.DeviceStatusMap[name] = status
 }
+
+// UpdateStatus updates DeviceRollout's phase, status and StatusMaps according to the device statuses.
+// Devices statuses are updated by respective device driver(operator) and this function will aggregate
+// these remote device statuses into one summarized transaction status.
+func (dr *DeviceRollout) UpdateStatus() bool {
+	prev := dr.Status.DeepCopy()
+	if dr.Status.Status == RolloutStatusRunning {
+		dr.updateOnRunning()
+	} else {
+		dr.updateOnIdle()
+	}
+	return prev.Status != dr.Status.Status || prev.Phase != dr.Status.Phase
+}
+
+func (dr *DeviceRollout) updateOnRunning() {
+	switch {
+	case dr.Status.IsTxCompleted():
+		dr.Status.Status = RolloutStatusCompleted
+	case dr.Status.IsTxRunning():
+		// noop
+	case dr.Status.IsTxFailed():
+		if dr.Status.Phase == RolloutPhaseHealthy {
+			dr.Status.Phase = RolloutPhaseRollback
+			dr.Status.Status = RolloutStatusRunning
+			dr.Status.StartTx()
+		} else {
+			dr.Status.Status = RolloutStatusFailed
+		}
+	}
+}
+
+func (dr *DeviceRollout) updateOnIdle() {
+	if dr.Spec.DeviceConfigMap.Equal(dr.Status.DesiredDeviceConfigMap) {
+		return
+	}
+
+	// copy desired config to prev config if healthy
+	if dr.Status.Phase == RolloutPhaseHealthy {
+		dr.Status.PrevDeviceConfigMap = dr.Status.DesiredDeviceConfigMap.DeepCopy()
+	}
+	// copy new config to desired config
+	dr.Status.DesiredDeviceConfigMap = dr.Spec.DeviceConfigMap.DeepCopy()
+
+	// update status
+	dr.Status.Phase = RolloutPhaseHealthy
+	dr.Status.Status = RolloutStatusRunning
+	dr.Status.StartTx()
+}

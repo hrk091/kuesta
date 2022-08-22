@@ -307,3 +307,263 @@ func TestDeviceRolloutStatus_GetDeviceStatus(t *testing.T) {
 	})
 
 }
+
+func TestDeviceRollout_UpdateStatus(t *testing.T) {
+	desired := apiv1alpha1.DeviceConfig{GitRevision: "desired"}
+	curr := apiv1alpha1.DeviceConfig{GitRevision: "curr"}
+	prev := apiv1alpha1.DeviceConfig{GitRevision: "prev"}
+
+	t.Run("running", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			given       apiv1alpha1.DeviceRollout
+			want        apiv1alpha1.DeviceRolloutStatus
+			wantChanged bool
+		}{
+			{
+				"on completed",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseHealthy,
+						Status: apiv1alpha1.RolloutStatusRunning,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"completed": curr,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"completed": apiv1alpha1.DeviceStatusCompleted,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseHealthy,
+					Status: apiv1alpha1.RolloutStatusCompleted,
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"completed": apiv1alpha1.DeviceStatusCompleted,
+					},
+				},
+				true,
+			},
+			{
+				"on running",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseHealthy,
+						Status: apiv1alpha1.RolloutStatusRunning,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"running": curr,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"running": apiv1alpha1.DeviceStatusRunning,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseHealthy,
+					Status: apiv1alpha1.RolloutStatusRunning,
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"running": apiv1alpha1.DeviceStatusRunning,
+					},
+				},
+				false,
+			},
+			{
+				"on failed healthy",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseHealthy,
+						Status: apiv1alpha1.RolloutStatusRunning,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"failed": curr,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"failed": apiv1alpha1.DeviceStatusFailed,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseRollback,
+					Status: apiv1alpha1.RolloutStatusRunning,
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"failed": apiv1alpha1.DeviceStatusRunning,
+					},
+				},
+				true,
+			},
+			{
+				"on failed rollback",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseRollback,
+						Status: apiv1alpha1.RolloutStatusRunning,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"failed": curr,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"failed": apiv1alpha1.DeviceStatusFailed,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseRollback,
+					Status: apiv1alpha1.RolloutStatusFailed,
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"failed": apiv1alpha1.DeviceStatusFailed,
+					},
+				},
+				true,
+			},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				s := tt.given.DeepCopy()
+				got := s.UpdateStatus()
+				assert.Equal(t, tt.wantChanged, got)
+				assert.Equal(t, tt.want.Phase, s.Status.Phase)
+				assert.Equal(t, tt.want.Status, s.Status.Status)
+				assert.Equal(t, tt.want.DeviceStatusMap, s.Status.DeviceStatusMap)
+				// check not changed
+				assert.Equal(t, tt.given.Status.DesiredDeviceConfigMap, s.Status.DesiredDeviceConfigMap)
+			})
+		}
+	})
+
+	t.Run("idle", func(t *testing.T) {
+
+		t.Run("spec not updated", func(t *testing.T) {
+			oldDr := apiv1alpha1.DeviceRollout{
+				Spec: apiv1alpha1.DeviceRolloutSpec{
+					DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": curr,
+					},
+				},
+				Status: apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseHealthy,
+					Status: apiv1alpha1.RolloutStatusCompleted,
+					DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": curr,
+					},
+					PrevDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": prev,
+					},
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"device1": apiv1alpha1.DeviceStatusCompleted,
+					},
+				},
+			}
+			newDr := oldDr.DeepCopy()
+			got := newDr.UpdateStatus()
+			assert.False(t, got)
+			assert.Equal(t, oldDr.Status, newDr.Status)
+		})
+
+		tests := []struct {
+			name        string
+			given       apiv1alpha1.DeviceRollout
+			want        apiv1alpha1.DeviceRolloutStatus
+			wantChanged bool
+		}{
+			{
+				"spec updated: on healthy",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseHealthy,
+						Status: apiv1alpha1.RolloutStatusCompleted,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": curr,
+						},
+						PrevDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": prev,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"device1": apiv1alpha1.DeviceStatusCompleted,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseHealthy,
+					Status: apiv1alpha1.RolloutStatusRunning,
+					DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": desired,
+					},
+					PrevDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": curr,
+					},
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"device1": apiv1alpha1.DeviceStatusRunning,
+					},
+				},
+				true,
+			},
+			{
+				"spec updated: on rollback",
+				apiv1alpha1.DeviceRollout{
+					Spec: apiv1alpha1.DeviceRolloutSpec{
+						DeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": desired,
+						},
+					},
+					Status: apiv1alpha1.DeviceRolloutStatus{
+						Phase:  apiv1alpha1.RolloutPhaseRollback,
+						Status: apiv1alpha1.RolloutStatusFailed,
+						DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": curr,
+						},
+						PrevDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+							"device1": prev,
+						},
+						DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+							"device1": apiv1alpha1.DeviceStatusFailed,
+						},
+					},
+				},
+				apiv1alpha1.DeviceRolloutStatus{
+					Phase:  apiv1alpha1.RolloutPhaseHealthy,
+					Status: apiv1alpha1.RolloutStatusRunning,
+					DesiredDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": desired,
+					},
+					PrevDeviceConfigMap: apiv1alpha1.DeviceConfigMap{
+						"device1": prev,
+					},
+					DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
+						"device1": apiv1alpha1.DeviceStatusRunning,
+					},
+				},
+				true,
+			},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := tt.given.UpdateStatus()
+				assert.Equal(t, tt.wantChanged, got)
+				assert.Equal(t, tt.want, tt.given.Status)
+			})
+		}
+	})
+
+}
