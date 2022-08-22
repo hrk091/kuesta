@@ -47,84 +47,18 @@ func (r *DeviceRolloutReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		l.Error(err, "failed to fetch DeviceRollout")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	l.Info("start reconciliation", "spec", dr.Spec)
 
-	// NOTE just for test
-	if dr.Annotations[nwctlv1alpha1.AnnKeyResetStatus] != "" {
-		if _, err := r.reconcileOnIdle(ctx, &dr); err != nil {
-			return ctrl.Result{}, err
-		}
-		dr.Annotations[nwctlv1alpha1.AnnKeyResetStatus] = ""
-		if err := r.Update(ctx, &dr); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if dr.Status.IsRunning() {
-		return r.reconcileOnRunning(ctx, &dr)
-	} else {
-		return r.reconcileOnIdle(ctx, &dr)
-	}
-}
-
-func (r *DeviceRolloutReconciler) reconcileOnRunning(ctx context.Context, dr *nwctlv1alpha1.DeviceRollout) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
-	// check deviceStatusMap
-	changed := false
-	switch {
-	case dr.Status.IsTxCompleted():
-		dr.Status.Status = nwctlv1alpha1.RolloutStatusCompleted
-		changed = true
-
-	case dr.Status.IsTxRunning():
-		// noop
-
-	case dr.Status.IsTxFailed():
-		if dr.Status.Phase == nwctlv1alpha1.RolloutPhaseHealthy {
-			dr.Status.Phase = nwctlv1alpha1.RolloutPhaseRollback
-			dr.Status.Status = nwctlv1alpha1.RolloutStatusRunning
-			dr.Status.StartTx()
-		} else {
-			dr.Status.Status = nwctlv1alpha1.RolloutStatusFailed
-		}
-		changed = true
-	}
-
+	changed := dr.UpdateStatus()
 	if changed {
-		if err := r.Status().Update(ctx, dr); err != nil {
+		l.Info("changed", "phase", dr.Status.Phase, "status", dr.Status.Status)
+		if err := r.Status().Update(ctx, &dr); err != nil {
 			l.Error(err, "failed to update DeviceRollout Status")
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
+	} else {
+		l.Info("not updated")
 	}
-
-	return ctrl.Result{}, nil
-}
-
-func (r *DeviceRolloutReconciler) reconcileOnIdle(ctx context.Context, dr *nwctlv1alpha1.DeviceRollout) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
-	if dr.Spec.DeviceConfigMap.Equal(dr.Status.DesiredDeviceConfigMap) {
-		return ctrl.Result{}, nil
-	}
-
-	// copy desired config to prev config if healthy
-	if dr.Status.Phase == nwctlv1alpha1.RolloutPhaseHealthy {
-		dr.Status.PrevDeviceConfigMap = dr.Status.DesiredDeviceConfigMap.DeepCopy()
-	}
-	// copy new config to desired config
-	dr.Status.DesiredDeviceConfigMap = dr.Spec.DeviceConfigMap.DeepCopy()
-
-	// update status
-	dr.Status.Phase = nwctlv1alpha1.RolloutPhaseHealthy
-	dr.Status.Status = nwctlv1alpha1.RolloutStatusRunning
-	dr.Status.StartTx()
-
-	if err := r.Status().Update(ctx, dr); err != nil {
-		l.Error(err, "failed to update DeviceRollout Status")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
 	return ctrl.Result{}, nil
 }
 

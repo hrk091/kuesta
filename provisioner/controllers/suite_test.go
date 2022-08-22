@@ -14,10 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controllers_test
 
 import (
+	"context"
+	corev1 "k8s.io/api/core/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -31,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	"github.com/hrk091/nwctl/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -40,6 +45,7 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var stopFunc func()
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -69,14 +75,37 @@ var _ = BeforeSuite(func() {
 
 	//+kubebuilder:scaffold:scheme
 
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&controllers.DeviceRolloutReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	stopFunc = cancel
+	go func() {
+		utilruntime.Must(mgr.Start(ctx))
+	}()
+
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	ns := &corev1.Namespace{}
+	ns.Name = "test-ns"
+	err = k8sClient.Create(ctx, ns)
+	Expect(err).NotTo(HaveOccurred())
 
 }, 60)
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	stopFunc()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

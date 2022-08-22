@@ -283,8 +283,6 @@ func (dr *DeviceRollout) updateOnRunning() {
 	switch {
 	case dr.Status.IsTxCompleted():
 		dr.Status.Status = RolloutStatusCompleted
-	case dr.Status.IsTxRunning():
-		// noop
 	case dr.Status.IsTxFailed():
 		if dr.Status.Phase == RolloutPhaseHealthy {
 			dr.Status.Phase = RolloutPhaseRollback
@@ -293,6 +291,8 @@ func (dr *DeviceRollout) updateOnRunning() {
 		} else {
 			dr.Status.Status = RolloutStatusFailed
 		}
+	case dr.Status.IsTxRunning():
+		// noop
 	}
 }
 
