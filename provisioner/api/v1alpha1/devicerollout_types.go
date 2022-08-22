@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 )
@@ -150,10 +151,12 @@ const (
 	DeviceStatusUnknown DeviceStatus = "Unknown"
 )
 
+// IsRunning returns true when rollout status is in `Running`.
 func (s *DeviceRolloutStatus) IsRunning() bool {
 	return s.Status == RolloutStatusRunning
 }
 
+// IsTxCompleted returns true when all device statuses are `Completed` or `Synced`.
 func (s *DeviceRolloutStatus) IsTxCompleted() bool {
 	if s.DeviceStatusMap == nil {
 		return false
@@ -170,6 +173,7 @@ func (s *DeviceRolloutStatus) IsTxCompleted() bool {
 	return true
 }
 
+// IsTxFailed returns true when one or more device statuses are `Failed` or `ConnectionError`.
 func (s *DeviceRolloutStatus) IsTxFailed() bool {
 	if s.DeviceStatusMap == nil {
 		return false
@@ -185,6 +189,7 @@ func (s *DeviceRolloutStatus) IsTxFailed() bool {
 	return false
 }
 
+// IsTxRunning returns true when one or more device statuses are `Running`.
 func (s *DeviceRolloutStatus) IsTxRunning() bool {
 	if s.DeviceStatusMap == nil {
 		return false
@@ -200,6 +205,7 @@ func (s *DeviceRolloutStatus) IsTxRunning() bool {
 	return false
 }
 
+// IsTxIdle returns true all device statuses are not `Running`.
 func (s *DeviceRolloutStatus) IsTxIdle() bool {
 	if s.DeviceStatusMap == nil {
 		return false
@@ -215,7 +221,8 @@ func (s *DeviceRolloutStatus) IsTxIdle() bool {
 	return true
 }
 
-func (s *DeviceRolloutStatus) StartTx() bool {
+// StartTx initializes device transaction statuses.
+func (s *DeviceRolloutStatus) StartTx() {
 	if s.DeviceStatusMap == nil {
 		s.DeviceStatusMap = map[string]DeviceStatus{}
 	}
@@ -228,17 +235,21 @@ func (s *DeviceRolloutStatus) StartTx() bool {
 			s.DeviceStatusMap[k] = DeviceStatusPurged
 		}
 	}
-	return false
 }
 
-func (s *DeviceRolloutStatus) ResolveNextDeviceConfig(name string) DeviceConfig {
+// ResolveNextDeviceConfig returns the next device config to transition to according to the current RolloutPhase.
+func (s *DeviceRolloutStatus) ResolveNextDeviceConfig(name string) (DeviceConfig, error) {
+	if s.Phase == "" {
+		return DeviceConfig{}, fmt.Errorf("phase is not set")
+	}
 	if s.Phase == RolloutPhaseHealthy {
-		return s.DesiredDeviceConfigMap[name]
+		return s.DesiredDeviceConfigMap[name], nil
 	} else {
-		return s.PrevDeviceConfigMap[name]
+		return s.PrevDeviceConfigMap[name], nil
 	}
 }
 
+// GetDeviceStatus returns the device config of the given name.
 func (s *DeviceRolloutStatus) GetDeviceStatus(name string) DeviceStatus {
 	if s.DeviceStatusMap == nil {
 		return DeviceStatusUnknown
@@ -250,6 +261,7 @@ func (s *DeviceRolloutStatus) GetDeviceStatus(name string) DeviceStatus {
 	}
 }
 
+// SetDeviceStatus records the given device config to the device status map.
 func (s *DeviceRolloutStatus) SetDeviceStatus(name string, status DeviceStatus) {
 	s.DeviceStatusMap[name] = status
 }
