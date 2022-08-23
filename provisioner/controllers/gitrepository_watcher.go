@@ -21,16 +21,15 @@ import (
 	"context"
 	"crypto/sha1"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"github.com/fluxcd/pkg/untar"
+	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"io"
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -63,17 +62,14 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err := r.Get(ctx, req.NamespacedName, &repository); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	l.Info("start reconciliation", "revision", repository.Status.Artifact.Revision)
 
-	l.Info("New revision detected", "revision", repository.Status.Artifact.Revision)
-
-	// create tmp dir
 	tmpDir, err := ioutil.TempDir("", repository.Name)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create temp dir, error: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// download and extract artifact
 	summary, err := FetchArtifact(ctx, repository, tmpDir)
 	if err != nil {
 		l.Error(err, "unable to fetch artifact")
@@ -81,11 +77,21 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	l.Info(summary)
 
-	// list devices
-	deviceDirPath := filepath.Join(tmpDir, "devices")
-	devices, err := os.ReadDir(deviceDirPath)
+	dps, err := nwctl.NewDevicePathList(tmpDir)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to list devices, error: %w", err)
+		return ctrl.Result{}, fmt.Errorf("list devices: %w", err)
+	}
+
+	cmap := v1alpha1.DeviceConfigMap{}
+	for _, dp := range dps {
+		checksum, err := dp.CheckSum()
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("get checksum: %w", err)
+		}
+		cmap[dp.Device] = v1alpha1.DeviceConfig{
+			Checksum:    checksum,
+			GitRevision: repository.GetArtifact().Revision,
+		}
 	}
 
 	dr := v1alpha1.DeviceRollout{
@@ -93,44 +99,9 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 			Name:      req.Name,
 			Namespace: req.Namespace,
 		},
-		Spec: v1alpha1.DeviceRolloutSpec{
-			DeviceConfigMap: v1alpha1.DeviceConfigMap{},
-		},
 	}
 	if _, err = ctrl.CreateOrUpdate(ctx, r.Client, &dr, func() error {
-		// make deviceConfigMap
-		for _, d := range devices {
-			if !d.IsDir() {
-				continue
-			}
-			dn := d.Name()
-			l.Info("Processing " + dn)
-			configFilePath := filepath.Join(deviceDirPath, dn, "config.cue")
-			l.Info("Opening device config", "path", configFilePath)
-			f, err := os.Open(configFilePath)
-			if err != nil {
-				if !errors.Is(err, os.ErrNotExist) {
-					l.Error(err, "unable to open file")
-				}
-				continue
-			}
-			hasher := sha256.New()
-			_, err = io.Copy(hasher, f)
-			if err != nil {
-				l.Error(err, "unable to make hash")
-				continue
-			}
-			next := v1alpha1.DeviceConfig{
-				Checksum: fmt.Sprintf("%x", hasher.Sum(nil)),
-				// TODO
-				GitRevision: repository.GetArtifact().Revision,
-			}
-			curr, ok := dr.Spec.DeviceConfigMap[dn]
-			l.Info("Diff", "curr", curr, "next", next)
-			if !ok || curr.Checksum != next.Checksum {
-				dr.Spec.DeviceConfigMap[dn] = next
-			}
-		}
+		dr.Spec.DeviceConfigMap = cmap
 		return nil
 	}); err != nil {
 		return ctrl.Result{}, err
