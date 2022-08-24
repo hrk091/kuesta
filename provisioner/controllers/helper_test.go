@@ -29,8 +29,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"runtime/debug"
 	"testing"
@@ -49,17 +51,17 @@ func Must(err error) {
 	}
 }
 
-func NewDeviceRolloutTestData(name string) nwctlv1alpha1.DeviceRollout {
+func newTestDataFromFixture(name string, o metav1.Object) error {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("./fixtures/%s.yaml", name))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	fmt.Printf("%+v\n", string(buf))
-	var o nwctlv1alpha1.DeviceRollout
-	if err := yaml.Unmarshal(buf, &o); err != nil {
-		panic(err)
+	// TODO GVK validation
+
+	if err := yaml.Unmarshal(buf, o); err != nil {
+		return err
 	}
-	return o
+	return nil
 }
 
 func mustGenTgzArchive(path, content string) (string, io.Reader) {
@@ -84,4 +86,21 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
 
 	return checksum, &out
+}
+
+func TestNewTestDataFromFixture(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		var dr nwctlv1alpha1.DeviceRollout
+		err := newTestDataFromFixture("devicerollout", &dr)
+		assert.Nil(t, err)
+		assert.Equal(t, dr.Name, "test1")
+		assert.Equal(t, dr.Namespace, "test-ns")
+	})
+
+	t.Run("bad: file not found", func(t *testing.T) {
+		var dr nwctlv1alpha1.DeviceRollout
+		err := newTestDataFromFixture("not-found", &dr)
+		assert.Error(t, err)
+	})
 }
