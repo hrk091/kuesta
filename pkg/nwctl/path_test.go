@@ -23,6 +23,8 @@
 package nwctl_test
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -385,6 +387,34 @@ func TestDevicePath_WriteDeviceConfigFile(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(dir, "devices", "device1", "config.cue"))
 	assert.Nil(t, err)
 	assert.Equal(t, buf, got)
+}
+
+func TestDevicePath_CheckSum(t *testing.T) {
+	config := []byte("foobar")
+
+	t.Run("ok", func(t *testing.T) {
+		dir := t.TempDir()
+		ExitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
+
+		hasher := sha256.New()
+		hasher.Write(config)
+		want := fmt.Sprintf("%x", hasher.Sum(nil))
+
+		dp := nwctl.DevicePath{RootDir: dir, Device: "device1"}
+		got, err := dp.CheckSum()
+		assert.Nil(t, err)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("bad: config not found", func(t *testing.T) {
+		dir := t.TempDir()
+		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
+
+		dp := nwctl.DevicePath{RootDir: dir, Device: "device1"}
+		_, err := dp.CheckSum()
+		assert.ErrorIs(t, err, os.ErrNotExist)
+	})
+
 }
 
 func TestParseServiceInputPath(t *testing.T) {

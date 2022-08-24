@@ -229,15 +229,11 @@ func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
 	return WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
 }
 
-// CheckSum returns the checksum of the device config.
+// CheckSum returns the SHA256 checksum of the device config.
 func (p *DevicePath) CheckSum() (string, error) {
 	f, err := os.Open(p.DeviceConfigPath(IncludeRoot))
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return "", nil
-		} else {
-			return "", errors.WithStack(err)
-		}
+		return "", errors.WithStack(err)
 	}
 	hasher := sha256.New()
 	_, err = io.Copy(hasher, f)
