@@ -34,7 +34,10 @@ import (
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"os"
+	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"testing"
 )
 
@@ -75,6 +78,56 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	if _, err := tw.Write([]byte(content)); err != nil {
 		panic(err)
 	}
+	Must(tw.Close())
+	Must(gw.Close())
+
+	hasher := sha256.New()
+	var out bytes.Buffer
+	if _, err := io.Copy(io.MultiWriter(hasher, &out), &buf); err != nil {
+		panic(err)
+	}
+	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
+
+	return checksum, &out
+}
+
+func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	walkDirFunc := func(path string, info os.FileInfo, err error) error {
+		relPath := strings.TrimPrefix(path, dir+string(filepath.Separator))
+
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name:    relPath,
+			Mode:    int64(info.Mode()),
+			ModTime: info.ModTime(),
+			Size:    info.Size(),
+		}); err != nil {
+			return err
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if _, err := io.Copy(tw, f); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := filepath.Walk(dir, walkDirFunc); err != nil {
+		panic(err)
+	}
+
 	Must(tw.Close())
 	Must(gw.Close())
 
