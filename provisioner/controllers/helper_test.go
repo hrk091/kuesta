@@ -141,13 +141,21 @@ func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
 	return checksum, &out
 }
 
+func hash(buf []byte) string {
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, bytes.NewBuffer(buf)); err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
 func TestNewTestDataFromFixture(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		var dr nwctlv1alpha1.DeviceRollout
 		err := newTestDataFromFixture("devicerollout", &dr)
 		assert.Nil(t, err)
-		assert.Equal(t, dr.Name, "test1")
+		assert.Equal(t, dr.Name, "test-devicerollout")
 		assert.Equal(t, dr.Namespace, "test-ns")
 	})
 

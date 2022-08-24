@@ -25,7 +25,6 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
 	"crypto/sha256"
 	"fmt"
 	"github.com/fluxcd/pkg/untar"
@@ -88,11 +87,6 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 
 func verifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Reader) error {
 	hasher := sha256.New()
-
-	// for backwards compatibility with source-controller v0.17.2 and older
-	if len(artifact.Checksum) == 40 {
-		hasher = sha1.New()
-	}
 
 	// compute checksum
 	mw := io.MultiWriter(hasher, buf)

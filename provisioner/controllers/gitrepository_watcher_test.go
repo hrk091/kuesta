@@ -47,14 +47,18 @@ var _ = Describe("GitRepository watcher", func() {
 	var testGr sourcev1.GitRepository
 	Must(newTestDataFromFixture("gitrepository", &testGr))
 
+	config1 := []byte("foo")
+	config2 := []byte("bar")
 	dir, err := ioutil.TempDir("", "git-watcher-test-*")
 	if err != nil {
 		panic(err)
 	}
 	defer os.RemoveAll(dir)
-	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("foo")))
-	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), []byte("bar")))
+	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+
 	checksum, buf := mustGenTgzArchiveDir(dir)
+	revision := "test-revision"
 
 	h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := io.Copy(w, buf); err != nil {
@@ -62,21 +66,20 @@ var _ = Describe("GitRepository watcher", func() {
 		}
 	}))
 
-	l := logf.Log
+	_ = logf.Log
 
 	BeforeEach(func() {
 		gr := testGr.DeepCopy()
 		err := k8sClient.Create(ctx, gr)
 		Expect(err).NotTo(HaveOccurred())
-		l.Info("gitrepo created", "gr", gr)
 
 		gr.Status.Artifact = &sourcev1.Artifact{
 			URL:      h.URL,
 			Checksum: checksum,
+			Revision: revision,
 		}
 		err = k8sClient.Status().Update(ctx, gr)
 		Expect(err).NotTo(HaveOccurred())
-		l.Info("status updated", "gr", gr)
 	})
 
 	AfterEach(func() {
@@ -98,7 +101,17 @@ var _ = Describe("GitRepository watcher", func() {
 			return nil
 		}, timeout, interval).Should(Succeed())
 
-		Expect(dr.Spec.DeviceConfigMap).Should(Not(BeNil()))
+		cmap := nwctlv1alpha1.DeviceConfigMap{
+			"device1": nwctlv1alpha1.DeviceConfig{
+				Checksum:    hash(config1),
+				GitRevision: revision,
+			},
+			"device2": nwctlv1alpha1.DeviceConfig{
+				Checksum:    hash(config2),
+				GitRevision: revision,
+			},
+		}
+		Expect(dr.Spec.DeviceConfigMap).To(Equal(cmap))
 	})
 
 })
