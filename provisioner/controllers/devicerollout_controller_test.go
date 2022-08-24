@@ -70,11 +70,11 @@ var _ = Describe("DeviceRollout controller", func() {
 
 		BeforeEach(func() {
 			var dr nwctlv1alpha1.DeviceRollout
-			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-			for k, _ := range dr.Status.DeviceStatusMap {
-				dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
-			}
 			Eventually(func() error {
+				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
+				for k, _ := range dr.Status.DeviceStatusMap {
+					dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
+				}
 				return k8sClient.Status().Update(ctx, &dr)
 			}, timeout, interval).Should(Succeed())
 
@@ -98,9 +98,9 @@ var _ = Describe("DeviceRollout controller", func() {
 
 			BeforeEach(func() {
 				var dr nwctlv1alpha1.DeviceRollout
-				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-				dr.Spec.DeviceConfigMap = desired
 				Eventually(func() error {
+					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
+					dr.Spec.DeviceConfigMap = desired
 					return k8sClient.Update(ctx, &dr)
 				}, timeout, interval).Should(Succeed())
 
@@ -129,12 +129,12 @@ var _ = Describe("DeviceRollout controller", func() {
 
 				BeforeEach(func() {
 					var dr nwctlv1alpha1.DeviceRollout
-					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-					for k, _ := range dr.Status.DeviceStatusMap {
-						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
-						break
-					}
 					Eventually(func() error {
+						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
+						for k, _ := range dr.Status.DeviceStatusMap {
+							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
+							break
+						}
 						return k8sClient.Status().Update(ctx, &dr)
 					}, timeout, interval).Should(Succeed())
 
@@ -161,11 +161,11 @@ var _ = Describe("DeviceRollout controller", func() {
 
 				It("should update DeviceRollout to rollback/completed when rollback succeeded", func() {
 					var dr nwctlv1alpha1.DeviceRollout
-					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-					for k, _ := range dr.Status.DeviceStatusMap {
-						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
-					}
 					Eventually(func() error {
+						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
+						for k, _ := range dr.Status.DeviceStatusMap {
+							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
+						}
 						return k8sClient.Status().Update(ctx, &dr)
 					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
@@ -182,12 +182,12 @@ var _ = Describe("DeviceRollout controller", func() {
 
 				It("should update DeviceRollout to rollback/failed when rollback failed", func() {
 					var dr nwctlv1alpha1.DeviceRollout
-					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-					for k, _ := range dr.Status.DeviceStatusMap {
-						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
-						break
-					}
 					Eventually(func() error {
+						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
+						for k, _ := range dr.Status.DeviceStatusMap {
+							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
+							break
+						}
 						return k8sClient.Status().Update(ctx, &dr)
 					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
