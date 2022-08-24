@@ -74,7 +74,9 @@ var _ = Describe("DeviceRollout controller", func() {
 			for k, _ := range dr.Status.DeviceStatusMap {
 				dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
 			}
-			Expect(k8sClient.Status().Update(ctx, &dr)).NotTo(HaveOccurred())
+			Eventually(func() error {
+				return k8sClient.Status().Update(ctx, &dr)
+			}, timeout, interval).Should(Succeed())
 
 			Eventually(func() error {
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
@@ -98,7 +100,9 @@ var _ = Describe("DeviceRollout controller", func() {
 				var dr nwctlv1alpha1.DeviceRollout
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 				dr.Spec.DeviceConfigMap = desired
-				Expect(k8sClient.Update(ctx, &dr)).NotTo(HaveOccurred())
+				Eventually(func() error {
+					return k8sClient.Update(ctx, &dr)
+				}, timeout, interval).Should(Succeed())
 
 				Eventually(func() error {
 					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
@@ -130,7 +134,9 @@ var _ = Describe("DeviceRollout controller", func() {
 						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
 						break
 					}
-					Expect(k8sClient.Status().Update(ctx, &dr)).NotTo(HaveOccurred())
+					Eventually(func() error {
+						return k8sClient.Status().Update(ctx, &dr)
+					}, timeout, interval).Should(Succeed())
 
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
@@ -159,7 +165,9 @@ var _ = Describe("DeviceRollout controller", func() {
 					for k, _ := range dr.Status.DeviceStatusMap {
 						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
 					}
-					Expect(k8sClient.Status().Update(ctx, &dr)).NotTo(HaveOccurred())
+					Eventually(func() error {
+						return k8sClient.Status().Update(ctx, &dr)
+					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 						if dr.Status.Status == nwctlv1alpha1.RolloutStatusRunning {
@@ -179,7 +187,9 @@ var _ = Describe("DeviceRollout controller", func() {
 						dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
 						break
 					}
-					Expect(k8sClient.Status().Update(ctx, &dr)).NotTo(HaveOccurred())
+					Eventually(func() error {
+						return k8sClient.Status().Update(ctx, &dr)
+					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 						if dr.Status.Status == nwctlv1alpha1.RolloutStatusRunning {

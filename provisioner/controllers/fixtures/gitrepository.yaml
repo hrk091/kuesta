@@ -1,10 +1,10 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: GitRepository
 metadata:
+  name: test-gitrepo
+  namespace: test-ns
   finalizers:
     - finalizers.fluxcd.io
-  name: test1
-  namespace: test-ns
 spec:
   gitImplementation: go-git
   interval: 1m0s
