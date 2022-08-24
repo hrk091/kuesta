@@ -3,8 +3,6 @@ kind: GitRepository
 metadata:
   name: test-gitrepo
   namespace: test-ns
-  finalizers:
-    - finalizers.fluxcd.io
 spec:
   gitImplementation: go-git
   interval: 1m0s
