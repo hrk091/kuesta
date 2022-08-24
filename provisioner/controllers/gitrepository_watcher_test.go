@@ -1,3 +1,5 @@
+//go:build bdd
+
 /*
  * Copyright (c) 2022. Hiroki Okui
  *
