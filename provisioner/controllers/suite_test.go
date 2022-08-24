@@ -20,11 +20,13 @@ package controllers_test
 
 import (
 	"context"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,6 +51,12 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var stopFunc func()
 
+const (
+	timeout   = time.Second * 5
+	interval  = time.Millisecond * 500
+	namespace = "test-ns"
+)
+
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -62,7 +70,10 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "config", "crd", "bases"),
+			filepath.Join("..", "config", "fluxcd"),
+		},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -72,8 +83,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = nwctlv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	utilruntime.Must(nwctlv1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(sourcev1.AddToScheme(scheme.Scheme))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -83,6 +94,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&controllers.DeviceRolloutReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&controllers.GitRepositoryWatcher{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr)

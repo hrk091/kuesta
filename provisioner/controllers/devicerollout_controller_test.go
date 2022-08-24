@@ -25,20 +25,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
-)
-
-const (
-	timeout   = time.Second * 5
-	interval  = time.Millisecond * 500
-	namespace = "test-ns"
 )
 
 var _ = Describe("DeviceRollout controller", func() {
 	ctx := context.Background()
 
 	var testDr nwctlv1alpha1.DeviceRollout
-	newTestDataFromFixture("devicerollout", &testDr)
+	Must(newTestDataFromFixture("devicerollout", &testDr))
 	desired := nwctlv1alpha1.DeviceConfigMap{
 		"device1": {Checksum: "desired", GitRevision: "desired"},
 		"device2": {Checksum: "desired", GitRevision: "desired"},
@@ -50,9 +43,8 @@ var _ = Describe("DeviceRollout controller", func() {
 
 		Eventually(func() error {
 			var dr nwctlv1alpha1.DeviceRollout
-			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-			if dr.Status.Status == "" {
-				return fmt.Errorf("not updated yet")
+			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+				return err
 			}
 			return nil
 		}, timeout, interval).Should(Succeed())

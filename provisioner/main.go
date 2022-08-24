@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"github.com/hrk091/nwctl/provisioner/controllers"

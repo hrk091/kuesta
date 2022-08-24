@@ -23,3 +23,82 @@
  */
 
 package controllers_test
+
+import (
+	"context"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/hrk091/nwctl/pkg/nwctl"
+	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+var _ = Describe("GitRepository watcher", func() {
+	ctx := context.Background()
+
+	var testGr sourcev1.GitRepository
+	Must(newTestDataFromFixture("gitrepository", &testGr))
+
+	dir, err := ioutil.TempDir("", "git-watcher-test-*")
+	if err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(dir)
+	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("foo")))
+	Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), []byte("bar")))
+	checksum, buf := mustGenTgzArchiveDir(dir)
+
+	h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := io.Copy(w, buf); err != nil {
+			panic(err)
+		}
+	}))
+
+	l := logf.Log
+
+	BeforeEach(func() {
+		gr := testGr.DeepCopy()
+		err := k8sClient.Create(ctx, gr)
+		Expect(err).NotTo(HaveOccurred())
+		l.Info("gitrepo created", "gr", gr)
+
+		gr.Status.Artifact = &sourcev1.Artifact{
+			URL:      h.URL,
+			Checksum: checksum,
+		}
+		err = k8sClient.Status().Update(ctx, gr)
+		Expect(err).NotTo(HaveOccurred())
+		l.Info("status updated", "gr", gr)
+	})
+
+	AfterEach(func() {
+		err := k8sClient.DeleteAllOf(ctx, &nwctlv1alpha1.DeviceRollout{}, client.InNamespace(namespace))
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("should update DeviceRollout's status to running", func() {
+		var dr nwctlv1alpha1.DeviceRollout
+		key := client.ObjectKey{
+			Namespace: testGr.Namespace,
+			Name:      testGr.Name,
+		}
+
+		Eventually(func() error {
+			if err := k8sClient.Get(ctx, key, &dr); err != nil {
+				return err
+			}
+			return nil
+		}, timeout, interval).Should(Succeed())
+
+		Expect(dr.Spec.DeviceConfigMap).Should(Not(BeNil()))
+	})
+
+})
