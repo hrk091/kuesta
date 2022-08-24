@@ -321,6 +321,12 @@ func TestDevicePath_Validate(t *testing.T) {
 	}
 }
 
+func TestDevicePath_DeviceDirPath(t *testing.T) {
+	p := newValidDevicePath()
+	assert.Equal(t, "devices", p.DeviceDirPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices", p.DeviceDirPath(nwctl.IncludeRoot))
+}
+
 func TestDevicePath_DeviceConfigPath(t *testing.T) {
 	p := newValidDevicePath()
 	assert.Equal(t, "devices/device1/config.cue", p.DeviceConfigPath(nwctl.ExcludeRoot))
@@ -475,4 +481,37 @@ func TestParseServiceComputedFilePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewDevicePathList(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		dir := t.TempDir()
+		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0750))
+		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750))
+		ExitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
+
+		paths, err := nwctl.NewDevicePathList(dir)
+		assert.Nil(t, err)
+		assert.Len(t, paths, 2)
+		for _, p := range paths {
+			assert.Contains(t, []string{"device1", "device2"}, p.Device)
+		}
+	})
+
+	t.Run("ok: no item", func(t *testing.T) {
+		dir := t.TempDir()
+		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0750))
+
+		paths, err := nwctl.NewDevicePathList(dir)
+		assert.Nil(t, err)
+		assert.Len(t, paths, 0)
+	})
+
+	t.Run("bad: no root", func(t *testing.T) {
+		dir := t.TempDir()
+
+		_, err := nwctl.NewDevicePathList(dir)
+		assert.Error(t, err)
+	})
 }

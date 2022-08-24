@@ -163,7 +163,7 @@ type DevicePath struct {
 // NewDevicePathList returns the slice of DevicePath placed in the given root dir.
 func NewDevicePathList(dir string) ([]*DevicePath, error) {
 	dp := DevicePath{RootDir: dir}
-	path := filepath.Join(dp.deviceDirElem()...)
+	path := dp.DeviceDirPath(IncludeRoot)
 	devices, err := os.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("read devices dir: %w", err)
@@ -202,6 +202,11 @@ func (p *DevicePath) addRoot(path string, t PathType) string {
 	} else {
 		return filepath.Join(p.RootPath(), path)
 	}
+}
+
+// DeviceDirPath returns the path to the devices directory.
+func (p *DevicePath) DeviceDirPath(t PathType) string {
+	return p.addRoot(filepath.Join(p.deviceDirElem()...), t)
 }
 
 // DeviceConfigPath returns the path to specified device config.
