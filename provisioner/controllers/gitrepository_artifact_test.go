@@ -24,7 +24,7 @@ package controllers_test
 
 import (
 	"context"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/hrk091/nwctl/provisioner/controllers"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -115,7 +115,23 @@ func TestFetchArtifact(t *testing.T) {
 			}
 
 		})
-
 	}
+
+	t.Run("bad: url not set", func(t *testing.T) {
+		repo := sourcev1.GitRepository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test",
+				Namespace: "test-ns",
+			},
+			Status: sourcev1.GitRepositoryStatus{
+				Artifact: &sourcev1.Artifact{
+					Checksum: checksum,
+				},
+			},
+		}
+
+		_, err := controllers.FetchArtifact(context.Background(), repo, dir)
+		assert.Error(t, err)
+	})
 
 }

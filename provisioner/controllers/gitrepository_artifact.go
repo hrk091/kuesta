@@ -29,7 +29,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/fluxcd/pkg/untar"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"io"
 	"net/http"
 	"os"
@@ -47,6 +47,10 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// export SOURCE_HOST=localhost:8080
 	if hostname := os.Getenv(EnvSourceHost); hostname != "" {
 		url = fmt.Sprintf("http://%s/gitrepository/%s/%s/latest.tar.gz", hostname, repository.Namespace, repository.Name)
+	}
+
+	if url == "" {
+		return "", fmt.Errorf("no url given")
 	}
 
 	// download the tarball
