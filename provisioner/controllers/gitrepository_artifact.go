@@ -52,18 +52,18 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// download the tarball
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create HTTP request, error: %w", err)
+		return "", fmt.Errorf("create HTTP request, error: %w", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return "", fmt.Errorf("failed to download artifact from %s, error: %w", url, err)
+		return "", fmt.Errorf("download artifact from %s, error: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	// check response
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to download artifact, status: %s", resp.Status)
+		return "", fmt.Errorf("download artifact, status: %s", resp.Status)
 	}
 
 	var buf bytes.Buffer
@@ -76,7 +76,7 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// extract
 	summary, err := untar.Untar(&buf, dir)
 	if err != nil {
-		return "", fmt.Errorf("failed to untar artifact, error: %w", err)
+		return "", fmt.Errorf("untar artifact, error: %w", err)
 	}
 
 	return summary, nil
@@ -97,7 +97,7 @@ func verifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Re
 	}
 
 	if checksum := fmt.Sprintf("%x", hasher.Sum(nil)); checksum != artifact.Checksum {
-		return fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised '%s'",
+		return fmt.Errorf("verify artifact: computed checksum '%s' doesn't match advertised '%s'",
 			checksum, artifact.Checksum)
 	}
 

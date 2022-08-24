@@ -31,12 +31,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestFetchArtifact(t *testing.T) {
 	dir := t.TempDir()
-	checksum, buf := mustGenTgzArchive("test.txt", "dummy")
+	want := []byte("dummy")
+	checksum, buf := mustGenTgzArchive("test.txt", string(want))
 
 	tests := []struct {
 		name     string
@@ -53,6 +56,34 @@ func TestFetchArtifact(t *testing.T) {
 			},
 			checksum,
 			false,
+		},
+		{
+			"bad: wrong checksum",
+			func(w http.ResponseWriter, r *http.Request) {
+				if _, err := io.Copy(w, buf); err != nil {
+					panic(err)
+				}
+			},
+			"wrong checksum",
+			true,
+		},
+		{
+			"bad: wrong contents",
+			func(w http.ResponseWriter, r *http.Request) {
+				if _, err := w.Write([]byte("wrong content")); err != nil {
+					panic(err)
+				}
+			},
+			checksum,
+			true,
+		},
+		{
+			"bad: error from server",
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(500)
+			},
+			checksum,
+			true,
 		},
 	}
 
@@ -71,9 +102,20 @@ func TestFetchArtifact(t *testing.T) {
 					},
 				},
 			}
+
 			_, err := controllers.FetchArtifact(context.Background(), repo, dir)
-			assert.Nil(t, err)
+			if tt.wantErr {
+				t.Log(err)
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				got, err := os.ReadFile(filepath.Join(dir, "test.txt"))
+				ExitOnErr(t, err)
+				assert.Equal(t, want, got)
+			}
+
 		})
+
 	}
 
 }
