@@ -28,18 +28,36 @@ import (
 	"io"
 )
 
-// ShowStackTrace shows the stacktrace of original error only.
-func ShowStackTrace(w io.Writer, err error) bool {
-	done := false
+// ShowStackTrace shows the stacktrace of the original error only.
+func ShowStackTrace(w io.Writer, err error) {
+	if st := GetStackTrace(err); st != "" {
+		fmt.Fprintf(w, "StackTrace: %s\n\n", st)
+	}
+}
+
+// GetStackTrace returns the stacktrace of the original error only.
+func GetStackTrace(err error) string {
+	st := bottomStackTrace(err)
+	if st != nil {
+		return fmt.Sprintf("%+v", st.StackTrace())
+	}
+	return ""
+}
+
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
+
+func bottomStackTrace(err error) stackTracer {
+	var st stackTracer
 	if errors.Unwrap(err) != nil {
-		done = ShowStackTrace(w, errors.Unwrap(err))
+		st = bottomStackTrace(errors.Unwrap(err))
+		if st != nil {
+			return st
+		}
 	}
-	if done {
-		return true
+	if e, ok := err.(stackTracer); ok {
+		return e
 	}
-	if e, ok := err.(interface{ StackTrace() errors.StackTrace }); ok {
-		fmt.Fprintf(w, "StackTrace:  %+v\n\n", e.StackTrace())
-		return true
-	}
-	return false
+	return nil
 }

@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"context"
-	"fmt"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"io/ioutil"
@@ -48,39 +48,45 @@ type GitRepositoryWatcher struct {
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories/status,verbs=get
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts,verbs=get;list;create;update;patch;delete
 
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
 func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
 	// get source object
 	var repository sourcev1.GitRepository
 	if err := r.Get(ctx, req.NamespacedName, &repository); err != nil {
+		r.Error(ctx, err, "get GitRepository")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	l.Info("start reconciliation", "revision", repository.Status.Artifact.Revision)
 
 	tmpDir, err := ioutil.TempDir("", repository.Name)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to create temp dir, error: %w", err)
+		r.Error(ctx, err, "create temp dir")
+		return ctrl.Result{}, err
 	}
 	defer os.RemoveAll(tmpDir)
 
 	summary, err := FetchArtifact(ctx, repository, tmpDir)
 	if err != nil {
-		l.Error(err, "unable to fetch artifact")
+		r.Error(ctx, err, "fetch artifact")
 		return ctrl.Result{}, err
 	}
 	l.Info(summary)
 
 	dps, err := nwctl.NewDevicePathList(tmpDir)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("list devices: %w", err)
+		r.Error(ctx, err, "list devices")
+		return ctrl.Result{}, err
 	}
 
 	cmap := v1alpha1.DeviceConfigMap{}
 	for _, dp := range dps {
 		checksum, err := dp.CheckSum()
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("get checksum: %w", err)
+			r.Error(ctx, err, "get checksum")
+			return ctrl.Result{}, err
 		}
 		cmap[dp.Device] = v1alpha1.DeviceConfig{
 			Checksum:    checksum,
@@ -98,10 +104,22 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 		dr.Spec.DeviceConfigMap = cmap
 		return nil
 	}); err != nil {
+		r.Error(ctx, err, "create or update DeviceRollout")
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GitRepositoryWatcher) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
+	if err == nil {
+		return
+	}
+	l := log.FromContext(ctx).WithCallDepth(1)
+	if st := common.GetStackTrace(err); st != "" {
+		l = l.WithValues("stacktrace", st)
+	}
+	l.Error(err, msg, kvs...)
 }
 
 func (r *GitRepositoryWatcher) SetupWithManager(mgr ctrl.Manager) error {
