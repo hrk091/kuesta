@@ -133,7 +133,7 @@ func TestNewValueFromBuf(t *testing.T) {
 func TestNewValueWithInstance(t *testing.T) {
 	dir := t.TempDir()
 	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	tests := []struct {
 		name    string
@@ -171,19 +171,19 @@ func TestNewValueWithInstance(t *testing.T) {
 func TestApplyTemplate(t *testing.T) {
 	dir := t.TempDir()
 	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
 
 	tr, err := nwctl.NewValueWithInstance(cctx, []string{"transform.cue"}, &load.Config{Dir: dir})
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	t.Run("ok", func(t *testing.T) {
 		in := cctx.CompileBytes(input)
-		ExitOnErr(t, in.Err())
+		exitOnErr(t, in.Err())
 
 		it, err := nwctl.ApplyTransform(cctx, in, tr)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		assert.True(t, it.Next())
 		assert.Equal(t, "device1", it.Label())
@@ -194,7 +194,7 @@ func TestApplyTemplate(t *testing.T) {
 
 	t.Run("ok: missing optional fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingOptinoal)
-		ExitOnErr(t, in.Err())
+		exitOnErr(t, in.Err())
 
 		_, err = nwctl.ApplyTransform(cctx, in, tr)
 		assert.Nil(t, err)
@@ -202,7 +202,7 @@ func TestApplyTemplate(t *testing.T) {
 
 	t.Run("bad: missing required fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingRequired)
-		ExitOnErr(t, in.Err())
+		exitOnErr(t, in.Err())
 
 		_, err = nwctl.ApplyTransform(cctx, in, tr)
 		assert.Error(t, err)
@@ -220,10 +220,10 @@ func TestExtractDeviceConfig(t *testing.T) {
 		Mtu:     9000
 	}
 }`))
-		ExitOnErr(t, want.Err())
+		exitOnErr(t, want.Err())
 
 		v := cctx.CompileBytes(device)
-		ExitOnErr(t, v.Err())
+		exitOnErr(t, v.Err())
 
 		got, err := nwctl.ExtractDeviceConfig(v)
 		assert.Nil(t, err)
@@ -232,7 +232,7 @@ func TestExtractDeviceConfig(t *testing.T) {
 
 	t.Run("bad: config missing", func(t *testing.T) {
 		v := cctx.CompileBytes(keyMissing)
-		ExitOnErr(t, v.Err())
+		exitOnErr(t, v.Err())
 
 		got, err := nwctl.ExtractDeviceConfig(v)
 		assert.Nil(t, got)
@@ -250,7 +250,7 @@ func TestFormatCue(t *testing.T) {
 		Mtu:     9000
 	}
 }`))
-	ExitOnErr(t, want.Err())
+	exitOnErr(t, want.Err())
 
 	got, err := nwctl.FormatCue(want)
 	assert.Nil(t, err)

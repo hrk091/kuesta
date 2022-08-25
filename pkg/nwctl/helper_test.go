@@ -42,7 +42,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err := nwctl.WriteFileWithMkdir(path, buf)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -51,11 +51,11 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: existing dir", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = nwctl.WriteFileWithMkdir(path, buf)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -64,13 +64,13 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: write multiple times", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = nwctl.WriteFileWithMkdir(path, buf)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		err = nwctl.WriteFileWithMkdir(path, buf)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -79,7 +79,9 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 }
 
-func ExitOnErr(t *testing.T, err error) {
+// test helpers
+
+func exitOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Log(string(debug.Stack()))
 		t.Fatal(err)

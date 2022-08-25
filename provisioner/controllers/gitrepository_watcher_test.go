@@ -45,7 +45,7 @@ var _ = Describe("GitRepository watcher", func() {
 	ctx := context.Background()
 
 	var testGr sourcev1.GitRepository
-	Must(newTestDataFromFixture("gitrepository", &testGr))
+	must(newTestDataFromFixture("gitrepository", &testGr))
 
 	config1 := []byte("foo")
 	config2 := []byte("bar")
@@ -57,8 +57,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var err error
 		dir, err = ioutil.TempDir("", "git-watcher-test-*")
 		Expect(err).NotTo(HaveOccurred())
-		Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-		Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+		must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+		must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
 
 		gr := testGr.DeepCopy()
 		Expect(k8sClient.Create(ctx, gr)).NotTo(HaveOccurred())
@@ -119,8 +119,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var version string
 
 		BeforeEach(func() {
-			Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-			Must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+			must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+			must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
 
 			var dr nwctlv1alpha1.DeviceRollout
 			Eventually(func() error {

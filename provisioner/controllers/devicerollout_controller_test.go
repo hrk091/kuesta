@@ -31,7 +31,7 @@ var _ = Describe("DeviceRollout controller", func() {
 	ctx := context.Background()
 
 	var testDr nwctlv1alpha1.DeviceRollout
-	Must(newTestDataFromFixture("devicerollout", &testDr))
+	must(newTestDataFromFixture("devicerollout", &testDr))
 	desired := nwctlv1alpha1.DeviceConfigMap{
 		"device1": {Checksum: "desired", GitRevision: "desired"},
 		"device2": {Checksum: "desired", GitRevision: "desired"},

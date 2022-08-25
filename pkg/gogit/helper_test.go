@@ -31,7 +31,7 @@ import (
 	"time"
 )
 
-func ExitOnErr(t *testing.T, err error) {
+func exitOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Log(string(debug.Stack()))
 		t.Fatal(err)

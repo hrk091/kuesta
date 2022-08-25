@@ -44,19 +44,19 @@ func TestRunGitCommit(t *testing.T) {
 			Name: "origin",
 			URLs: []string{url},
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
-		ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-		ExitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
+		exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+		exitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
 		_, err = commit(repo, time.Now())
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
-		ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-		ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-		ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
-		ExitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
-		ExitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
-		ExitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
+		exitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
+		exitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
+		exitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+		exitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
+		exitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
+		exitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
 		return repo, dir
 	}
 
@@ -88,9 +88,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		h, err := g.Head()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 
@@ -110,9 +110,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		h, err := g.Head()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 

@@ -126,7 +126,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p.RootDir = dir
 		want := []byte("foobar")
 		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		r, err := p.ReadServiceInput()
 		if err != nil {
@@ -141,7 +141,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p.RootDir = dir
 		p.Service = "bar"
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two"), 0750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = p.ReadServiceInput()
 		assert.Error(t, err)
@@ -172,7 +172,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		p.RootDir = dir
 		want := []byte("foobar")
 		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), want)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		r, err := p.ReadServiceTransform()
 		if err != nil {
@@ -187,7 +187,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		p.RootDir = dir
 		p.Service = "bar"
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = p.ReadServiceTransform()
 		assert.Error(t, err)
@@ -224,7 +224,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p.RootDir = dir
 		want := []byte("foobar")
 		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		r, err := p.ReadServiceComputedFile("device1")
 		if err != nil {
@@ -239,7 +239,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p.RootDir = dir
 		p.Service = "bar"
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two", "computed"), 0750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = p.ReadServiceTransform()
 		assert.Error(t, err)
@@ -264,7 +264,7 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 	p.RootDir = dir
 
 	err := p.WriteServiceComputedFile("device1", buf)
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	got, err := os.ReadFile(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"))
 	assert.Nil(t, err)
@@ -343,7 +343,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		p.RootDir = dir
 		want := []byte("foobar")
 		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		r, err := p.ReadDeviceConfigFile()
 		if err != nil {
@@ -358,7 +358,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		p.RootDir = dir
 		p.Device = "device2"
 		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = p.ReadDeviceConfigFile()
 		assert.Error(t, err)
@@ -382,7 +382,7 @@ func TestDevicePath_WriteDeviceConfigFile(t *testing.T) {
 	p.RootDir = dir
 
 	err := p.WriteDeviceConfigFile(buf)
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	got, err := os.ReadFile(filepath.Join(dir, "devices", "device1", "config.cue"))
 	assert.Nil(t, err)
@@ -394,7 +394,7 @@ func TestDevicePath_CheckSum(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		ExitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
+		exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
 
 		hasher := sha256.New()
 		hasher.Write(config)
@@ -408,7 +408,7 @@ func TestDevicePath_CheckSum(t *testing.T) {
 
 	t.Run("bad: config not found", func(t *testing.T) {
 		dir := t.TempDir()
-		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
+		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
 
 		dp := nwctl.DevicePath{RootDir: dir, Device: "device1"}
 		_, err := dp.CheckSum()
@@ -517,9 +517,9 @@ func TestNewDevicePathList(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0750))
-		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750))
-		ExitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
+		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0750))
+		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750))
+		exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
 
 		paths, err := nwctl.NewDevicePathList(dir)
 		assert.Nil(t, err)
@@ -531,7 +531,7 @@ func TestNewDevicePathList(t *testing.T) {
 
 	t.Run("ok: no item", func(t *testing.T) {
 		dir := t.TempDir()
-		ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0750))
+		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0750))
 
 		paths, err := nwctl.NewDevicePathList(dir)
 		assert.Nil(t, err)

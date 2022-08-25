@@ -107,9 +107,9 @@ func TestRunDeviceComposite(t *testing.T) {
 		RootCfg: nwctl.RootCfg{RootPath: filepath.Join("./testdata")},
 		Device:  "oc01",
 	})
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "devices", "oc01", "config.cue"))
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)

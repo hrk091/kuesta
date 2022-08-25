@@ -163,13 +163,13 @@ func TestCheckGitFileStatus(t *testing.T) {
 func TestServiceCompilePlan_Do(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
-	ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-	ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-	ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+	exitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
+	exitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
 
 	stmap := getStatus(t, repo)
 	plan := nwctl.NewServiceCompilePlan(stmap, dir)
@@ -196,9 +196,9 @@ func TestServiceCompilePlan_Do(t *testing.T) {
 func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
 	plan := nwctl.NewServiceCompilePlan(stmap, dir)
@@ -208,13 +208,13 @@ func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 func TestDeviceCompositePlan_Do(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
-	ExitOnErr(t, deleteFile(repo, "services/foo/one/computed/device1.cue"))
-	ExitOnErr(t, addFile(repo, "services/foo/two/computed/device2.cue", "{}"))
-	ExitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
+	exitOnErr(t, deleteFile(repo, "services/foo/one/computed/device1.cue"))
+	exitOnErr(t, addFile(repo, "services/foo/two/computed/device2.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
 
 	stmap := getStatus(t, repo)
 	plan := nwctl.NewDeviceCompositePlan(stmap, dir)
@@ -232,9 +232,9 @@ func TestDeviceCompositePlan_Do(t *testing.T) {
 func TestDeviceCompositePlan_IsEmpty(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
+	exitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
 	plan := nwctl.NewDeviceCompositePlan(stmap, dir)

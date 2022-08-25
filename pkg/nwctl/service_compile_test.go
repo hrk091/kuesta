@@ -113,9 +113,9 @@ func TestRunServiceCompile(t *testing.T) {
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "services", "oc_interface", "oc01", "1", "computed", "oc01.cue"))
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)

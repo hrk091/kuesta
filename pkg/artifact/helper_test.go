@@ -33,14 +33,14 @@ import (
 	"testing"
 )
 
-func ExitOnErr(t *testing.T, err error) {
+func exitOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Log(string(debug.Stack()))
 		t.Fatal(err)
 	}
 }
 
-func Must(err error) {
+func must(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -57,8 +57,8 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	if _, err := tw.Write([]byte(content)); err != nil {
 		panic(err)
 	}
-	Must(tw.Close())
-	Must(gw.Close())
+	must(tw.Close())
+	must(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer

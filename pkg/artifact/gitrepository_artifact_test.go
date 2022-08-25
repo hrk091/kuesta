@@ -110,7 +110,7 @@ func TestFetchArtifact(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 				got, err := os.ReadFile(filepath.Join(dir, "test.txt"))
-				ExitOnErr(t, err)
+				exitOnErr(t, err)
 				assert.Equal(t, want, got)
 			}
 

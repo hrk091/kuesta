@@ -131,17 +131,17 @@ func TestGit_Signature(t *testing.T) {
 
 func TestGit_Head(t *testing.T) {
 	repo, dir := initRepo(t, "main")
-	ExitOnErr(t, addFile(repo, "test", "hash"))
+	exitOnErr(t, addFile(repo, "test", "hash"))
 	want, err := commit(repo, time.Now())
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	g, err := gogit.NewGit(gogit.GitOptions{
 		Path: dir,
 	})
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 
 	c, err := g.Head()
-	ExitOnErr(t, err)
+	exitOnErr(t, err)
 	assert.Equal(t, want, c.Hash)
 }
 
@@ -151,13 +151,13 @@ func TestGit_Checkout(t *testing.T) {
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = g.Checkout()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		b, err := g.Branch()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		assert.Equal(t, "main", b)
 	})
 
@@ -168,13 +168,13 @@ func TestGit_Checkout(t *testing.T) {
 			Path:        dir,
 			TrunkBranch: branchName,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = g.Checkout()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		b, err := g.Branch()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		assert.Equal(t, branchName, b)
 	})
 
@@ -183,13 +183,13 @@ func TestGit_Checkout(t *testing.T) {
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		b, err := g.Branch()
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		assert.Equal(t, "test", b)
 	})
 
@@ -198,8 +198,8 @@ func TestGit_Checkout(t *testing.T) {
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
-		ExitOnErr(t, createBranch(repo, "test"))
+		exitOnErr(t, err)
+		exitOnErr(t, createBranch(repo, "test"))
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("main"), gogit.CheckoutOptsCreateNew())
 		assert.Error(t, err)
@@ -210,7 +210,7 @@ func TestGit_Checkout(t *testing.T) {
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("test"))
 		assert.Error(t, err)
@@ -220,12 +220,12 @@ func TestGit_Checkout(t *testing.T) {
 func TestGit_Commit(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
-		ExitOnErr(t, addFile(repo, "test", "dummy"))
+		exitOnErr(t, addFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		_, err = g.Commit("added: test")
 		assert.Nil(t, err)
 	})
@@ -233,13 +233,13 @@ func TestGit_Commit(t *testing.T) {
 	t.Run("ok: other trunk branch", func(t *testing.T) {
 		testTrunk := "test-branch"
 		repo, dir := initRepo(t, testTrunk)
-		ExitOnErr(t, addFile(repo, "test", "dummy"))
+		exitOnErr(t, addFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: testTrunk,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		h, err := g.Commit("added: test")
 		assert.Nil(t, err)
 
@@ -256,7 +256,7 @@ func TestGit_Commit(t *testing.T) {
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path: dir,
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		_, err = g.Commit("no change")
 		assert.Nil(t, err)
 	})
@@ -272,25 +272,25 @@ func TestGit_Push(t *testing.T) {
 			Name: testRemote,
 			URLs: []string{url},
 		})
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		g, err := gogit.NewGit(gogit.GitOptions{
 			Path:       dir,
 			RemoteName: testRemote,
 		})
-		ExitOnErr(t, err)
-		ExitOnErr(t, addFile(repo, "test", "push"))
+		exitOnErr(t, err)
+		exitOnErr(t, addFile(repo, "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		_, err = g.Commit(wantMsg)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		err = g.Push("main")
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 		c, err := repo.CommitObject(ref.Hash())
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		assert.Equal(t, wantMsg, c.Message)
 	})
@@ -303,10 +303,10 @@ func TestGit_Push(t *testing.T) {
 			Path:       dir,
 			RemoteName: noExistRemote,
 		})
-		ExitOnErr(t, err)
-		ExitOnErr(t, addFile(repo, "test", "push"))
+		exitOnErr(t, err)
+		exitOnErr(t, addFile(repo, "test", "push"))
 		_, err = g.Commit("added: test")
-		ExitOnErr(t, err)
+		exitOnErr(t, err)
 
 		err = g.Push("main")
 		assert.Error(t, err)
