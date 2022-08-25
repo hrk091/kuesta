@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"github.com/hrk091/nwctl/pkg/artifact"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/hrk091/nwctl/provisioner/api/v1alpha1"
@@ -33,10 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-)
-
-const (
-	EnvSourceHost = "SOURCE_HOST"
 )
 
 // GitRepositoryWatcher watches GitRepository objects for revision changes
@@ -70,7 +67,7 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	defer os.RemoveAll(tmpDir)
 
-	summary, err := FetchArtifact(ctx, repository, tmpDir)
+	summary, err := artifact.FetchArtifact(ctx, repository, tmpDir)
 	if err != nil {
 		r.Error(ctx, err, "fetch artifact")
 		return ctrl.Result{}, err

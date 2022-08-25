@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 )
@@ -238,14 +237,22 @@ func (s *DeviceRolloutStatus) StartTx() {
 }
 
 // ResolveNextDeviceConfig returns the next device config to transition to according to the current RolloutPhase.
-func (s *DeviceRolloutStatus) ResolveNextDeviceConfig(name string) (DeviceConfig, error) {
+func (s *DeviceRolloutStatus) ResolveNextDeviceConfig(name string) *DeviceConfig {
 	if s.Phase == "" {
-		return DeviceConfig{}, fmt.Errorf("phase is not set")
+		return nil
 	}
 	if s.Phase == RolloutPhaseHealthy {
-		return s.DesiredDeviceConfigMap[name], nil
+		c, ok := s.DesiredDeviceConfigMap[name]
+		if ok {
+			return &c
+		}
+		return nil
 	} else {
-		return s.PrevDeviceConfigMap[name], nil
+		c, ok := s.PrevDeviceConfigMap[name]
+		if ok {
+			return &c
+		}
+		return nil
 	}
 }
 

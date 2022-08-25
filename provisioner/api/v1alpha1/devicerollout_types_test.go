@@ -236,28 +236,40 @@ func TestDeviceRolloutStatus_ResolveNextDeviceConfig(t *testing.T) {
 	prev := apiv1alpha1.DeviceConfig{GitRevision: "prev"}
 
 	tests := []struct {
-		name    string
-		phase   apiv1alpha1.RolloutPhase
-		want    apiv1alpha1.DeviceConfig
-		wantErr bool
+		name   string
+		device string
+		phase  apiv1alpha1.RolloutPhase
+		want   *apiv1alpha1.DeviceConfig
 	}{
 		{
 			"ok: healthy",
+			"device1",
 			apiv1alpha1.RolloutPhaseHealthy,
-			desired,
-			false,
+			&desired,
 		},
 		{
 			"ok: rollback",
+			"device1",
 			apiv1alpha1.RolloutPhaseRollback,
-			prev,
-			false,
+			&prev,
 		},
 		{
 			"bad: not set",
+			"device1",
 			"",
-			apiv1alpha1.DeviceConfig{},
-			true,
+			nil,
+		},
+		{
+			"bad: healthy but not existing device",
+			"not-exist",
+			apiv1alpha1.RolloutPhaseHealthy,
+			nil,
+		},
+		{
+			"bad: rollback but not existing device",
+			"not-exist",
+			apiv1alpha1.RolloutPhaseRollback,
+			nil,
 		},
 	}
 
@@ -273,13 +285,8 @@ func TestDeviceRolloutStatus_ResolveNextDeviceConfig(t *testing.T) {
 				},
 			}
 
-			got, err := s.ResolveNextDeviceConfig("device1")
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, tt.want, got)
-			}
+			got := s.ResolveNextDeviceConfig(tt.device)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

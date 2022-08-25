@@ -46,6 +46,9 @@ var _ = Describe("DeviceRollout controller", func() {
 			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
 				return err
 			}
+			if dr.Status.Phase == "" {
+				return fmt.Errorf("not updated yet")
+			}
 			return nil
 		}, timeout, interval).Should(Succeed())
 	})

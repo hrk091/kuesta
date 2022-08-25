@@ -20,12 +20,12 @@
  * THE SOFTWARE.
  */
 
-package controllers_test
+package artifact_test
 
 import (
 	"context"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/hrk091/nwctl/provisioner/controllers"
+	"github.com/hrk091/nwctl/pkg/artifact"
 	"github.com/stretchr/testify/assert"
 	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +103,7 @@ func TestFetchArtifact(t *testing.T) {
 				},
 			}
 
-			_, err := controllers.FetchArtifact(context.Background(), repo, dir)
+			_, err := artifact.FetchArtifact(context.Background(), repo, dir)
 			if tt.wantErr {
 				t.Log(err)
 				assert.Error(t, err)
@@ -130,7 +130,7 @@ func TestFetchArtifact(t *testing.T) {
 			},
 		}
 
-		_, err := controllers.FetchArtifact(context.Background(), repo, dir)
+		_, err := artifact.FetchArtifact(context.Background(), repo, dir)
 		assert.Error(t, err)
 	})
 

@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package controllers
+package artifact
 
 import (
 	"bytes"
@@ -33,6 +33,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+)
+
+const (
+	EnvSourceHost = "SOURCE_HOST"
 )
 
 func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir string) (string, error) {
