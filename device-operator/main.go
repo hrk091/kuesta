@@ -18,6 +18,8 @@ package main
 
 import (
 	"flag"
+	origzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -59,6 +61,14 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
 		Development: true,
+		// show caller for debug use
+		ZapOpts: []origzap.Option{
+			origzap.AddCaller(),
+			origzap.AddCallerSkip(-1),
+		},
+		TimeEncoder: zapcore.ISO8601TimeEncoder,
+		// suppress Stacktrace of error log since stacktrace from controller.reconcileHandler is meaningless and annoying
+		StacktraceLevel: origzap.PanicLevel,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
