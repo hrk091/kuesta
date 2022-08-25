@@ -36,6 +36,8 @@ import (
 	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"github.com/hrk091/nwctl/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
+
+	origzap "go.uber.org/zap"
 )
 
 var (
@@ -62,6 +64,10 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
 		Development: true,
+		ZapOpts: []origzap.Option{
+			origzap.AddCaller(),
+			origzap.AddCallerSkip(-1),
+		},
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
