@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"github.com/fluxcd/pkg/untar"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -36,7 +37,7 @@ import (
 
 func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir string) (string, error) {
 	if repository.Status.Artifact == nil {
-		return "", fmt.Errorf("respository %s does not containt an artifact", repository.Name)
+		return "", fmt.Errorf("respository %s does not contain an artifact", repository.Name)
 	}
 
 	url := repository.Status.Artifact.URL
@@ -55,18 +56,18 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// download the tarball
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("create HTTP request, error: %w", err)
+		return "", errors.WithStack(fmt.Errorf("create HTTP request: %w", err))
 	}
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return "", fmt.Errorf("download artifact from %s, error: %w", url, err)
+		return "", errors.WithStack(fmt.Errorf("download artifact from %s: %w", url, err))
 	}
 	defer resp.Body.Close()
 
 	// check response
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("download artifact, status: %s", resp.Status)
+		return "", errors.WithStack(fmt.Errorf("download artifact, status: %s", resp.Status))
 	}
 
 	var buf bytes.Buffer
@@ -79,7 +80,7 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	// extract
 	summary, err := untar.Untar(&buf, dir)
 	if err != nil {
-		return "", fmt.Errorf("untar artifact, error: %w", err)
+		return "", errors.WithStack(fmt.Errorf("untar artifact: %w", err))
 	}
 
 	return summary, nil
@@ -91,7 +92,7 @@ func verifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Re
 	// compute checksum
 	mw := io.MultiWriter(hasher, buf)
 	if _, err := io.Copy(mw, reader); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if checksum := fmt.Sprintf("%x", hasher.Sum(nil)); checksum != artifact.Checksum {

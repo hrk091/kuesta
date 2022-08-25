@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/hrk091/nwctl/provisioner/api/v1alpha1"
@@ -52,6 +53,7 @@ type GitRepositoryWatcher struct {
 // move the current state of the cluster closer to the desired state.
 func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
+	l.Info("start reconciliation")
 
 	// get source object
 	var repository sourcev1.GitRepository
@@ -59,7 +61,7 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.Error(ctx, err, "get GitRepository")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	l.Info("start reconciliation", "revision", repository.Status.Artifact.Revision)
+	l.Info(fmt.Sprintf("revision: %s", repository.Status.Artifact.Revision))
 
 	tmpDir, err := ioutil.TempDir("", repository.Name)
 	if err != nil {
