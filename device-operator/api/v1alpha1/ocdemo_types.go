@@ -17,25 +17,18 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/hrk091/nwctl/pkg/device"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // OcDemoSpec defines the desired state of OcDemo
 type OcDemoSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of OcDemo. Edit ocdemo_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	device.DeviceSpec `json:",inline"`
 }
 
 // OcDemoStatus defines the observed state of OcDemo
 type OcDemoStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	device.DeviceStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true

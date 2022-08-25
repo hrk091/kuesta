@@ -335,6 +335,12 @@ func TestDevicePath_DeviceConfigPath(t *testing.T) {
 	assert.Equal(t, "tmproot/devices/device1/config.cue", p.DeviceConfigPath(nwctl.IncludeRoot))
 }
 
+func TestDevicePath_DeviceActualConfigPath(t *testing.T) {
+	p := newValidDevicePath()
+	assert.Equal(t, "devices/device1/actual_config.cue", p.DeviceActualConfigPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1/actual_config.cue", p.DeviceActualConfigPath(nwctl.IncludeRoot))
+}
+
 func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 	dir := t.TempDir()
 
@@ -415,6 +421,45 @@ func TestDevicePath_CheckSum(t *testing.T) {
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 
+}
+
+func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
+	dir := t.TempDir()
+
+	t.Run("ok: file exists", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.RootDir = dir
+		want := []byte("foobar")
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), want)
+		exitOnErr(t, err)
+
+		r, err := p.ReadActualDeviceConfigFile()
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
+	t.Run("bad: file not exist", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.RootDir = dir
+		p.Device = "device2"
+		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750)
+		exitOnErr(t, err)
+
+		_, err = p.ReadActualDeviceConfigFile()
+		assert.Error(t, err)
+	})
+
+	t.Run("bad: dir not exist", func(t *testing.T) {
+		p := newValidDevicePath()
+		p.Device = "notExist"
+		p.RootDir = dir
+
+		_, err := p.ReadActualDeviceConfigFile()
+		assert.Error(t, err)
+	})
 }
 
 func TestParseServiceInputPath(t *testing.T) {

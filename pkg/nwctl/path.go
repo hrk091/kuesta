@@ -34,12 +34,13 @@ import (
 )
 
 const (
-	DirServices      = "services"
-	DirDevices       = "devices"
-	DirComputed      = "computed"
-	FileInputCue     = "input.cue"
-	FileTransformCue = "transform.cue"
-	FileConfigCue    = "config.cue"
+	DirServices         = "services"
+	DirDevices          = "devices"
+	DirComputed         = "computed"
+	FileInputCue        = "input.cue"
+	FileTransformCue    = "transform.cue"
+	FileConfigCue       = "config.cue"
+	FileActualConfigCue = "actual_config.cue"
 )
 
 type PathType string
@@ -242,6 +243,21 @@ func (p *DevicePath) CheckSum() (string, error) {
 	}
 	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
 	return checksum, nil
+}
+
+// DeviceActualConfigPath returns the path to specified device actual config.
+func (p *DevicePath) DeviceActualConfigPath(t PathType) string {
+	el := append(p.devicePathElem(), FileActualConfigCue)
+	return p.addRoot(filepath.Join(el...), t)
+}
+
+// ReadActualDeviceConfigFile loads the device actual config.
+func (p *DevicePath) ReadActualDeviceConfigFile() ([]byte, error) {
+	buf, err := os.ReadFile(p.DeviceActualConfigPath(IncludeRoot))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return buf, nil
 }
 
 // ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.
