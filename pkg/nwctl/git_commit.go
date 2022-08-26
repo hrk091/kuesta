@@ -50,6 +50,7 @@ func (c *GitCommitCfg) Validate() error {
 // RunGitCommit runs the main process of the `git commit` command.
 func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	l := logger.FromContext(ctx)
+	out := WriterFromContext(ctx)
 	l.Debug("git commit called")
 
 	git, err := gogit.NewGit(gogit.GitOptions{
@@ -71,10 +72,14 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	stmap, err := w.Status()
 	if err != nil {
 		return fmt.Errorf("git status: %w", err)
-	} else if err := CheckGitIsStagedOrUnmodified(stmap); err != nil {
+	}
+	if len(stmap) == 0 {
+		fmt.Fprintf(out, "Skipped: There are no update.")
+		return nil
+	}
+	if err := CheckGitIsStagedOrUnmodified(stmap); err != nil {
 		return fmt.Errorf("check files are either staged or unmodified: %w", err)
 	}
-	commitMsg := MakeCommitMessage(stmap)
 
 	t := time.Now()
 	branchName := "main"
@@ -85,6 +90,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 		}
 	}
 
+	commitMsg := MakeCommitMessage(stmap)
 	if _, err := git.Commit(commitMsg); err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}

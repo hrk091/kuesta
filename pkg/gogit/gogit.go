@@ -233,6 +233,29 @@ func (g *Git) Push(branch string, opts ...PushOpts) error {
 // PushOpts enables modification of the go-git PushOptions.
 type PushOpts func(o *extgogit.PushOptions)
 
+// Pull pulls the specified git branch from remote to local.
+func (g *Git) Pull(opts ...PullOpts) error {
+	o := &extgogit.PullOptions{
+		SingleBranch: false,
+		Auth:         g.BasicAuth(),
+	}
+	for _, tr := range opts {
+		tr(o)
+	}
+
+	w, err := g.repo.Worktree()
+	if err != nil {
+		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
+	}
+	if err := w.Pull(o); err != nil {
+		return errors.WithStack(fmt.Errorf("git pull : %w", err))
+	}
+	return nil
+}
+
+// PullOpts enables modification of the go-git PullOptions.
+type PullOpts func(o *extgogit.PullOptions)
+
 // IsTrackedAndChanged returns true if git file status is neither untracked nor unmodified.
 func IsTrackedAndChanged(c extgogit.StatusCode) bool {
 	return c != extgogit.Untracked && c != extgogit.Unmodified
