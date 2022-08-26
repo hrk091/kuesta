@@ -63,11 +63,11 @@ func (s *GnmiMock) Set(ctx context.Context, r *pb.SetRequest) (*pb.SetResponse, 
 	return s.SetHandler(ctx, r)
 }
 
-func (s *GnmiMock) Subscribe(srv pb.GNMI_SubscribeServer) error {
+func (s *GnmiMock) Subscribe(stream pb.GNMI_SubscribeServer) error {
 	if s.SubscribeHandler == nil {
-		return s.UnimplementedGNMIServer.Subscribe(srv)
+		return s.UnimplementedGNMIServer.Subscribe(stream)
 	}
-	return s.SubscribeHandler(srv)
+	return s.SubscribeHandler(stream)
 }
 
 func NewServer(ctx context.Context, s pb.GNMIServer, opts ...grpc.DialOption) (*grpc.Server, *grpc.ClientConn) {

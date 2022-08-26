@@ -84,3 +84,40 @@ func TestConfig_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestNewRootCmd(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{
+			"bad: device not set",
+			[]string{"nwctl-subscribe", "-addr=:9339", "-aggregator-url=http://localhost:8080"},
+			true,
+		},
+		{
+			"bad: addr not set",
+			[]string{"nwctl-subscribe", "-d=device1", "-aggregator-url=http://localhost:8080"},
+			true,
+		},
+		{
+			"bad: aggregator-url not set",
+			[]string{"nwctl-subscribe", "-d=device1", "-addr=:9339"},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewRootCmd()
+			c.SetArgs(tt.args)
+			err := c.Execute()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}

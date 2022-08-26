@@ -26,7 +26,7 @@ import (
 	"context"
 	"encoding/json"
 	nwctlgnmi "github.com/hrk091/nwctl/pkg/gnmi"
-	"github.com/openconfig/gnmi/client"
+	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -36,7 +36,127 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
+
+func TestSubscribe(t *testing.T) {
+	v := gnmi.TypedValue{
+		Value: &gnmi.TypedValue_JsonIetfVal{
+			JsonIetfVal: []byte(`{"foo": "bar"}`),
+		},
+	}
+	m := &nwctlgnmi.GnmiMock{
+		SubscribeHandler: func(stream pb.GNMI_SubscribeServer) error {
+			for i := 0; i < 3; i++ {
+				resp := &pb.SubscribeResponse{
+					Response: &pb.SubscribeResponse_Update{
+						Update: &pb.Notification{
+							Timestamp: time.Now().UnixNano(),
+							Update: []*pb.Update{
+								{Path: &pb.Path{Target: "*"}, Val: &v},
+							},
+						},
+					},
+				}
+				if err := stream.Send(resp); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	ctx := context.Background()
+	gs, conn := nwctlgnmi.NewServer(ctx, m)
+	defer gs.Stop()
+
+	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
+	exitOnErr(t, err)
+
+	count := 0
+	err = Subscribe(ctx, client, func(noti gclient.Notification) error {
+		count++
+		return nil
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, 3+1, count)
+}
+
+func TestSync(t *testing.T) {
+	config := []byte(`{
+  "openconfig-interfaces:interfaces": {
+    "interface": [
+      {
+        "config": {
+          "description": "foo",
+          "enabled": true,
+          "mtu": 9000,
+          "name": "Ethernet1",
+          "type": "iana-if-type:ethernetCsmacd"
+        },
+        "name": "Ethernet1",
+        "state": {
+          "admin-status": "UP",
+          "oper-status": "UP"
+        }
+      }
+    ]
+  }
+}
+`)
+	want := `{
+	Interface: {
+		Ethernet1: {
+			AdminStatus: 1
+			Description: "foo"
+			Enabled:     true
+			Mtu:         9000
+			Name:        "Ethernet1"
+			OperStatus:  1
+			Type:        80
+		}
+	}
+}`
+
+	m := &nwctlgnmi.GnmiMock{
+		GetHandler: func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
+			v := gnmi.TypedValue{
+				Value: &gnmi.TypedValue_JsonIetfVal{
+					JsonIetfVal: config,
+				},
+			}
+			resp := &pb.GetResponse{
+				Notification: []*pb.Notification{
+					{
+						Update: []*pb.Update{
+							{Path: &pb.Path{}, Val: &v},
+						},
+					},
+				},
+			}
+			return resp, nil
+		},
+	}
+	ctx := context.Background()
+	gs, conn := nwctlgnmi.NewServer(ctx, m)
+	defer gs.Stop()
+
+	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
+	exitOnErr(t, err)
+
+	cfg := Config{
+		Device: "device1",
+	}
+	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req SaveConfigRequest
+		exitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
+		assert.Equal(t, req.Device, cfg.Device)
+		assert.Equal(t, want, req.Config)
+	}))
+	cfg.AggregatorURL = hs.URL
+
+	err = Sync(ctx, cfg, client)
+	assert.Nil(t, err)
+}
 
 func TestGetEntireConfig(t *testing.T) {
 	config := []byte("dummy")
@@ -95,7 +215,7 @@ func TestGetEntireConfig(t *testing.T) {
 			s, conn := nwctlgnmi.NewServer(ctx, m)
 			defer s.Stop()
 
-			c, err := gnmiclient.NewFromConn(ctx, conn, client.Destination{})
+			c, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
 			got, err := GetEntireConfig(ctx, c)
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -59,25 +59,25 @@ func Run(cfg Config) error {
 		return fmt.Errorf("create gNMI client: %w", errors.WithStack(err))
 	}
 
-	cb := func() error {
+	fn := func(noti gclient.Notification) error {
 		return Sync(ctx, cfg, c.(*gnmiclient.Client))
 	}
-	if err := Subscribe(ctx, c, cb); err != nil {
+	if err := Subscribe(ctx, c, fn); err != nil {
 		return err
 	}
 	return nil
 }
 
-func Subscribe(ctx context.Context, c gclient.Impl, cb func() error) error {
+func Subscribe(ctx context.Context, c gclient.Impl, fn func(noti gclient.Notification) error) error {
 	l := logger.FromContext(ctx)
 
 	query := gclient.Query{
+		Type: gclient.Stream,
 		NotificationHandler: func(noti gclient.Notification) error {
 			if err, ok := noti.(error); ok {
 				return fmt.Errorf("error received: %w", err)
 			}
-			l.Infow("notification received", "item", noti)
-			return nil
+			return fn(noti)
 		},
 	}
 
@@ -98,11 +98,7 @@ func Subscribe(ctx context.Context, c gclient.Impl, cb func() error) error {
 		} else if err != nil {
 			return fmt.Errorf("error received on gNMI subscribe channel: %w", err)
 		}
-		if err := cb(); err != nil {
-			l.Errorf("sync on received: %v", err)
-		}
 	}
-
 }
 
 func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {

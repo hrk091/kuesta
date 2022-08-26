@@ -54,6 +54,9 @@ func NewRootCmd() *cobra.Command {
 			if err := viper.Unmarshal(&cfg); err != nil {
 				return err
 			}
+			if err := cfg.Validate(); err != nil {
+				return err
+			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 			return Run(cfg)
 		},
@@ -61,12 +64,12 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.Flags().BoolP("devel", "", false, "enable development mode")
 	cmd.Flags().Uint8P("verbose", "v", 0, "verbose level")
-	cmd.Flags().StringP("addr", "a", ":9339", "Address of the target device, address:port or just :port")
+	cmd.Flags().StringP("addr", "a", "", "Address of the target device, address:port or just :port")
 	cmd.Flags().StringP("username", "u", "admin", "Username of the target device")
 	cmd.Flags().StringP("password", "p", "admin", "Password of the target device")
 	cmd.Flags().StringP("device", "d", "", "Name of the target device")
 	cobra.CheckErr(cmd.MarkFlagRequired("device"))
-	cmd.Flags().StringP("aggregator-url", "", "http://localhost:8080", "URL of the aggregator")
+	cmd.Flags().StringP("aggregator-url", "", "", "URL of the aggregator")
 
 	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
 	viper.SetEnvPrefix("NWCTL")
