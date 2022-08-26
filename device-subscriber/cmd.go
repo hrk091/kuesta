@@ -55,7 +55,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
-			return Subscribe(cfg)
+			return Run(cfg)
 		},
 	}
 

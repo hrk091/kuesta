@@ -42,11 +42,9 @@ import (
 	"time"
 )
 
-func Subscribe(cfg Config) error {
+func Run(cfg Config) error {
 	ctx := context.Background()
-	l := logger.FromContext(ctx)
 
-	// send gNMI Subscribe Query
 	c, err := gnmiclient.New(ctx, gclient.Destination{
 		Addrs:   []string{cfg.Addr},
 		Target:  "",
@@ -59,6 +57,18 @@ func Subscribe(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("create gNMI client: %w", errors.WithStack(err))
 	}
+
+	cb := func() error {
+		return Sync(ctx, cfg, c.(*gnmiclient.Client))
+	}
+	if err := Subscribe(ctx, c, cb); err != nil {
+		return err
+	}
+	return nil
+}
+
+func Subscribe(ctx context.Context, c gclient.Impl, cb func() error) error {
+	l := logger.FromContext(ctx)
 
 	query := gclient.Query{
 		NotificationHandler: func(noti gclient.Notification) error {
@@ -78,21 +88,20 @@ func Subscribe(cfg Config) error {
 			l.Errorf("close gNMI subscription: %w", err)
 		}
 	}()
-	l.Infof("start subscribe: %s (%s)", cfg.Device, cfg.Addr)
 
 	for {
-		err = c.Recv()
+		err := c.Recv()
 		if err == io.EOF {
 			l.Infow("EOF")
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("error received on gNMI subscribe channel: %w", err)
 		}
-		if err := Sync(ctx, cfg, c.(*gnmiclient.Client)); err != nil {
-			// ignore error not to stop server even when raised
+		if err := cb(); err != nil {
 			l.Errorf("sync on received: %v", err)
 		}
 	}
+
 }
 
 func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {
