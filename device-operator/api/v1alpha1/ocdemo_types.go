@@ -21,6 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	RefField = ".spec.rolloutRef"
+)
+
 // OcDemoSpec defines the desired state of OcDemo
 type OcDemoSpec struct {
 	device.DeviceSpec `json:",inline"`

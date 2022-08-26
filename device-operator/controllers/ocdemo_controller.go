@@ -32,8 +32,14 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/prototext"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	source "github.com/fluxcd/source-controller/api/v1beta2"
+	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
 	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 )
@@ -92,7 +98,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	l.Info(fmt.Sprintf("next: revision=%s", next.GitRevision))
 
-	var gr source.GitRepository
+	var gr fluxcd.GitRepository
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: dr.Namespace,
 		Name:      dr.Name,
@@ -211,6 +217,11 @@ func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs
 func (r *OcDemoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&deviceoperator.OcDemo{}).
+		Watches(
+			&source.Kind{Type: &provisioner.DeviceRollout{}},
+			handler.EnqueueRequestsFromMapFunc(r.findObjectForDeviceRollout),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		Complete(r)
 }
 
@@ -224,4 +235,27 @@ func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
 		return nil, errors.WithStack(err)
 	}
 	return &o, nil
+}
+
+func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
+	attachedDevices := &deviceoperator.OcDemoList{}
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(deviceoperator.RefField, deviceRollout.GetName()),
+		Namespace:     deviceRollout.GetNamespace(),
+	}
+	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
+		fmt.Printf("unable to list effected devices: %v\n", err)
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(attachedDevices.Items))
+	for i, v := range attachedDevices.Items {
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      v.GetName(),
+				Namespace: v.GetNamespace(),
+			},
+		}
+	}
+	return requests
 }
