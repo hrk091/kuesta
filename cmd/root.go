@@ -75,7 +75,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.nwctl.yaml)")
 
 	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
-	cmd.PersistentFlags().BoolP(FlagDevel, "d", false, "enable development mode")
+	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
 	cmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
 	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
 	cmd.PersistentFlags().StringP(FlagGitTrunk, "", "main", "git trunk branch")
@@ -95,7 +95,6 @@ func NewRootCmd() *cobra.Command {
 }
 
 func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
-	// TODO flag parameter validation
 	gitUser := viper.GetString(FlagGitUser)
 	gitEmail := viper.GetString(FlagGitEmail)
 	if gitUser != DefaultGitUser && gitEmail == DefaultGitEmail {

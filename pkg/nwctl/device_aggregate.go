@@ -20,16 +20,29 @@
  * THE SOFTWARE.
  */
 
-package cmd
+package nwctl
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
+)
 
-func newDeviceCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "device",
-		Short: "Manage devices",
-	}
-	cmd.AddCommand(newDeviceCompositeCmd())
-	cmd.AddCommand(newDeviceAggregateCmd())
-	return cmd
+type DeviceAggregateCfg struct {
+	RootCfg
+
+	Port string
+}
+
+// Validate validates exposed fields according to the `validate` tag.
+func (c *DeviceAggregateCfg) Validate() error {
+	return common.Validate(c)
+}
+
+// RunDeviceAggregate runs the main process of the `device aggregate` command.
+func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
+	l := logger.FromContext(ctx)
+	l.Debug("device aggregate called")
+
+	return nil
 }

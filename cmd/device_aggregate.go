@@ -22,14 +22,44 @@
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
 
-func newDeviceCmd() *cobra.Command {
+const (
+	FlagAggregatePort = "aggregate-port"
+)
+
+func newDeviceAggregateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "device",
-		Short: "Manage devices",
+		Use:   "aggregate",
+		Short: "Aggregate device config update and push to git",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := newDeviceAggregateCfg(cmd, args)
+			if err != nil {
+				return err
+			}
+			logger.Setup(cfg.Devel, cfg.Verbose)
+
+			return nwctl.RunDeviceAggregate(cmd.Context(), cfg)
+		},
 	}
-	cmd.AddCommand(newDeviceCompositeCmd())
-	cmd.AddCommand(newDeviceAggregateCmd())
+	cmd.PersistentFlags().StringVar(&cfgFile, FlagAggregatePort, ":8000", "Listen port")
+
 	return cmd
+}
+
+func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceAggregateCfg, error) {
+	rootCfg, err := newRootCfg(cmd)
+	if err != nil {
+		return nil, err
+	}
+	cfg := &nwctl.DeviceAggregateCfg{
+		RootCfg: *rootCfg,
+		Port:    viper.GetString(FlagAggregatePort),
+	}
+	return cfg, cfg.Validate()
 }
