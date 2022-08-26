@@ -23,47 +23,64 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
-	"github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-// ExtractJsonIetfVal extracts the JSON IETF field of the supplied TypedValue.
-func ExtractJsonIetfVal(tv *gnmi.TypedValue) ([]byte, error) {
-	v, ok := tv.GetValue().(*gnmi.TypedValue_JsonIetfVal)
-	if !ok {
-		return nil, errors.WithStack(fmt.Errorf("value did not contain IETF JSON"))
-	}
-	return v.JsonIetfVal, nil
-}
+func TestConfig_Validate(t *testing.T) {
 
-// GetEntireConfig requests gNMI GetRequest and returns entire device config as
-func GetEntireConfig(ctx context.Context, client *gnmiclient.Client) ([]byte, error) {
-	req := gnmi.GetRequest{
-		Path: []*gnmi.Path{
-			{}, // TODO consider to specify target and path
-		},
-		Encoding: gnmi.Encoding_JSON_IETF,
-	}
-
-	resp, err := client.Get(ctx, &req)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	// resolve gnmi TypedValue
-	var tv *gnmi.TypedValue
-	for _, v := range resp.GetNotification() {
-		for _, u := range v.GetUpdate() {
-			tv = u.GetVal()
-			break
+	newValidStruct := func(t func(*Config)) *Config {
+		cfg := &Config{
+			Device:        "device1",
+			Addr:          ":9339",
+			AggregatorURL: "http://localhost:8000",
 		}
-	}
-	if tv == nil {
-		return nil, errors.WithStack(fmt.Errorf("no content from gNMI server"))
+		t(cfg)
+		return cfg
 	}
 
-	return ExtractJsonIetfVal(tv)
+	tests := []struct {
+		name      string
+		transform func(cfg *Config)
+		wantErr   bool
+	}{
+		{
+			"ok",
+			func(cfg *Config) {},
+			false,
+		},
+		{
+			"bad: device is empty",
+			func(cfg *Config) {
+				cfg.Device = ""
+			},
+			true,
+		},
+		{
+			"bad: addr is empty",
+			func(cfg *Config) {
+				cfg.Addr = ""
+			},
+			true,
+		},
+		{
+			"bad: aggregator-url is empty",
+			func(cfg *Config) {
+				cfg.AggregatorURL = ""
+			},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := newValidStruct(tt.transform)
+			err := cfg.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
