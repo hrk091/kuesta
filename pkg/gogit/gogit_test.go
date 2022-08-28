@@ -313,6 +313,74 @@ func TestGit_Push(t *testing.T) {
 	})
 }
 
+func TestGit_Pull(t *testing.T) {
+	// setup remote bare
+	_, dirBare := initBareRepo(t)
+	t.Log("bare: ", dirBare)
+	testRemote := "test-remote"
+
+	// setup pusher
+	repoPusher, dirPusher := initRepo(t, "main")
+	_, err := repoPusher.CreateRemote(&config.RemoteConfig{
+		Name: testRemote,
+		URLs: []string{dirBare},
+	})
+	exitOnErr(t, err)
+	t.Log("pusher: ", dirPusher)
+	gitPusher, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dirPusher,
+		RemoteName: testRemote,
+	})
+	exitOnErr(t, err)
+
+	_, err = gitPusher.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+	exitOnErr(t, err)
+
+	err = gitPusher.Push("master")
+	exitOnErr(t, err)
+	err = gitPusher.Push("test")
+	exitOnErr(t, err)
+
+	// setup puller by git clone
+	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+		URL:        dirBare,
+		RemoteName: testRemote,
+	})
+	t.Log("puller: ", dirPuller)
+	gitPuller, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dirPuller,
+		RemoteName: testRemote,
+	})
+	exitOnErr(t, err)
+
+	remote, err := repoPuller.Remote(testRemote)
+	exitOnErr(t, err)
+	listOpts := extgogit.ListOptions{}
+	refs, err := remote.List(&listOpts)
+	for _, r := range refs {
+		t.Log(r.Name().String())
+	}
+
+	// push test branch
+	exitOnErr(t, addFile(repoPusher, "test", "push"))
+	wantMsg := "git commit which should be pushed to remote"
+	want, err := gitPusher.Commit(wantMsg)
+	exitOnErr(t, err)
+
+	err = gitPusher.Push("test")
+	exitOnErr(t, err)
+
+	// pull test branch
+	_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+	exitOnErr(t, err)
+
+	err = gitPuller.Pull()
+	exitOnErr(t, err)
+
+	got, err := gitPuller.Head()
+	assert.Equal(t, want.String(), got.Hash.String())
+}
+
 func TestIsTrackedAndChanged(t *testing.T) {
 	tests := []struct {
 		given extgogit.StatusCode

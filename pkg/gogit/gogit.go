@@ -63,12 +63,12 @@ type Git struct {
 	repo *extgogit.Repository
 }
 
-// NewGit creates Git with an open git repository.
-func NewGit(opts GitOptions) (*Git, error) {
-	if err := opts.Validate(); err != nil {
+// NewGit creates Git with a go-git repository.
+func NewGit(o GitOptions) (*Git, error) {
+	if err := o.Validate(); err != nil {
 		return nil, fmt.Errorf("validate GitOptions struct: %w", err)
 	}
-	g := NewGitWithoutRepo(opts)
+	g := NewGitWithoutRepo(o)
 	repo, err := extgogit.PlainOpen(g.opts.Path)
 	if err != nil {
 		return nil, errors.WithStack(fmt.Errorf("open git repo: %w", err))
@@ -77,10 +77,10 @@ func NewGit(opts GitOptions) (*Git, error) {
 	return g, nil
 }
 
-// NewGitWithoutRepo creates Git without setting up an open git repository.
-func NewGitWithoutRepo(opts GitOptions) *Git {
+// NewGitWithoutRepo creates Git without setting up a go-git repository.
+func NewGitWithoutRepo(o GitOptions) *Git {
 	return &Git{
-		opts: opts,
+		opts: o,
 	}
 }
 
@@ -127,6 +127,35 @@ func (g *Git) Branch() (string, error) {
 	return ref.Name().Short(), nil
 }
 
+func (g *Git) SetUpstream(branch string) error {
+	b := config.Branch{
+		Name:   branch,
+		Remote: g.opts.RemoteName,
+		Merge:  plumbing.NewBranchReferenceName(branch),
+	}
+	if err := g.repo.CreateBranch(&b); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (g *Git) Branches() ([]string, error) {
+	var branches []string
+	it, err := g.repo.Branches()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	err = it.ForEach(func(ref *plumbing.Reference) error {
+		branches = append(branches, ref.Name().Short())
+		return nil
+	})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return branches, nil
+}
+
 // Head returns the object.Commit of the current repository head.
 func (g *Git) Head() (*object.Commit, error) {
 	ref, err := g.repo.Head()
@@ -157,11 +186,8 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 		tr(o)
 	}
 
-	ref, err := g.repo.Head()
-	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("resolve head: %w", err))
-	}
-	if ref.Name() == o.Branch {
+	ref, _ := g.repo.Head()
+	if ref != nil && ref.Name() == o.Branch {
 		return w, nil
 	}
 
@@ -236,8 +262,14 @@ type PushOpts func(o *extgogit.PushOptions)
 // Pull pulls the specified git branch from remote to local.
 func (g *Git) Pull(opts ...PullOpts) error {
 	o := &extgogit.PullOptions{
+		RemoteName:   common.Or(g.opts.RemoteName, DefaultRemoteName),
 		SingleBranch: false,
+		Progress:     os.Stdout,
 		Auth:         g.BasicAuth(),
+	}
+	// NOTE explicit head resolution is needed since go-git ReferenceName default does not work.
+	if ref, err := g.repo.Head(); err == nil {
+		o.ReferenceName = ref.Name()
 	}
 	for _, tr := range opts {
 		tr(o)
@@ -248,7 +280,9 @@ func (g *Git) Pull(opts ...PullOpts) error {
 		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 	if err := w.Pull(o); err != nil {
-		return errors.WithStack(fmt.Errorf("git pull : %w", err))
+		if err != extgogit.NoErrAlreadyUpToDate {
+			return errors.WithStack(fmt.Errorf("git pull : %w", err))
+		}
 	}
 	return nil
 }

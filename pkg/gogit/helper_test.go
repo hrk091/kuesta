@@ -26,6 +26,7 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"io/ioutil"
 	"runtime/debug"
 	"testing"
 	"time"
@@ -39,7 +40,11 @@ func exitOnErr(t *testing.T, err error) {
 }
 
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "gittest-*")
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
+	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
 	if err != nil {
 		t.Fatalf("init repo: %v", err)
@@ -57,10 +62,27 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 }
 
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "gittest-*")
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
+	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
 	if err != nil {
 		t.Fatalf("init repo: %v", err)
+	}
+	return repo, dir
+}
+
+func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
+	dir, err := ioutil.TempDir("", "gittest-*")
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
+	//dir := t.TempDir()
+	repo, err := extgogit.PlainClone(dir, false, opts)
+	if err != nil {
+		t.Fatalf("clone repo: %v", err)
 	}
 	return repo, dir
 }
