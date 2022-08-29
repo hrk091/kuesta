@@ -84,6 +84,11 @@ func NewGitWithoutRepo(o GitOptions) *Git {
 	}
 }
 
+// Repo returns containing go-git repository.
+func (g *Git) Repo() *extgogit.Repository {
+	return g.repo
+}
+
 // BasicAuth returns the go-git BasicAuth if git token is provided, otherwise nil.
 func (g *Git) BasicAuth() *gogithttp.BasicAuth {
 	// TODO integrate with k8s secret

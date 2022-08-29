@@ -369,7 +369,8 @@ func TestGit_Branches(t *testing.T) {
 func TestGit_Pull(t *testing.T) {
 	testRemote := "test-remote"
 
-	t.Run("ok", func(t *testing.T) {
+	setup := func(t *testing.T, beforeCloneFn func(*gogit.Git)) (*gogit.Git, *gogit.Git) {
+		// setup remote bare repo
 		_, dirBare := initBareRepo(t)
 
 		// setup pusher
@@ -388,8 +389,9 @@ func TestGit_Pull(t *testing.T) {
 		_, err = gitPusher.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
 		exitOnErr(t, err)
 
-		exitOnErr(t, gitPusher.Push("master"))
-		exitOnErr(t, gitPusher.Push("test"))
+		if beforeCloneFn != nil {
+			beforeCloneFn(gitPusher)
+		}
 
 		// setup puller by git clone
 		_, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
@@ -402,8 +404,17 @@ func TestGit_Pull(t *testing.T) {
 		})
 		exitOnErr(t, err)
 
+		return gitPusher, gitPuller
+	}
+
+	t.Run("ok", func(t *testing.T) {
+		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
+			exitOnErr(t, pusher.Push("master"))
+			exitOnErr(t, pusher.Push("test"))
+		})
+
 		// push branch
-		exitOnErr(t, addFile(repoPusher, "test", "push"))
+		exitOnErr(t, addFile(gitPuller.Repo(), "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		want, err := gitPusher.Commit(wantMsg)
 		exitOnErr(t, err)
@@ -422,43 +433,14 @@ func TestGit_Pull(t *testing.T) {
 	})
 
 	t.Run("ok: no update", func(t *testing.T) {
-		_, dirBare := initBareRepo(t)
-
-		// setup pusher
-		repoPusher, dirPusher := initRepo(t, "main")
-		_, err := repoPusher.CreateRemote(&config.RemoteConfig{
-			Name: testRemote,
-			URLs: []string{dirBare},
+		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
+			exitOnErr(t, pusher.Push("master"))
+			exitOnErr(t, pusher.Push("test"))
 		})
-		exitOnErr(t, err)
-		gitPusher, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dirPusher,
-			RemoteName: testRemote,
-		})
-		exitOnErr(t, err)
-
-		_, err = gitPusher.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		exitOnErr(t, err)
 
 		head, err := gitPusher.Head()
 		exitOnErr(t, err)
 		want := head.Hash
-
-		err = gitPusher.Push("master")
-		exitOnErr(t, err)
-		err = gitPusher.Push("test")
-		exitOnErr(t, err)
-
-		// setup puller by git clone
-		_, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
-			URL:        dirBare,
-			RemoteName: testRemote,
-		})
-		gitPuller, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dirPuller,
-			RemoteName: testRemote,
-		})
-		exitOnErr(t, err)
 
 		// pull branch
 		_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
@@ -471,6 +453,18 @@ func TestGit_Pull(t *testing.T) {
 		assert.Equal(t, want.String(), got.Hash.String())
 	})
 
+	t.Run("err: upstream branch not exist", func(t *testing.T) {
+		_, gitPuller := setup(t, func(g *gogit.Git) {
+			exitOnErr(t, g.Push("master"))
+		})
+
+		_, err := gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+		exitOnErr(t, err)
+
+		err = gitPuller.Pull()
+		assert.Error(t, err)
+	})
+
 	t.Run("err: remote repo not exist", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		git, err := gogit.NewGit(gogit.GitOptions{
@@ -480,43 +474,6 @@ func TestGit_Pull(t *testing.T) {
 		exitOnErr(t, err)
 
 		err = git.Pull()
-		assert.Error(t, err)
-	})
-
-	t.Run("err: upstream branch not exist", func(t *testing.T) {
-		_, dirBare := initBareRepo(t)
-
-		// setup pusher
-		repoPusher, dirPusher := initRepo(t, "main")
-		_, err := repoPusher.CreateRemote(&config.RemoteConfig{
-			Name: testRemote,
-			URLs: []string{dirBare},
-		})
-		exitOnErr(t, err)
-		gitPusher, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dirPusher,
-			RemoteName: testRemote,
-		})
-		exitOnErr(t, err)
-
-		err = gitPusher.Push("master")
-		exitOnErr(t, err)
-
-		// setup puller by git clone
-		_, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
-			URL:        dirBare,
-			RemoteName: testRemote,
-		})
-		gitPuller, err := gogit.NewGit(gogit.GitOptions{
-			Path:       dirPuller,
-			RemoteName: testRemote,
-		})
-		exitOnErr(t, err)
-
-		_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		exitOnErr(t, err)
-
-		err = gitPuller.Pull()
 		assert.Error(t, err)
 	})
 
