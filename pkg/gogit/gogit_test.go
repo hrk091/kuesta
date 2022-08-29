@@ -313,10 +313,62 @@ func TestGit_Push(t *testing.T) {
 	})
 }
 
+func TestGit_SetUpstream(t *testing.T) {
+	_, dirBare := initBareRepo(t)
+	testRemote := "test-remote"
+
+	repo, dir := initRepo(t, "main")
+	_, err := repo.CreateRemote(&config.RemoteConfig{
+		Name: testRemote,
+		URLs: []string{dirBare},
+	})
+	exitOnErr(t, err)
+	git, err := gogit.NewGit(gogit.GitOptions{
+		Path:       dir,
+		RemoteName: testRemote,
+	})
+	exitOnErr(t, err)
+
+	_, err = git.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+	exitOnErr(t, err)
+
+	err = git.SetUpstream("test")
+	assert.Nil(t, err)
+
+	c, err := repo.Storer.Config()
+	exitOnErr(t, err)
+
+	exists := false
+	for name, r := range c.Branches {
+		if name == "test" {
+			assert.Equal(t, testRemote, r.Remote)
+			assert.Equal(t, plumbing.NewBranchReferenceName("test"), r.Merge)
+			exists = true
+		}
+	}
+	assert.True(t, exists)
+}
+
+func TestGit_Branches(t *testing.T) {
+	_, dir := initRepo(t, "main")
+	git, err := gogit.NewGit(gogit.GitOptions{
+		Path: dir,
+	})
+	exitOnErr(t, err)
+
+	_, err = git.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
+	exitOnErr(t, err)
+
+	branches, err := git.Branches()
+	want := []string{"main", "test"}
+	for _, w := range want {
+		assert.Contains(t, branches, w)
+	}
+}
+
 func TestGit_Pull(t *testing.T) {
 	// setup remote bare
 	_, dirBare := initBareRepo(t)
-	t.Log("bare: ", dirBare)
 	testRemote := "test-remote"
 
 	// setup pusher
@@ -326,7 +378,6 @@ func TestGit_Pull(t *testing.T) {
 		URLs: []string{dirBare},
 	})
 	exitOnErr(t, err)
-	t.Log("pusher: ", dirPusher)
 	gitPusher, err := gogit.NewGit(gogit.GitOptions{
 		Path:       dirPusher,
 		RemoteName: testRemote,
@@ -346,7 +397,6 @@ func TestGit_Pull(t *testing.T) {
 		URL:        dirBare,
 		RemoteName: testRemote,
 	})
-	t.Log("puller: ", dirPuller)
 	gitPuller, err := gogit.NewGit(gogit.GitOptions{
 		Path:       dirPuller,
 		RemoteName: testRemote,
@@ -355,8 +405,8 @@ func TestGit_Pull(t *testing.T) {
 
 	remote, err := repoPuller.Remote(testRemote)
 	exitOnErr(t, err)
-	listOpts := extgogit.ListOptions{}
-	refs, err := remote.List(&listOpts)
+	refs, err := remote.List(&extgogit.ListOptions{})
+	exitOnErr(t, err)
 	for _, r := range refs {
 		t.Log(r.Name().String())
 	}

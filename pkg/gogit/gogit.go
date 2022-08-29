@@ -127,18 +127,7 @@ func (g *Git) Branch() (string, error) {
 	return ref.Name().Short(), nil
 }
 
-func (g *Git) SetUpstream(branch string) error {
-	b := config.Branch{
-		Name:   branch,
-		Remote: g.opts.RemoteName,
-		Merge:  plumbing.NewBranchReferenceName(branch),
-	}
-	if err := g.repo.CreateBranch(&b); err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
-}
-
+// Branches returns the all branch names at the local repo.
 func (g *Git) Branches() ([]string, error) {
 	var branches []string
 	it, err := g.repo.Branches()
@@ -154,6 +143,19 @@ func (g *Git) Branches() ([]string, error) {
 	}
 
 	return branches, nil
+}
+
+// SetUpstream writes branch remote setting to .git/config.
+func (g *Git) SetUpstream(branch string) error {
+	b := config.Branch{
+		Name:   branch,
+		Remote: g.opts.RemoteName,
+		Merge:  plumbing.NewBranchReferenceName(branch),
+	}
+	if err := g.repo.CreateBranch(&b); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // Head returns the object.Commit of the current repository head.
