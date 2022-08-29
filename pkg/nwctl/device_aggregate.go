@@ -38,6 +38,10 @@ import (
 	"time"
 )
 
+var (
+	UpdateCheckDuration = 5 * time.Second
+)
+
 type DeviceAggregateCfg struct {
 	RootCfg
 
@@ -58,8 +62,7 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	defer cancel()
 
 	s := NewDeviceAggregateServer(cfg)
-	s.runSaver(ctx)
-	s.runCommitter(ctx)
+	s.Run(ctx)
 
 	l.Infof("Start simple api server on %s", cfg.Port)
 	http.HandleFunc("/commit", s.HandleFunc)
@@ -87,12 +90,13 @@ func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 
 // HandleFunc handles API call to persist actual device config.
 func (s *DeviceAggregateServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	switch r.Method {
 	case http.MethodPost:
+		ctx := r.Context()
 		if err, code := s.add(ctx, r.Body); err != nil {
 			http.Error(w, err.Error(), code)
 		}
+		defer r.Body.Close()
 		return
 	default:
 		http.Error(w, `{"status": "only POST allowed"}`, http.StatusMethodNotAllowed)
@@ -106,6 +110,11 @@ func (s *DeviceAggregateServer) add(ctx context.Context, r io.Reader) (error, in
 	}
 	s.ch <- req
 	return nil, 200
+}
+
+func (s *DeviceAggregateServer) Run(ctx context.Context) {
+	s.runSaver(ctx)
+	s.runCommitter(ctx)
 }
 
 func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
@@ -133,7 +142,7 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case <-time.After(5 * time.Second):
+			case <-time.After(UpdateCheckDuration):
 				l.Info("Checking git status...")
 				if err := s.GitPushSyncBranch(ctx); err != nil {
 					l.Errorf("push sync branch: %v", err)

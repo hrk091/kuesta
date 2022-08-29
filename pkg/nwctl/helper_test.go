@@ -220,5 +220,42 @@ func getBranch(t *testing.T, repo *extgogit.Repository) string {
 		t.Fatalf("git head: %v", err)
 	}
 	return ref.Name().Short()
+}
 
+func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName string) []*plumbing.Reference {
+	remote, err := repo.Remote(remoteName)
+	exitOnErr(t, err)
+	branches, err := remote.List(&extgogit.ListOptions{})
+	exitOnErr(t, err)
+	return branches
+}
+
+func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, string) {
+	_, url := initBareRepo(t)
+
+	repo, dir := initRepo(t, "main")
+	_, err := repo.CreateRemote(&config.RemoteConfig{
+		Name: remote,
+		URLs: []string{url},
+	})
+	exitOnErr(t, err)
+
+	exitOnErr(t, addFile(repo, "devices/device1/actual_config.cue", "{will_deleted: _}"))
+	exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{will_updated: _}"))
+	_, err = commit(repo, time.Now())
+	exitOnErr(t, err)
+
+	exitOnErr(t, repo.CreateBranch(&config.Branch{
+		Name:   "main",
+		Remote: remote,
+		Merge:  plumbing.NewBranchReferenceName("main"),
+	}))
+
+	exitOnErr(t, push(repo, "main", remote))
+
+	exitOnErr(t, deleteFile(repo, "devices/device1/actual_config.cue"))
+	exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{updated: _}"))
+	exitOnErr(t, addFile(repo, "devices/device3/actual_config.cue", "{added: _}"))
+
+	return repo, dir
 }

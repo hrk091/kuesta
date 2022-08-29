@@ -23,12 +23,14 @@
 package nwctl_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -125,38 +127,9 @@ func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 
 func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 	testRemote := "test-remote"
-	setup := func(t *testing.T) (*extgogit.Repository, string) {
-		_, url := initBareRepo(t)
-
-		repo, dir := initRepo(t, "main")
-		_, err := repo.CreateRemote(&config.RemoteConfig{
-			Name: testRemote,
-			URLs: []string{url},
-		})
-		exitOnErr(t, err)
-
-		exitOnErr(t, addFile(repo, "devices/device1/actual_config.cue", "{will_deleted: _}"))
-		exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{will_updated: _}"))
-		_, err = commit(repo, time.Now())
-		exitOnErr(t, err)
-
-		exitOnErr(t, repo.CreateBranch(&config.Branch{
-			Name:   "main",
-			Remote: testRemote,
-			Merge:  plumbing.NewBranchReferenceName("main"),
-		}))
-
-		exitOnErr(t, push(repo, "main", testRemote))
-
-		exitOnErr(t, deleteFile(repo, "devices/device1/actual_config.cue"))
-		exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{updated: _}"))
-		exitOnErr(t, addFile(repo, "devices/device3/actual_config.cue", "{added: _}"))
-
-		return repo, dir
-	}
 
 	t.Run("ok", func(t *testing.T) {
-		repo, dir := setup(t)
+		repo, dir := setupGitRepoWithRemote(t, testRemote)
 		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
 			RootCfg: nwctl.RootCfg{
 				RootPath:  dir,
@@ -166,18 +139,58 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 		err := s.GitPushSyncBranch(context.Background())
 		exitOnErr(t, err)
 
-		remote, err := repo.Remote(testRemote)
-		exitOnErr(t, err)
-		branches, err := remote.List(&extgogit.ListOptions{})
-		exitOnErr(t, err)
-
 		exists := false
-		for _, b := range branches {
-			t.Log(b.Name().Short())
+		for _, b := range getRemoteBranches(t, repo, testRemote) {
 			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
 				exists = true
 			}
 		}
 		assert.True(t, exists)
 	})
+}
+
+func TestDeviceAggregateServer_Run(t *testing.T) {
+	testRemote := "test-remote"
+	repo, dir := setupGitRepoWithRemote(t, testRemote)
+	config := "foobar"
+	req := nwctl.SaveConfigRequest{
+		Device: "device1",
+		Config: &config,
+	}
+
+	buf, err := json.Marshal(req)
+	exitOnErr(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/commit", bytes.NewBuffer(buf))
+	response := httptest.NewRecorder()
+
+	s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
+		RootCfg: nwctl.RootCfg{
+			RootPath:  dir,
+			GitRemote: testRemote,
+		},
+	})
+	nwctl.UpdateCheckDuration = time.Millisecond
+	s.Run(context.Background())
+
+	s.HandleFunc(response, request)
+	res := response.Result()
+	assert.Equal(t, 200, res.StatusCode)
+
+	var got []byte
+	assert.Eventually(t, func() bool {
+		got, err = os.ReadFile(filepath.Join(dir, "devices", "device1", "actual_config.cue"))
+		return err == nil
+	}, time.Second, time.Millisecond)
+	assert.Equal(t, []byte(config), got)
+
+	assert.Eventually(t, func() bool {
+		exists := false
+		for _, b := range getRemoteBranches(t, repo, testRemote) {
+			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
+				exists = true
+			}
+		}
+		return exists
+	}, time.Second, time.Millisecond)
+
 }
