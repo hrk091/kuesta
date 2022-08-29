@@ -143,7 +143,7 @@ func MakeCommitMessage(stmap extgogit.Status) string {
 	services := append(servicesAdded, servicesDeleted...)
 	services = append(services, servicesModified...)
 
-	title := fmt.Sprintf("Updated: %s", strings.Join(services, ","))
+	title := fmt.Sprintf("Updated: %s", strings.Join(services, " "))
 	var bodylines []string
 	bodylines = append(bodylines, "", "Services:")
 	for _, s := range servicesAdded {

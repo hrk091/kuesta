@@ -60,7 +60,7 @@ func TestRunGitCommit(t *testing.T) {
 		return repo, dir
 	}
 
-	wantMsg := `Updated: services/foo/three,services/foo/two,services/foo/one
+	wantMsg := `Updated: services/foo/three services/foo/two services/foo/one
 
 Services:
 	added:     services/foo/three
@@ -127,7 +127,7 @@ func TestMakeCommitMessage(t *testing.T) {
 		"devices/dvc2/config.cue":          &extgogit.FileStatus{Staging: extgogit.Deleted},
 		"devices/dvc3/config.cue":          &extgogit.FileStatus{Staging: extgogit.Modified},
 	}
-	want := `Updated: services/svc1/k1,services/svc2/k1/k2,services/svc3/k1/k2/k3
+	want := `Updated: services/svc1/k1 services/svc2/k1/k2 services/svc3/k1/k2/k3
 
 Services:
 	added:     services/svc1/k1
