@@ -57,7 +57,7 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	s := NewDeviceAggregateServer()
+	s := NewDeviceAggregateServer(cfg)
 	s.runSaver(ctx)
 	s.runCommitter(ctx)
 
@@ -74,17 +74,18 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 // and git-pushed as batch commit periodically.
 type DeviceAggregateServer struct {
 	ch  chan *SaveConfigRequest
-	cfg DeviceAggregateCfg
+	cfg *DeviceAggregateCfg
 }
 
 // NewDeviceAggregateServer creates new DeviceAggregateServer.
-func NewDeviceAggregateServer() *DeviceAggregateServer {
+func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 	return &DeviceAggregateServer{
-		ch: make(chan *SaveConfigRequest),
+		ch:  make(chan *SaveConfigRequest),
+		cfg: cfg,
 	}
 }
 
-// HandleFunc handles API call to /commit.
+// HandleFunc handles API call to persist actual device config.
 func (s *DeviceAggregateServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	switch r.Method {

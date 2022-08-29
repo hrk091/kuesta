@@ -24,10 +24,12 @@ package nwctl_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -89,7 +91,10 @@ func exitOnErr(t *testing.T, err error) {
 }
 
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "gittest-*")
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
 	repo, err := extgogit.PlainInit(dir, false)
 	if err != nil {
 		t.Fatalf("init repo: %v", err)
@@ -107,7 +112,10 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 }
 
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
-	dir := t.TempDir()
+	dir, err := ioutil.TempDir("", "gittest-*")
+	if err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
 	repo, err := extgogit.PlainInit(dir, true)
 	if err != nil {
 		t.Fatalf("init repo: %v", err)
@@ -146,6 +154,17 @@ func commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
 		Author:    mockSignature(time),
 		Committer: mockSignature(time),
 	})
+}
+
+func push(repo *extgogit.Repository, branch, remote string) error {
+	o := &extgogit.PushOptions{
+		RemoteName: remote,
+		Progress:   os.Stdout,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(plumbing.NewBranchReferenceName(branch) + ":" + plumbing.NewBranchReferenceName(branch)),
+		},
+	}
+	return repo.Push(o)
 }
 
 func createBranch(repo *extgogit.Repository, branch string) error {
