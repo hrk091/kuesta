@@ -69,17 +69,22 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	return nil
 }
 
+// DeviceAggregateServer runs saver loop and committer loop along with serving commit API to persist device config to git.
+// Device config are written locally and added to git just after commit API call. Updated configs are aggregated
+// and git-pushed as batch commit periodically.
 type DeviceAggregateServer struct {
 	ch  chan *SaveConfigRequest
 	cfg DeviceAggregateCfg
 }
 
+// NewDeviceAggregateServer creates new DeviceAggregateServer.
 func NewDeviceAggregateServer() *DeviceAggregateServer {
 	return &DeviceAggregateServer{
 		ch: make(chan *SaveConfigRequest),
 	}
 }
 
+// HandleFunc handles API call to /commit.
 func (s *DeviceAggregateServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	switch r.Method {
@@ -140,14 +145,16 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 	l.Info("Start committer loop")
 }
 
+// SaveConfig writes device config contained in supplied SaveConfigRequest.
 func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigRequest) error {
 	dp := DevicePath{RootDir: s.cfg.RootPath, Device: r.Device}
-	if err := WriteFileWithMkdir(dp.DeviceActualConfigPath(IncludeRoot), []byte(r.Config)); err != nil {
+	if err := WriteFileWithMkdir(dp.DeviceActualConfigPath(IncludeRoot), []byte(*r.Config)); err != nil {
 		return fmt.Errorf("write actual device config: %w", err)
 	}
 	return nil
 }
 
+// GitPushSyncBranch runs git-commit all unstaged device config updates as batch commit then git-push to remote origin.
 func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	l := logger.FromContext(ctx)
 
@@ -177,7 +184,7 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 
 	stmap, err := w.Status()
 	if err != nil {
-		return fmt.Errorf("unable to get status map: %v", err)
+		return fmt.Errorf("get status map: %v", err)
 	}
 	if len(stmap) == 0 {
 		l.Info("skipped: there are no update")
@@ -204,22 +211,21 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 }
 
 type SaveConfigRequest struct {
-	Device string `json:"device"`
-	Config string `json:"config"`
+	Device string  `json:"device" validate:"required"`
+	Config *string `json:"config" validate:"required"`
 }
 
+func (r *SaveConfigRequest) Validate() error {
+	return common.Validate(r)
+}
+
+// DecodeSaveConfigRequest decodes supplied payload to SaveConfigRequest.
 func DecodeSaveConfigRequest(r io.Reader) (*SaveConfigRequest, error) {
 	var req SaveConfigRequest
 	if err := json.NewDecoder(r).Decode(&req); err != nil {
-		return nil, fmt.Errorf("unable to decode request body: %v", err)
+		return nil, fmt.Errorf("decode: %v", err)
 	}
-	if req.Device == "" {
-		return nil, fmt.Errorf("device name is not given")
-	}
-	if req.Config == "" {
-		return nil, fmt.Errorf("device config is not given")
-	}
-	return &req, nil
+	return &req, req.Validate()
 }
 
 // MakeSyncCommitMessage returns the commit message that shows the device actual config updates.
@@ -250,17 +256,17 @@ func MakeSyncCommitMessage(stmap git.Status) string {
 	devices := append(devicesAdded, devicesDeleted...)
 	devices = append(devices, devicesModified...)
 
-	title := fmt.Sprintf("Updated: %s", strings.Join(devices, ","))
+	title := fmt.Sprintf("Updated: %s", strings.Join(devices, " "))
 	var bodylines []string
 	bodylines = append(bodylines, "", "Devices:")
 	for _, d := range devicesAdded {
-		bodylines = append(bodylines, fmt.Sprintf("    added:     %s", d))
+		bodylines = append(bodylines, fmt.Sprintf("\tadded:     %s", d))
 	}
 	for _, d := range devicesDeleted {
-		bodylines = append(bodylines, fmt.Sprintf("    deleted:   %s", d))
+		bodylines = append(bodylines, fmt.Sprintf("\tdeleted:   %s", d))
 	}
 	for _, d := range devicesModified {
-		bodylines = append(bodylines, fmt.Sprintf("    modified:  %s", d))
+		bodylines = append(bodylines, fmt.Sprintf("\tmodified:  %s", d))
 	}
 
 	return title + "\n" + strings.Join(bodylines, "\n")
