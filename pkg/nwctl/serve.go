@@ -20,47 +20,27 @@
  * THE SOFTWARE.
  */
 
-package cmd
+package nwctl
 
 import (
+	"context"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
-	"github.com/hrk091/nwctl/pkg/nwctl"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-const (
-	FlagAggregatePort = "aggregate-port"
-)
+type ServeCfg struct {
+	RootCfg
 
-func newDeviceAggregateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "aggregate",
-		Short: "Aggregate device config update and push to git",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := newDeviceAggregateCfg(cmd, args)
-			if err != nil {
-				return err
-			}
-			logger.Setup(cfg.Devel, cfg.Verbose)
-
-			return nwctl.RunDeviceAggregate(cmd.Context(), cfg)
-		},
-	}
-	cmd.PersistentFlags().StringP(FlagAggregatePort, "", ":8000", "Listen port")
-	mustBindToViper(cmd)
-
-	return cmd
+	Addr string `validate:"required"`
 }
 
-func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceAggregateCfg, error) {
-	rootCfg, err := newRootCfg(cmd)
-	if err != nil {
-		return nil, err
-	}
-	cfg := &nwctl.DeviceAggregateCfg{
-		RootCfg: *rootCfg,
-		Port:    viper.GetString(FlagAggregatePort),
-	}
-	return cfg, cfg.Validate()
+// Validate validates exposed fields according to the `validate` tag.
+func (c *ServeCfg) Validate() error {
+	return common.Validate(c)
+}
+
+func RunServe(ctx context.Context, cfg *ServeCfg) error {
+	l := logger.FromContext(ctx)
+	l.Debug("serve called")
+	return nil
 }

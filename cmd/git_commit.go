@@ -44,6 +44,7 @@ func newGitCommitCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolP(FlagPushToMain, "", false, "push to main (otherwise create new branch)")
+	mustBindToViper(cmd)
 
 	return cmd
 }

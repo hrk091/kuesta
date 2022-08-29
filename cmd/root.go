@@ -90,6 +90,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(newServiceCmd())
 	cmd.AddCommand(newDeviceCmd())
 	cmd.AddCommand(newGitCmd())
+	cmd.AddCommand(newServeCmd())
 
 	return cmd
 }

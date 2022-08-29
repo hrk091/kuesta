@@ -30,37 +30,37 @@ import (
 )
 
 const (
-	FlagAggregatePort = "aggregate-port"
+	FlagAddr = "addr"
 )
 
-func newDeviceAggregateCmd() *cobra.Command {
+func newServeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "aggregate",
-		Short: "Aggregate device config update and push to git",
+		Use:   "serve",
+		Short: "Run gNMI server to expose northbound API",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := newDeviceAggregateCfg(cmd, args)
+			cfg, err := newServeCfg(cmd, args)
 			if err != nil {
 				return err
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return nwctl.RunDeviceAggregate(cmd.Context(), cfg)
+			return nwctl.RunServe(cmd.Context(), cfg)
 		},
 	}
-	cmd.PersistentFlags().StringP(FlagAggregatePort, "", ":8000", "Listen port")
+	cmd.Flags().StringP(FlagAddr, "a", ":9339", "Bind address of gNMI northbound API.")
 	mustBindToViper(cmd)
 
 	return cmd
 }
 
-func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceAggregateCfg, error) {
+func newServeCfg(cmd *cobra.Command, args []string) (*nwctl.ServeCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &nwctl.DeviceAggregateCfg{
+	cfg := &nwctl.ServeCfg{
 		RootCfg: *rootCfg,
-		Port:    viper.GetString(FlagAggregatePort),
+		Addr:    viper.GetString(FlagAddr),
 	}
 	return cfg, cfg.Validate()
 }
