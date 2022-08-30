@@ -284,6 +284,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := &nwctl.ServiceMeta{
+			Name: "foo",
 			Keys: []string{"device", "port"},
 		}
 		given := []byte(`{"keys": ["device", "port"]}`)
@@ -329,6 +330,20 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		_, err := p.ReadServiceMeta()
 		assert.Error(t, err)
 	})
+}
+
+func TestServicePath_ReadServiceMetaAll(t *testing.T) {
+	dir := t.TempDir()
+	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), []byte(`{"keys": ["device", "port"]}`)))
+	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), []byte(`{"keys": ["vlan"]}`)))
+	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
+
+	p := nwctl.ServicePath{RootDir: dir}
+	mlist, err := p.ReadServiceMetaAll()
+	assert.Nil(t, err)
+	for _, m := range mlist {
+		assert.Contains(t, []string{"foo", "bar"}, m.Name)
+	}
 }
 
 func newValidDevicePath() *nwctl.DevicePath {

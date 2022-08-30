@@ -173,7 +173,28 @@ func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
 	if err := json.Unmarshal(buf, &meta); err != nil {
 		return nil, errors.WithStack(err)
 	}
+	meta.Name = p.Service
 	return &meta, nil
+}
+
+// ReadServiceMetaAll loads all service meta stored in the git repo.
+func (p *ServicePath) ReadServiceMetaAll() ([]*ServiceMeta, error) {
+	var mlist []*ServiceMeta
+	items, err := os.ReadDir(p.ServiceDirPath(IncludeRoot))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	for _, i := range items {
+		if !i.IsDir() {
+			continue
+		}
+		pp := ServicePath{RootDir: p.RootDir, Service: i.Name()}
+		if m, err := pp.ReadServiceMeta(); err == nil {
+			m.Name = i.Name()
+			mlist = append(mlist, m)
+		}
+	}
+	return mlist, nil
 }
 
 type DevicePath struct {
