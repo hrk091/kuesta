@@ -27,6 +27,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/gnmi"
 	"github.com/hrk091/nwctl/pkg/logger"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -89,6 +90,34 @@ func (s *NorthboundServer) Error(ctx context.Context, err error, msg string, kvs
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
 }
 
+var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
+
+func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
+	l := logger.FromContext(ctx)
+	l.Debug("Capabilities called")
+
+	ver, err := gnmi.GetGNMIServiceVersion()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
+	}
+	p := ServicePath{RootDir: s.cfg.RootPath}
+	mlist, err := p.ReadServiceMetaAll()
+	if err != nil {
+		return nil, err
+	}
+
+	models := make([]*pb.ModelData, len(mlist))
+	for i, m := range mlist {
+		models[i] = m.ModelData()
+	}
+
+	return &pb.CapabilityResponse{
+		SupportedModels:    models,
+		SupportedEncodings: supportedEncodings,
+		GNMIVersion:        *ver,
+	}, nil
+}
+
 func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	if !s.mu.TryRLock() {
 		return nil, status.Error(codes.Unavailable, "locked")
@@ -119,7 +148,7 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	pathReq, err := s.converter.Convert(prefix, path)
 	if err != nil {
 		s.Error(ctx, err, "convert path request")
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path: %v", err)
 	}
 
 	var buf []byte
@@ -131,9 +160,9 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	}
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			s.Error(ctx, err, "open file")
-			return nil, status.Error(codes.NotFound, "not found")
+			return nil, status.Errorf(codes.NotFound, "not found: %v", err)
 		} else {
+			s.Error(ctx, err, "open file")
 			return nil, err
 		}
 	}
@@ -142,7 +171,7 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	val, err := NewValueFromBuf(cctx, buf)
 	if err != nil {
 		s.Error(ctx, err, "load cue")
-		return nil, status.Error(codes.Internal, "failed to read file")
+		return nil, status.Errorf(codes.Internal, "failed to read file: %v", err)
 	}
 
 	// TODO get only nested tree
@@ -150,7 +179,7 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	jsonDump, err := val.MarshalJSON()
 	if err != nil {
 		s.Error(ctx, err, "encode json")
-		return nil, status.Error(codes.Internal, "failed to encode to json")
+		return nil, status.Errorf(codes.Internal, "failed to encode to json: %v", err)
 	}
 
 	update := &pb.Update{

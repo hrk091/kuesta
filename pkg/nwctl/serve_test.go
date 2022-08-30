@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -75,6 +76,30 @@ func TestServeCfg_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNorthboundServer_Capabilities(t *testing.T) {
+	dir := t.TempDir()
+	fooMeta := []byte(`{"keys": ["device", "port"], "organization": "org-foo", "version": "0.1.0"}`)
+	barMeta := []byte(`{"keys": ["vlan"]}`)
+	fooModel := &pb.ModelData{Name: "foo", Organization: "org-foo", Version: "0.1.0"}
+	barModel := &pb.ModelData{Name: "bar"}
+
+	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), fooMeta))
+	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), barMeta))
+	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
+
+	s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+		RootCfg: nwctl.RootCfg{
+			RootPath: dir,
+		},
+	})
+	got, err := s.Capabilities(context.Background(), &pb.CapabilityRequest{})
+	assert.Nil(t, err)
+	assert.Contains(t, got.SupportedModels, fooModel)
+	assert.Contains(t, got.SupportedModels, barModel)
+	assert.NotNil(t, got.SupportedEncodings)
+	assert.NotNil(t, got.GNMIVersion)
 }
 
 func TestNorthboundServer_Get(t *testing.T) {
