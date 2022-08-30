@@ -30,8 +30,7 @@ import (
 
 func TestSet(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
-		set := common.NewSet[string]()
-		assert.True(t, set.Add("foo"))
+		set := common.NewSet[string]("foo")
 		assert.False(t, set.Add("foo"))
 		assert.True(t, set.Add("bar"))
 		assert.True(t, set.Has("foo"))
@@ -41,8 +40,7 @@ func TestSet(t *testing.T) {
 	})
 
 	t.Run("int", func(t *testing.T) {
-		set := common.NewSet[int]()
-		assert.True(t, set.Add(1))
+		set := common.NewSet[int](1)
 		assert.False(t, set.Add(1))
 		assert.True(t, set.Add(2))
 		assert.True(t, set.Has(1))

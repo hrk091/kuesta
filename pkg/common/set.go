@@ -28,10 +28,14 @@ type Set[T comparable] struct {
 	m map[T]Empty
 }
 
-func NewSet[T comparable]() Set[T] {
-	return Set[T]{
+func NewSet[T comparable](items ...T) Set[T] {
+	s := Set[T]{
 		m: make(map[T]Empty),
 	}
+	for _, i := range items {
+		s.Add(i)
+	}
+	return s
 }
 
 func (s *Set[T]) Add(v T) bool {
