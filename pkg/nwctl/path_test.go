@@ -271,6 +271,66 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 	assert.Equal(t, buf, got)
 }
 
+func TestServicePath_ServiceMetaPath(t *testing.T) {
+	p := newValidServicePath()
+	assert.Equal(t, "services/foo/metadata.json", p.ServiceMetaPath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/metadata.json", p.ServiceMetaPath(nwctl.IncludeRoot))
+}
+
+func TestServicePath_ReadServiceMeta(t *testing.T) {
+	dir := t.TempDir()
+
+	t.Run("ok: file exists", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		want := &nwctl.ServiceMeta{
+			Keys: []string{"device", "port"},
+		}
+		given := []byte(`{"keys": ["device", "port"]}`)
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		exitOnErr(t, err)
+
+		r, err := p.ReadServiceMeta()
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
+	t.Run("bad: invalid file format", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		given := []byte(`{"keys": ["device", "port"]`)
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		exitOnErr(t, err)
+
+		_, err = p.ReadServiceMeta()
+		assert.Error(t, err)
+	})
+
+	t.Run("bad: file not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		exitOnErr(t, err)
+
+		_, err = p.ReadServiceMeta()
+		assert.Error(t, err)
+	})
+
+	t.Run("bad: dir not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		p.Service = "bar"
+		p.Keys = []string{"not", "exist"}
+
+		_, err := p.ReadServiceMeta()
+		assert.Error(t, err)
+	})
+}
+
 func newValidDevicePath() *nwctl.DevicePath {
 	return &nwctl.DevicePath{
 		RootDir: "./tmproot",

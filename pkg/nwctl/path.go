@@ -24,6 +24,7 @@ package nwctl
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
@@ -39,15 +40,16 @@ const (
 	DirComputed         = "computed"
 	FileInputCue        = "input.cue"
 	FileTransformCue    = "transform.cue"
+	FileServiceMetaJson = "metadata.json"
 	FileConfigCue       = "config.cue"
 	FileActualConfigCue = "actual_config.cue"
 )
 
-type PathType string
+type PathOpt string
 
 const (
-	ExcludeRoot PathType = ""
-	IncludeRoot PathType = "INCLUDE_ROOT"
+	ExcludeRoot PathOpt = ""
+	IncludeRoot PathOpt = "INCLUDE_ROOT"
 )
 
 var (
@@ -87,7 +89,7 @@ func (p *ServicePath) serviceComputedPathElem() []string {
 	return append(p.serviceItemPathElem(), DirComputed)
 }
 
-func (p *ServicePath) addRoot(path string, t PathType) string {
+func (p *ServicePath) addRoot(path string, t PathOpt) string {
 	if t == ExcludeRoot {
 		return path
 	} else {
@@ -96,12 +98,12 @@ func (p *ServicePath) addRoot(path string, t PathType) string {
 }
 
 // ServiceDirPath returns the path to the service directory.
-func (p *ServicePath) ServiceDirPath(t PathType) string {
+func (p *ServicePath) ServiceDirPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(p.serviceDirElem()...), t)
 }
 
 // ServiceInputPath returns the path to the specified service's input file.
-func (p *ServicePath) ServiceInputPath(t PathType) string {
+func (p *ServicePath) ServiceInputPath(t PathOpt) string {
 	el := append(p.serviceItemPathElem(), FileInputCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
@@ -116,7 +118,7 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 }
 
 // ServiceTransformPath returns the path to the specified service's transform file.
-func (p *ServicePath) ServiceTransformPath(t PathType) string {
+func (p *ServicePath) ServiceTransformPath(t PathOpt) string {
 	el := append(p.servicePathElem(), FileTransformCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
@@ -131,12 +133,12 @@ func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
 }
 
 // ServiceComputedDirPath returns the path to the specified service's computed dir.
-func (p *ServicePath) ServiceComputedDirPath(t PathType) string {
+func (p *ServicePath) ServiceComputedDirPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(p.serviceComputedPathElem()...), t)
 }
 
 // ServiceComputedPath returns the path to the specified service's computed result of given device.
-func (p *ServicePath) ServiceComputedPath(device string, t PathType) string {
+func (p *ServicePath) ServiceComputedPath(device string, t PathOpt) string {
 	el := append(p.serviceComputedPathElem(), fmt.Sprintf("%s.cue", device))
 	return p.addRoot(filepath.Join(el...), t)
 }
@@ -153,6 +155,25 @@ func (p *ServicePath) ReadServiceComputedFile(device string) ([]byte, error) {
 // WriteServiceComputedFile writes the partial device config computed from service to the corresponding computed dir.
 func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error {
 	return WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
+}
+
+// ServiceMetaPath returns the path to the service meta.
+func (p *ServicePath) ServiceMetaPath(t PathOpt) string {
+	el := append(p.servicePathElem(), FileServiceMetaJson)
+	return p.addRoot(filepath.Join(el...), t)
+}
+
+// ReadServiceMeta loads the service meta.
+func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
+	buf, err := os.ReadFile(p.ServiceMetaPath(IncludeRoot))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	var meta ServiceMeta
+	if err := json.Unmarshal(buf, &meta); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &meta, nil
 }
 
 type DevicePath struct {
@@ -197,7 +218,7 @@ func (p *DevicePath) devicePathElem() []string {
 	return append(p.deviceDirElem(), p.Device)
 }
 
-func (p *DevicePath) addRoot(path string, t PathType) string {
+func (p *DevicePath) addRoot(path string, t PathOpt) string {
 	if t == ExcludeRoot {
 		return path
 	} else {
@@ -206,12 +227,12 @@ func (p *DevicePath) addRoot(path string, t PathType) string {
 }
 
 // DeviceDirPath returns the path to the devices directory.
-func (p *DevicePath) DeviceDirPath(t PathType) string {
+func (p *DevicePath) DeviceDirPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(p.deviceDirElem()...), t)
 }
 
 // DeviceConfigPath returns the path to specified device config.
-func (p *DevicePath) DeviceConfigPath(t PathType) string {
+func (p *DevicePath) DeviceConfigPath(t PathOpt) string {
 	el := append(p.devicePathElem(), FileConfigCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
@@ -246,7 +267,7 @@ func (p *DevicePath) CheckSum() (string, error) {
 }
 
 // DeviceActualConfigPath returns the path to specified device actual config.
-func (p *DevicePath) DeviceActualConfigPath(t PathType) string {
+func (p *DevicePath) DeviceActualConfigPath(t PathOpt) string {
 	el := append(p.devicePathElem(), FileActualConfigCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
