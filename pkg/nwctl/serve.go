@@ -30,6 +30,7 @@ import (
 	"github.com/hrk091/nwctl/pkg/logger"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"os"
@@ -80,6 +81,14 @@ func NewNorthboundServer(cfg *ServeCfg) *NorthboundServer {
 	}
 }
 
+func (s *NorthboundServer) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
+	l := logger.FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
+	if st := common.GetStackTrace(err); st != "" {
+		l = l.With("stacktrace", st)
+	}
+	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
+}
+
 func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	if !s.mu.TryRLock() {
 		return nil, status.Error(codes.Unavailable, "locked")
@@ -109,7 +118,8 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 
 	pathReq, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		return nil, err
+		s.Error(ctx, err, "convert path request")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var buf []byte
@@ -121,6 +131,7 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	}
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			s.Error(ctx, err, "open file")
 			return nil, status.Error(codes.NotFound, "not found")
 		} else {
 			return nil, err
@@ -130,15 +141,16 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	cctx := cuecontext.New()
 	val, err := NewValueFromBuf(cctx, buf)
 	if err != nil {
-		fmt.Printf("################### %v\n", err)
-		return nil, status.Error(codes.Internal, "failed to load cue")
+		s.Error(ctx, err, "load cue")
+		return nil, status.Error(codes.Internal, "failed to read file")
 	}
 
 	// TODO get only nested tree
 
 	jsonDump, err := val.MarshalJSON()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		s.Error(ctx, err, "encode json")
+		return nil, status.Error(codes.Internal, "failed to encode to json")
 	}
 
 	update := &pb.Update{
@@ -147,117 +159,4 @@ func (s *NorthboundServer) doGet(ctx context.Context, prefix, path *pb.Path) (*p
 	}
 	// TODO use timestamp when updated
 	return &pb.Notification{Prefix: prefix, Update: []*pb.Update{update}}, nil
-}
-
-type PathReq interface {
-	Type() PathType
-}
-
-type ServicePathReq struct {
-	path *ServicePath
-}
-
-func (ServicePathReq) Type() PathType {
-	return PathTypeService
-}
-
-func (s *ServicePathReq) Path() *ServicePath {
-	return s.path
-}
-
-type DevicePathReq struct {
-	path *DevicePath
-}
-
-func (DevicePathReq) Type() PathType {
-	return PathTypeDevice
-}
-
-func (s DevicePathReq) Path() *DevicePath {
-	return s.path
-}
-
-type GnmiPathConverter struct {
-	cfg  *ServeCfg
-	meta map[string]*ServiceMeta
-}
-
-func NewGnmiPathConverter(cfg *ServeCfg) *GnmiPathConverter {
-	return &GnmiPathConverter{
-		cfg:  cfg,
-		meta: map[string]*ServiceMeta{},
-	}
-}
-
-// Convert converts gNMI Path to PathReq.
-func (c *GnmiPathConverter) Convert(prefix, path *pb.Path) (PathReq, error) {
-	path = gnmiFullPath(prefix, path)
-	elem := path.GetElem()
-	if len(elem) < 2 {
-		return nil, errors.WithStack(fmt.Errorf("path must have at least 2 elem"))
-	}
-	kindEl := elem[0]
-	switch kindEl.GetName() {
-	case DirServices:
-		return c.convertService(elem[1:])
-	case DirDevices:
-		return c.convertDevice(elem[1:])
-	default:
-		return nil, errors.WithStack(fmt.Errorf("name of the first elem must be `%s` or `%s`", DirServices, DirDevices))
-	}
-}
-
-func (c *GnmiPathConverter) convertService(elem []*pb.PathElem) (ServicePathReq, error) {
-	svcEl := elem[0]
-	if svcEl.GetName() != NodeService {
-		return ServicePathReq{}, errors.WithStack(fmt.Errorf("name of second elem must be `%s`", NodeService))
-	}
-	keys := svcEl.GetKey()
-	svcKind, ok := keys[KeyServiceKind]
-	if !ok {
-		return ServicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyServiceKind))
-	}
-	p := ServicePath{RootDir: c.cfg.RootPath, Service: svcKind}
-
-	meta, ok := c.meta[svcKind]
-	if !ok {
-		m, err := p.ReadServiceMeta()
-		if err != nil {
-			return ServicePathReq{}, err
-		}
-		c.meta[svcKind] = m
-		meta = m
-	}
-
-	for _, k := range meta.Keys {
-		if v, ok := keys[k]; ok == true {
-			p.Keys = append(p.Keys, v)
-		} else {
-			return ServicePathReq{}, errors.WithStack(fmt.Errorf("key `%s` of service %s is not supplied in Request Path", k, svcKind))
-		}
-	}
-	return ServicePathReq{path: &p}, nil
-}
-
-func (c *GnmiPathConverter) convertDevice(elem []*pb.PathElem) (DevicePathReq, error) {
-	svcEl := elem[0]
-	if svcEl.GetName() != NodeDevice {
-		return DevicePathReq{}, errors.WithStack(fmt.Errorf("name of second elem must be `%s`", NodeDevice))
-	}
-	keys := svcEl.GetKey()
-	deviceName, ok := keys[KeyDeviceName]
-	if !ok {
-		return DevicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyDeviceName))
-	}
-
-	p := DevicePath{RootDir: c.cfg.RootPath, Device: deviceName}
-	return DevicePathReq{path: &p}, nil
-}
-
-func gnmiFullPath(prefix, path *pb.Path) *pb.Path {
-	fullPath := &pb.Path{}
-	if path.GetElem() != nil {
-		fullPath.Elem = append(prefix.GetElem(), path.GetElem()...)
-	}
-	return fullPath
 }
