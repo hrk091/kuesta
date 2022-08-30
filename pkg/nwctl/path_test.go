@@ -112,6 +112,12 @@ func TestServicePath_ServiceDirPath(t *testing.T) {
 	assert.Equal(t, "tmproot/services", p.ServiceDirPath(nwctl.IncludeRoot))
 }
 
+func TestServicePath_ServiceItemPath(t *testing.T) {
+	p := newValidServicePath()
+	assert.Equal(t, "services/foo/one/two", p.ServicePath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two", p.ServicePath(nwctl.IncludeRoot))
+}
+
 func TestServicePath_ServiceInputPath(t *testing.T) {
 	p := newValidServicePath()
 	assert.Equal(t, "services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.ExcludeRoot))
@@ -156,6 +162,21 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		_, err := p.ReadServiceInput()
 		assert.Error(t, err)
 	})
+}
+
+func TestServicePath_WriteServiceInputFile(t *testing.T) {
+	dir := t.TempDir()
+	buf := []byte("foobar")
+
+	p := newValidServicePath()
+	p.RootDir = dir
+
+	err := p.WriteServiceInputFile(buf)
+	exitOnErr(t, err)
+
+	got, err := os.ReadFile(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"))
+	assert.Nil(t, err)
+	assert.Equal(t, buf, got)
 }
 
 func TestServicePath_ServiceTransformPath(t *testing.T) {
@@ -402,6 +423,12 @@ func TestDevicePath_DeviceDirPath(t *testing.T) {
 	p := newValidDevicePath()
 	assert.Equal(t, "devices", p.DeviceDirPath(nwctl.ExcludeRoot))
 	assert.Equal(t, "tmproot/devices", p.DeviceDirPath(nwctl.IncludeRoot))
+}
+
+func TestDevicePath_DevicePath(t *testing.T) {
+	p := newValidDevicePath()
+	assert.Equal(t, "devices/device1", p.DevicePath(nwctl.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1", p.DevicePath(nwctl.IncludeRoot))
 }
 
 func TestDevicePath_DeviceConfigPath(t *testing.T) {

@@ -77,16 +77,16 @@ func (p *ServicePath) serviceDirElem() []string {
 	return []string{DirServices}
 }
 
-func (p *ServicePath) servicePathElem() []string {
+func (p *ServicePath) serviceColElem() []string {
 	return append(p.serviceDirElem(), p.Service)
 }
 
-func (p *ServicePath) serviceItemPathElem() []string {
-	return append(p.servicePathElem(), p.Keys...)
+func (p *ServicePath) servicePathElem() []string {
+	return append(p.serviceColElem(), p.Keys...)
 }
 
 func (p *ServicePath) serviceComputedPathElem() []string {
-	return append(p.serviceItemPathElem(), DirComputed)
+	return append(p.servicePathElem(), DirComputed)
 }
 
 func (p *ServicePath) addRoot(path string, t PathOpt) string {
@@ -102,9 +102,14 @@ func (p *ServicePath) ServiceDirPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(p.serviceDirElem()...), t)
 }
 
+// ServicePath returns the path to the specified service.
+func (p *ServicePath) ServicePath(t PathOpt) string {
+	return p.addRoot(filepath.Join(p.servicePathElem()...), t)
+}
+
 // ServiceInputPath returns the path to the specified service's input file.
 func (p *ServicePath) ServiceInputPath(t PathOpt) string {
-	el := append(p.serviceItemPathElem(), FileInputCue)
+	el := append(p.servicePathElem(), FileInputCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
 
@@ -117,9 +122,14 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 	return buf, nil
 }
 
+// WriteServiceInputFile writes the supplied service's input file..
+func (p *ServicePath) WriteServiceInputFile(buf []byte) error {
+	return WriteFileWithMkdir(p.ServiceInputPath(IncludeRoot), buf)
+}
+
 // ServiceTransformPath returns the path to the specified service's transform file.
 func (p *ServicePath) ServiceTransformPath(t PathOpt) string {
-	el := append(p.servicePathElem(), FileTransformCue)
+	el := append(p.serviceColElem(), FileTransformCue)
 	return p.addRoot(filepath.Join(el...), t)
 }
 
@@ -159,7 +169,7 @@ func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error 
 
 // ServiceMetaPath returns the path to the service meta.
 func (p *ServicePath) ServiceMetaPath(t PathOpt) string {
-	el := append(p.servicePathElem(), FileServiceMetaJson)
+	el := append(p.serviceColElem(), FileServiceMetaJson)
 	return p.addRoot(filepath.Join(el...), t)
 }
 
@@ -250,6 +260,11 @@ func (p *DevicePath) addRoot(path string, t PathOpt) string {
 // DeviceDirPath returns the path to the devices directory.
 func (p *DevicePath) DeviceDirPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(p.deviceDirElem()...), t)
+}
+
+// DevicePath returns the path to the devices directory.
+func (p *DevicePath) DevicePath(t PathOpt) string {
+	return p.addRoot(filepath.Join(p.devicePathElem()...), t)
 }
 
 // DeviceConfigPath returns the path to specified device config.
