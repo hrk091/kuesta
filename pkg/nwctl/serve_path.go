@@ -30,26 +30,42 @@ import (
 
 type PathReq interface {
 	Type() PathType
+	String() string
 }
 
 type ServicePathReq struct {
-	path *ServicePath
+	path    *ServicePath
+	service string
+	keys    map[string]string
 }
 
 func (ServicePathReq) Type() PathType {
 	return PathTypeService
 }
 
+func (s ServicePathReq) String() string {
+	return s.path.ServicePath(ExcludeRoot)
+}
+
 func (s *ServicePathReq) Path() *ServicePath {
 	return s.path
 }
 
+func (s *ServicePathReq) Keys() map[string]string {
+	return s.keys
+}
+
 type DevicePathReq struct {
-	path *DevicePath
+	path   *DevicePath
+	device string
 }
 
 func (DevicePathReq) Type() PathType {
 	return PathTypeDevice
+}
+
+func (s DevicePathReq) String() string {
+	return s.path.DevicePath(ExcludeRoot)
 }
 
 func (s DevicePathReq) Path() *DevicePath {
@@ -94,8 +110,8 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 	if svcEl.GetName() != NodeService {
 		return ServicePathReq{}, errors.WithStack(fmt.Errorf("name of second elem must be `%s`", NodeService))
 	}
-	keys := svcEl.GetKey()
-	svcKind, ok := keys[KeyServiceKind]
+	elemKey := svcEl.GetKey()
+	svcKind, ok := elemKey[KeyServiceKind]
 	if !ok {
 		return ServicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyServiceKind))
 	}
@@ -111,14 +127,16 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 		meta = m
 	}
 
+	keys := map[string]string{}
 	for _, k := range meta.Keys {
-		if v, ok := keys[k]; ok == true {
+		if v, ok := elemKey[k]; ok == true {
+			keys[k] = v
 			p.Keys = append(p.Keys, v)
 		} else {
 			return ServicePathReq{}, errors.WithStack(fmt.Errorf("key `%s` of service %s is not supplied in Request Path", k, svcKind))
 		}
 	}
-	return ServicePathReq{path: &p}, nil
+	return ServicePathReq{path: &p, service: svcKind, keys: keys}, nil
 }
 
 func (c *GnmiPathConverter) convertDevice(elem []*gnmi.PathElem) (DevicePathReq, error) {
@@ -133,7 +151,7 @@ func (c *GnmiPathConverter) convertDevice(elem []*gnmi.PathElem) (DevicePathReq,
 	}
 
 	p := DevicePath{RootDir: c.cfg.RootPath, Device: deviceName}
-	return DevicePathReq{path: &p}, nil
+	return DevicePathReq{path: &p, device: deviceName}, nil
 }
 
 func gnmiFullPath(prefix, path *gnmi.Path) *gnmi.Path {
