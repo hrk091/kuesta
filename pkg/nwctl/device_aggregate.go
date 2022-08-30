@@ -196,6 +196,7 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get status map: %v", err)
 	}
+	// TODO check only staged files
 	if len(stmap) == 0 {
 		l.Info("skipped: there are no update")
 		return nil

@@ -169,7 +169,7 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 			GitRemote: testRemote,
 		},
 	})
-	nwctl.UpdateCheckDuration = time.Millisecond
+	nwctl.UpdateCheckDuration = 100 * time.Millisecond
 	s.Run(context.Background())
 
 	s.HandleFunc(response, request)
@@ -180,7 +180,7 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	assert.Eventually(t, func() bool {
 		got, err = os.ReadFile(filepath.Join(dir, "devices", "device1", "actual_config.cue"))
 		return err == nil
-	}, time.Second, time.Millisecond)
+	}, time.Second, 100*time.Millisecond)
 	assert.Equal(t, []byte(config), got)
 
 	assert.Eventually(t, func() bool {
