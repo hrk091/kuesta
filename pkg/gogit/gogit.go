@@ -257,10 +257,8 @@ func (g *Git) Commit(msg string, opts ...CommitOpts) (plumbing.Hash, error) {
 type CommitOpts func(o *extgogit.CommitOptions)
 
 // Push pushes the specified git branch to remote. If branch is empty, it pushes the branch set by GitOptions.TrunkBranch.
-func (g *Git) Push(branch string, opts ...PushOpts) error {
-	if branch == "" {
-		branch = g.opts.TrunkBranch
-	}
+func (g *Git) Push(opts ...PushOpts) error {
+	branch := g.opts.TrunkBranch
 	o := &extgogit.PushOptions{
 		RemoteName: g.opts.RemoteName,
 		Progress:   os.Stdout,
@@ -282,6 +280,14 @@ func (g *Git) Push(branch string, opts ...PushOpts) error {
 
 // PushOpts enables modification of the go-git PushOptions.
 type PushOpts func(o *extgogit.PushOptions)
+
+func PushOptBranch(branch string) PushOpts {
+	return func(o *extgogit.PushOptions) {
+		o.RefSpecs = []config.RefSpec{
+			config.RefSpec(plumbing.NewBranchReferenceName(branch) + ":" + plumbing.NewBranchReferenceName(branch)),
+		}
+	}
+}
 
 // Pull pulls the specified git branch from remote to local.
 func (g *Git) Pull(opts ...PullOpts) error {

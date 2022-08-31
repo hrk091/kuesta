@@ -286,7 +286,7 @@ func TestGit_Push(t *testing.T) {
 		_, err = g.Commit(wantMsg)
 		exitOnErr(t, err)
 
-		err = g.Push("main")
+		err = g.Push(gogit.PushOptBranch("main"))
 		exitOnErr(t, err)
 
 		ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
@@ -311,7 +311,7 @@ func TestGit_Push(t *testing.T) {
 		_, err = g.Commit("added: test")
 		exitOnErr(t, err)
 
-		err = g.Push("") // use default
+		err = g.Push()
 		assert.Error(t, err)
 	})
 }
@@ -413,8 +413,8 @@ func TestGit_Pull(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
-			exitOnErr(t, pusher.Push("master"))
-			exitOnErr(t, pusher.Push("test"))
+			exitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
+			exitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
 		})
 
 		// push branch
@@ -423,7 +423,7 @@ func TestGit_Pull(t *testing.T) {
 		want, err := gitPusher.Commit(wantMsg)
 		exitOnErr(t, err)
 
-		exitOnErr(t, gitPusher.Push("test"))
+		exitOnErr(t, gitPusher.Push(gogit.PushOptBranch("test")))
 
 		// pull branch
 		_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
@@ -438,8 +438,8 @@ func TestGit_Pull(t *testing.T) {
 
 	t.Run("ok: no update", func(t *testing.T) {
 		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
-			exitOnErr(t, pusher.Push("master"))
-			exitOnErr(t, pusher.Push("test"))
+			exitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
+			exitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
 		})
 
 		head, err := gitPusher.Head()
@@ -459,7 +459,7 @@ func TestGit_Pull(t *testing.T) {
 
 	t.Run("err: upstream branch not exist", func(t *testing.T) {
 		_, gitPuller := setup(t, func(g *gogit.Git) {
-			exitOnErr(t, g.Push("master"))
+			exitOnErr(t, g.Push(gogit.PushOptBranch("master")))
 		})
 
 		_, err := gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
@@ -618,11 +618,11 @@ func TestGitRemote_Branches(t *testing.T) {
 
 		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
 		exitOnErr(t, err)
-		exitOnErr(t, git.Push("foo"))
+		exitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
 
 		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
 		exitOnErr(t, err)
-		exitOnErr(t, git.Push("bar"))
+		exitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
 
 		branches, err := remote.Branches()
 		assert.Nil(t, err)
@@ -646,11 +646,11 @@ func TestGitRemote_RemoveBranch(t *testing.T) {
 
 		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
 		exitOnErr(t, err)
-		exitOnErr(t, git.Push("foo"))
+		exitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
 
 		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
 		exitOnErr(t, err)
-		exitOnErr(t, git.Push("bar"))
+		exitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
 
 		err = remote.RemoveBranch(plumbing.NewBranchReferenceName("foo"))
 		assert.Nil(t, err)

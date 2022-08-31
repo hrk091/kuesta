@@ -83,7 +83,7 @@ func RunGitMergeDevicesCfg(ctx context.Context, cfg *GitMergeDevicesCfg) error {
 		merged = append(merged, rn)
 	}
 
-	if err := git.Push(""); err != nil {
+	if err := git.Push(); err != nil {
 		return fmt.Errorf("git push: %w", err)
 	}
 
