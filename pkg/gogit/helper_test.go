@@ -24,8 +24,10 @@ package gogit_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/hrk091/nwctl/pkg/gogit"
 	"io/ioutil"
 	"runtime/debug"
 	"testing"
@@ -72,6 +74,24 @@ func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 		t.Fatalf("init repo: %v", err)
 	}
 	return repo, dir
+}
+
+func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
+	_, dirBare := initBareRepo(t)
+	repo, dir := initRepo(t, "main")
+	_, err := repo.CreateRemote(&config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{dirBare},
+	})
+	exitOnErr(t, err)
+
+	opt.Path = dir
+	git, err := gogit.NewGit(opt)
+	exitOnErr(t, err)
+
+	remote, err := git.Remote("origin")
+	exitOnErr(t, err)
+	return remote, git, dir
 }
 
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {

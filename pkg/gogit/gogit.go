@@ -55,7 +55,44 @@ const (
 
 // Validate validates exposed fields according to the `validate` tag.
 func (g *GitOptions) Validate() error {
+	g.User = common.Or(g.User, DefaultGitUser)
+	g.Email = common.Or(g.Email, DefaultGitEmail)
+	g.TrunkBranch = common.Or(g.TrunkBranch, DefaultTrunkBranch)
+	g.RemoteName = common.Or(g.RemoteName, DefaultRemoteName)
+
 	return common.Validate(g)
+}
+
+func (g *GitOptions) basicAuth() *gogithttp.BasicAuth {
+	// TODO integrate with k8s secret
+	// ref: https://github.com/fluxcd/source-controller/blob/main/pkg/git/options.go
+	token := g.Token
+	if token == "" {
+		return nil
+	}
+
+	user := DefaultAuthUser
+	var password string
+	if strings.Contains(token, ":") {
+		slice := strings.Split(token, ":")
+		user = slice[0]
+		password = slice[1]
+	} else {
+		password = token
+	}
+
+	return &gogithttp.BasicAuth{
+		Username: user,
+		Password: password,
+	}
+}
+
+func (g *GitOptions) signature() *object.Signature {
+	return &object.Signature{
+		Name:  g.User,
+		Email: g.Email,
+		When:  time.Now(),
+	}
 }
 
 type Git struct {
@@ -91,36 +128,12 @@ func (g *Git) Repo() *extgogit.Repository {
 
 // BasicAuth returns the go-git BasicAuth if git token is provided, otherwise nil.
 func (g *Git) BasicAuth() *gogithttp.BasicAuth {
-	// TODO integrate with k8s secret
-	// ref: https://github.com/fluxcd/source-controller/blob/main/pkg/git/options.go
-	token := g.opts.Token
-	if token == "" {
-		return nil
-	}
-
-	user := DefaultAuthUser
-	var password string
-	if strings.Contains(token, ":") {
-		slice := strings.Split(token, ":")
-		user = slice[0]
-		password = slice[1]
-	} else {
-		password = token
-	}
-
-	return &gogithttp.BasicAuth{
-		Username: user,
-		Password: password,
-	}
+	return g.opts.basicAuth()
 }
 
 // Signature returns the go-git Signature using user given User/Email or default one.
 func (g *Git) Signature() *object.Signature {
-	return &object.Signature{
-		Name:  common.Or(g.opts.User, DefaultGitUser),
-		Email: common.Or(g.opts.Email, DefaultGitEmail),
-		When:  time.Now(),
-	}
+	return g.opts.signature()
 }
 
 // Branch returns the current branch name.
@@ -133,14 +146,14 @@ func (g *Git) Branch() (string, error) {
 }
 
 // Branches returns the all branch names at the local repo.
-func (g *Git) Branches() ([]string, error) {
-	var branches []string
+func (g *Git) Branches() ([]*plumbing.Reference, error) {
+	var branches []*plumbing.Reference
 	it, err := g.repo.Branches()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	err = it.ForEach(func(ref *plumbing.Reference) error {
-		branches = append(branches, ref.Name().Short())
+		branches = append(branches, ref)
 		return nil
 	})
 	if err != nil {
@@ -184,9 +197,8 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 		return nil, errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 
-	branch := common.Or(g.opts.TrunkBranch, DefaultTrunkBranch)
 	o := &extgogit.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
+		Branch: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
 		Keep:   true,
 	}
 	for _, tr := range opts {
@@ -244,10 +256,13 @@ func (g *Git) Commit(msg string, opts ...CommitOpts) (plumbing.Hash, error) {
 // CommitOpts enables modification of the go-git CommitOptions.
 type CommitOpts func(o *extgogit.CommitOptions)
 
-// Push pushes the specified git branch to remote.
+// Push pushes the specified git branch to remote. If branch is empty, it pushes the branch set by GitOptions.TrunkBranch.
 func (g *Git) Push(branch string, opts ...PushOpts) error {
+	if branch == "" {
+		branch = g.opts.TrunkBranch
+	}
 	o := &extgogit.PushOptions{
-		RemoteName: common.Or(g.opts.RemoteName, DefaultRemoteName),
+		RemoteName: g.opts.RemoteName,
 		Progress:   os.Stdout,
 		RefSpecs: []config.RefSpec{
 			config.RefSpec(plumbing.NewBranchReferenceName(branch) + ":" + plumbing.NewBranchReferenceName(branch)),
@@ -258,7 +273,9 @@ func (g *Git) Push(branch string, opts ...PushOpts) error {
 		tr(o)
 	}
 	if err := g.repo.Push(o); err != nil {
-		return errors.WithStack(fmt.Errorf("git push: %w", err))
+		if err != extgogit.NoErrAlreadyUpToDate {
+			return errors.WithStack(fmt.Errorf("git push: %w", err))
+		}
 	}
 	return nil
 }
@@ -269,7 +286,7 @@ type PushOpts func(o *extgogit.PushOptions)
 // Pull pulls the specified git branch from remote to local.
 func (g *Git) Pull(opts ...PullOpts) error {
 	o := &extgogit.PullOptions{
-		RemoteName:   common.Or(g.opts.RemoteName, DefaultRemoteName),
+		RemoteName:   g.opts.RemoteName,
 		SingleBranch: false,
 		Progress:     os.Stdout,
 		Auth:         g.BasicAuth(),
@@ -297,6 +314,12 @@ func (g *Git) Pull(opts ...PullOpts) error {
 // PullOpts enables modification of the go-git PullOptions.
 type PullOpts func(o *extgogit.PullOptions)
 
+func PullOptsReference(name plumbing.ReferenceName) PullOpts {
+	return func(o *extgogit.PullOptions) {
+		o.ReferenceName = name
+	}
+}
+
 // ResetOpts enables modification of the go-git ResetOptions.
 type ResetOpts func(o *extgogit.ResetOptions)
 
@@ -321,6 +344,83 @@ func (g *Git) Reset(opts ...ResetOpts) error {
 	}
 	if err := w.Reset(o); err != nil {
 		return errors.WithStack(fmt.Errorf("run git-reset: %w", err))
+	}
+	return nil
+}
+
+// RemoveBranch removes the local branch.
+func (g *Git) RemoveBranch(rn plumbing.ReferenceName) error {
+	err := g.repo.Storer.RemoveReference(rn)
+	return errors.WithStack(err)
+}
+
+// Remote returns GitRemote of the supplied remote name. If not supplied, it returns the one of GitOptions.RemoteName.
+func (g *Git) Remote(name string) (*GitRemote, error) {
+	if name == "" {
+		name = g.opts.RemoteName
+	}
+	r, err := g.repo.Remote(name)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	remote := &GitRemote{
+		opts:   g.opts,
+		remote: r,
+	}
+	return remote, nil
+}
+
+type GitRemote struct {
+	opts   *GitOptions
+	remote *extgogit.Remote
+}
+
+func (r *GitRemote) Name() string {
+	c := r.remote.Config()
+	return c.Name
+}
+
+// BasicAuth returns the go-git BasicAuth if git token is provided, otherwise nil.
+func (r *GitRemote) BasicAuth() *gogithttp.BasicAuth {
+	return r.opts.basicAuth()
+}
+
+// ListOpts enables modification of the go-git ListOptions.
+type ListOpts func(o *extgogit.ListOptions)
+
+// Branches lists the branches of the remote repository.
+func (r *GitRemote) Branches(opts ...ListOpts) ([]*plumbing.Reference, error) {
+	o := &extgogit.ListOptions{
+		Auth: r.BasicAuth(),
+	}
+	for _, tr := range opts {
+		tr(o)
+	}
+	refs, err := r.remote.List(o)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var branches []*plumbing.Reference
+	for _, ref := range refs {
+		if ref.Name().IsBranch() {
+			branches = append(branches, ref)
+		}
+	}
+
+	return branches, nil
+}
+
+// RemoveBranch removes the remote branch.
+func (r *GitRemote) RemoveBranch(rn plumbing.ReferenceName) error {
+	err := r.remote.Push(&extgogit.PushOptions{
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(":" + rn.String()),
+		},
+		Auth: r.BasicAuth(),
+	})
+	if err != nil && err != extgogit.NoErrAlreadyUpToDate {
+		return errors.WithStack(err)
 	}
 	return nil
 }

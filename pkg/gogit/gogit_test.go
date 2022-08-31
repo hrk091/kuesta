@@ -122,7 +122,9 @@ func TestGit_Signature(t *testing.T) {
 		assert.Equal(t, "test-email", got.Email)
 	})
 	t.Run("default", func(t *testing.T) {
-		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{})
+		o := &gogit.GitOptions{Path: "dummy"}
+		exitOnErr(t, o.Validate())
+		g := gogit.NewGitWithoutRepo(o)
 		got := g.Signature()
 		assert.Equal(t, gogit.DefaultGitUser, got.Name)
 		assert.Equal(t, gogit.DefaultGitEmail, got.Email)
@@ -300,15 +302,16 @@ func TestGit_Push(t *testing.T) {
 		noExistRemote := "not-exist"
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
-			Path:       dir,
-			RemoteName: noExistRemote,
+			Path:        dir,
+			RemoteName:  noExistRemote,
+			TrunkBranch: "main",
 		})
 		exitOnErr(t, err)
 		exitOnErr(t, addFile(repo, "test", "push"))
 		_, err = g.Commit("added: test")
 		exitOnErr(t, err)
 
-		err = g.Push("main")
+		err = g.Push("") // use default
 		assert.Error(t, err)
 	})
 }
@@ -359,10 +362,11 @@ func TestGit_Branches(t *testing.T) {
 	_, err = git.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
 	exitOnErr(t, err)
 
-	branches, err := git.Branches()
-	want := []string{"main", "test"}
-	for _, w := range want {
-		assert.Contains(t, branches, w)
+	refs, err := git.Branches()
+	assert.Nil(t, err)
+	assert.Len(t, refs, 3)
+	for _, ref := range refs {
+		assert.Contains(t, []string{"main", "test", "master"}, ref.Name().Short())
 	}
 }
 
@@ -500,6 +504,168 @@ func TestGit_Reset(t *testing.T) {
 	st, err = w.Status()
 	exitOnErr(t, err)
 	assert.Equal(t, len(st), 0)
+}
+
+func TestGit_RemoveBranch(t *testing.T) {
+	_, dir := initRepo(t, "main")
+	git, err := gogit.NewGit(&gogit.GitOptions{
+		Path: dir,
+	})
+	exitOnErr(t, err)
+
+	_, err = git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
+	refs, err := git.Branches()
+	exitOnErr(t, err)
+	assert.Len(t, refs, 3)
+
+	exitOnErr(t, git.RemoveBranch(plumbing.NewBranchReferenceName("foo")))
+
+	refs, err = git.Branches()
+	exitOnErr(t, err)
+	assert.Len(t, refs, 2)
+}
+
+func TestGit_Branch(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		_, dirBare := initBareRepo(t)
+		repo, dir := initRepo(t, "main")
+		_, err := repo.CreateRemote(&config.RemoteConfig{
+			Name: "origin",
+			URLs: []string{dirBare},
+		})
+		exitOnErr(t, err)
+		git, err := gogit.NewGit(&gogit.GitOptions{
+			Path: dir,
+		})
+
+		remote, err := git.Remote("origin")
+		assert.Nil(t, err)
+		assert.Equal(t, "origin", remote.Name())
+	})
+
+	t.Run("ok: use default", func(t *testing.T) {
+		_, dirBare := initBareRepo(t)
+		repo, dir := initRepo(t, "main")
+		_, err := repo.CreateRemote(&config.RemoteConfig{
+			Name: "origin",
+			URLs: []string{dirBare},
+		})
+		exitOnErr(t, err)
+		git, err := gogit.NewGit(&gogit.GitOptions{
+			Path:       dir,
+			RemoteName: "origin",
+		})
+
+		remote, err := git.Remote("")
+		assert.Nil(t, err)
+		assert.Equal(t, "origin", remote.Name())
+	})
+
+	t.Run("err: remote not exist", func(t *testing.T) {
+		_, dir := initRepo(t, "main")
+		git, err := gogit.NewGit(&gogit.GitOptions{
+			Path:       dir,
+			RemoteName: "origin",
+		})
+
+		_, err = git.Remote("origin")
+		assert.Error(t, err)
+	})
+}
+
+func TestGitBranch_BasicAuth(t *testing.T) {
+	tests := []struct {
+		name  string
+		token string
+		want  *githttp.BasicAuth
+	}{
+		{
+			"both username and password",
+			"user:pass",
+			&githttp.BasicAuth{
+				Username: "user",
+				Password: "pass",
+			},
+		},
+		{
+			"only password",
+			"pass",
+			&githttp.BasicAuth{
+				Username: "anonymous",
+				Password: "pass",
+			},
+		},
+		{
+			"not set",
+			"",
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt := &gogit.GitOptions{
+				Token: tt.token,
+			}
+			remote, _, _ := setupRemoteRepo(t, opt)
+			assert.Equal(t, tt.want, remote.BasicAuth())
+		})
+	}
+}
+
+func TestGitRemote_Branches(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		remote, git, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+
+		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
+		exitOnErr(t, err)
+		exitOnErr(t, git.Push("foo"))
+
+		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
+		exitOnErr(t, err)
+		exitOnErr(t, git.Push("bar"))
+
+		branches, err := remote.Branches()
+		assert.Nil(t, err)
+		assert.Len(t, branches, 2)
+		for _, b := range branches {
+			assert.Contains(t, []string{"refs/heads/foo", "refs/heads/bar"}, b.Name().String())
+		}
+	})
+
+	t.Run("err: no branch", func(t *testing.T) {
+		remote, _, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		_, err := remote.Branches()
+		assert.Error(t, err)
+	})
+
+}
+
+func TestGitRemote_RemoveBranch(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		remote, git, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+
+		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
+		exitOnErr(t, err)
+		exitOnErr(t, git.Push("foo"))
+
+		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
+		exitOnErr(t, err)
+		exitOnErr(t, git.Push("bar"))
+
+		err = remote.RemoveBranch(plumbing.NewBranchReferenceName("foo"))
+		assert.Nil(t, err)
+
+		branches, err := remote.Branches()
+		exitOnErr(t, err)
+		assert.Len(t, branches, 1)
+		assert.Equal(t, "refs/heads/bar", branches[0].Name().String())
+	})
+
+	t.Run("ok: branch not found", func(t *testing.T) {
+		remote, _, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		err := remote.RemoveBranch(plumbing.NewBranchReferenceName("foo"))
+		assert.Nil(t, err)
+	})
 }
 
 func TestIsTrackedAndChanged(t *testing.T) {
