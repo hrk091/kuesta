@@ -57,9 +57,6 @@ const (
 	FlagGitUser    = "git-user"
 	FlagGitEmail   = "git-email"
 	FlagPushToMain = "push-to-main"
-
-	DefaultGitUser  = gogit.DefaultGitUser
-	DefaultGitEmail = gogit.DefaultGitEmail
 )
 
 // NewRootCmd creates command root.
@@ -78,11 +75,11 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
 	cmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
 	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
-	cmd.PersistentFlags().StringP(FlagGitTrunk, "", "main", "git trunk branch")
-	cmd.PersistentFlags().StringP(FlagGitRemote, "", "origin", "git remote name to be used for gitops")
+	cmd.PersistentFlags().StringP(FlagGitTrunk, "", gogit.DefaultTrunkBranch, "git trunk branch")
+	cmd.PersistentFlags().StringP(FlagGitRemote, "", gogit.DefaultRemoteName, "git remote name to be used for gitops")
 	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
-	cmd.PersistentFlags().StringP(FlagGitUser, "", DefaultGitUser, "git username")
-	cmd.PersistentFlags().StringP(FlagGitEmail, "", DefaultGitEmail, "git email")
+	cmd.PersistentFlags().StringP(FlagGitUser, "", gogit.DefaultGitUser, "git username")
+	cmd.PersistentFlags().StringP(FlagGitEmail, "", gogit.DefaultGitEmail, "git email")
 
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()
@@ -98,7 +95,7 @@ func NewRootCmd() *cobra.Command {
 func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	gitUser := viper.GetString(FlagGitUser)
 	gitEmail := viper.GetString(FlagGitEmail)
-	if gitUser != DefaultGitUser && gitEmail == DefaultGitEmail {
+	if gitUser != gogit.DefaultGitUser && gitEmail == gogit.DefaultGitEmail {
 		gitEmail = fmt.Sprintf("%s@example.com", gitUser)
 	}
 
