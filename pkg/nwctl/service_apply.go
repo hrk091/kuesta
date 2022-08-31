@@ -50,7 +50,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 
 	git, err := gogit.NewGit(cfg.GitOptions())
 	if err != nil {
-		return fmt.Errorf("setup git: %w", err)
+		return fmt.Errorf("init git: %w", err)
 	}
 
 	w, err := git.Checkout()

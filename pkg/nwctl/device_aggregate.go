@@ -170,7 +170,7 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 
 	g, err := gogit.NewGit(s.cfg.GitOptions())
 	if err != nil {
-		return fmt.Errorf("setup git: %w", err)
+		return fmt.Errorf("init git: %w", err)
 	}
 
 	if err := g.Pull(); err != nil {

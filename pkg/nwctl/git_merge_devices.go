@@ -24,8 +24,12 @@ package nwctl
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/logger"
+	"strings"
 )
 
 type GitMergeDevicesCfg struct {
@@ -42,7 +46,55 @@ func RunGitMergeDevicesCfg(ctx context.Context, cfg *GitMergeDevicesCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("git merge-devices called")
 
-	//git, err := gogit.NewGit(cfg.GitOptions())
+	git, err := gogit.NewGit(cfg.GitOptions())
+	if err != nil {
+		return fmt.Errorf("init git: %w", err)
+	}
+
+	_, err = git.Checkout()
+	if err != nil {
+		return fmt.Errorf("git checkout: %w", err)
+	}
+
+	if err := git.Pull(); err != nil {
+		return fmt.Errorf("git pull: %w", err)
+	}
+
+	remote, err := git.Remote("")
+	if err != nil {
+		return fmt.Errorf("get git remote: %w", err)
+	}
+
+	branches, err := remote.Branches()
+	if err != nil {
+		return fmt.Errorf("list remote references: %w", err)
+	}
+
+	var merged []plumbing.ReferenceName
+	for _, br := range branches {
+		rn := br.Name()
+		if !strings.HasPrefix(rn.String(), "refs/heads/SYNC") {
+			continue
+		}
+		l.Infof("pulling device update branch: %s", rn.String())
+		if err := git.Pull(gogit.PullOptsReference(rn)); err != nil {
+			return fmt.Errorf("git pull from %s: %w", rn.String(), err)
+		}
+		merged = append(merged, rn)
+	}
+
+	if err := git.Push(""); err != nil {
+		return fmt.Errorf("git push: %w", err)
+	}
+
+	for _, rn := range merged {
+		if err := git.RemoveBranch(rn); err != nil {
+			return fmt.Errorf("remove local branch: %w", err)
+		}
+		if err := remote.RemoveBranch(rn); err != nil {
+			return fmt.Errorf("remove remote branch: %w", err)
+		}
+	}
 
 	return nil
 }

@@ -33,6 +33,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"testing"
 	"time"
 )
@@ -171,6 +172,7 @@ func createBranch(repo *extgogit.Repository, branch string) error {
 		Hash:   h.Hash(),
 		Branch: plumbing.ReferenceName("refs/heads/" + branch),
 		Create: true,
+		Keep:   true,
 	})
 }
 
@@ -216,6 +218,16 @@ func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName strin
 	exitOnErr(t, err)
 
 	return branches
+}
+
+func hasSyncBranch(t *testing.T, repo *extgogit.Repository, remoteName string) bool {
+	exists := false
+	for _, b := range getRemoteBranches(t, repo, remoteName) {
+		if strings.HasPrefix(b.Name().Short(), "SYNC-") {
+			exists = true
+		}
+	}
+	return exists
 }
 
 func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, string, string) {

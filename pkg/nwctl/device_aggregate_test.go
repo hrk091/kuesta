@@ -129,7 +129,7 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 	testRemote := "test-remote"
 
 	t.Run("ok", func(t *testing.T) {
-		repo, dir := setupGitRepoWithRemote(t, testRemote)
+		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
 		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
 			RootCfg: nwctl.RootCfg{
 				RootPath:  dir,
@@ -151,7 +151,7 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 
 func TestDeviceAggregateServer_Run(t *testing.T) {
 	testRemote := "test-remote"
-	repo, dir := setupGitRepoWithRemote(t, testRemote)
+	repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
 	config := "foobar"
 	req := nwctl.SaveConfigRequest{
 		Device: "device1",

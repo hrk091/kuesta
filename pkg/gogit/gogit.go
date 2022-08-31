@@ -412,13 +412,18 @@ func (r *GitRemote) Branches(opts ...ListOpts) ([]*plumbing.Reference, error) {
 }
 
 // RemoveBranch removes the remote branch.
-func (r *GitRemote) RemoveBranch(rn plumbing.ReferenceName) error {
-	err := r.remote.Push(&extgogit.PushOptions{
+func (r *GitRemote) RemoveBranch(rn plumbing.ReferenceName, opts ...PushOpts) error {
+	o := &extgogit.PushOptions{
+		RemoteName: r.opts.RemoteName,
 		RefSpecs: []config.RefSpec{
 			config.RefSpec(":" + rn.String()),
 		},
 		Auth: r.BasicAuth(),
-	})
+	}
+	for _, tr := range opts {
+		tr(o)
+	}
+	err := r.remote.Push(o)
 	if err != nil && err != extgogit.NoErrAlreadyUpToDate {
 		return errors.WithStack(err)
 	}
