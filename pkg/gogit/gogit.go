@@ -59,12 +59,12 @@ func (g *GitOptions) Validate() error {
 }
 
 type Git struct {
-	opts GitOptions
+	opts *GitOptions
 	repo *extgogit.Repository
 }
 
 // NewGit creates Git with a go-git repository.
-func NewGit(o GitOptions) (*Git, error) {
+func NewGit(o *GitOptions) (*Git, error) {
 	if err := o.Validate(); err != nil {
 		return nil, fmt.Errorf("validate GitOptions struct: %w", err)
 	}
@@ -78,7 +78,7 @@ func NewGit(o GitOptions) (*Git, error) {
 }
 
 // NewGitWithoutRepo creates Git without setting up a go-git repository.
-func NewGitWithoutRepo(o GitOptions) *Git {
+func NewGitWithoutRepo(o *GitOptions) *Git {
 	return &Git{
 		opts: o,
 	}

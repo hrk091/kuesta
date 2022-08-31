@@ -48,14 +48,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("service apply called")
 
-	opts := gogit.GitOptions{
-		Path:        cfg.RootPath,
-		TrunkBranch: cfg.GitTrunk,
-		Token:       cfg.GitToken,
-		User:        cfg.GitUser,
-		Email:       cfg.GitEmail,
-	}
-	git, err := gogit.NewGit(opts)
+	git, err := gogit.NewGit(cfg.GitOptions())
 	if err != nil {
 		return fmt.Errorf("setup git: %w", err)
 	}

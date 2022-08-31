@@ -84,7 +84,7 @@ Devices:
 		assert.Nil(t, err)
 		assert.Equal(t, "main", getBranch(t, repo))
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: "main",
 		})
@@ -106,7 +106,7 @@ Devices:
 		assert.Nil(t, err)
 		assert.True(t, strings.HasPrefix(getBranch(t, repo), "REV-"))
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: "main",
 		})

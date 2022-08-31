@@ -22,7 +22,10 @@
 
 package nwctl
 
-import "github.com/hrk091/nwctl/pkg/common"
+import (
+	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/gogit"
+)
 
 type RootCfg struct {
 	Verbose   uint8 `validate:"min=0,max=3"`
@@ -38,4 +41,15 @@ type RootCfg struct {
 // Validate validates exposed fields according to the `validate` tag.
 func (c *RootCfg) Validate() error {
 	return common.Validate(c)
+}
+
+func (c *RootCfg) GitOptions() *gogit.GitOptions {
+	return &gogit.GitOptions{
+		Path:        c.RootPath,
+		TrunkBranch: c.GitTrunk,
+		RemoteName:  c.GitRemote,
+		Token:       c.GitToken,
+		User:        c.GitUser,
+		Email:       c.GitEmail,
+	}
 }

@@ -103,7 +103,7 @@ func TestGit_BasicAuth(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := gogit.NewGitWithoutRepo(gogit.GitOptions{
+			g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
 				Token: tt.token,
 			})
 			assert.Equal(t, tt.want, g.BasicAuth())
@@ -113,7 +113,7 @@ func TestGit_BasicAuth(t *testing.T) {
 
 func TestGit_Signature(t *testing.T) {
 	t.Run("given user/email", func(t *testing.T) {
-		g := gogit.NewGitWithoutRepo(gogit.GitOptions{
+		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
 			User:  "test-user",
 			Email: "test-email",
 		})
@@ -122,7 +122,7 @@ func TestGit_Signature(t *testing.T) {
 		assert.Equal(t, "test-email", got.Email)
 	})
 	t.Run("default", func(t *testing.T) {
-		g := gogit.NewGitWithoutRepo(gogit.GitOptions{})
+		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{})
 		got := g.Signature()
 		assert.Equal(t, gogit.DefaultGitUser, got.Name)
 		assert.Equal(t, gogit.DefaultGitEmail, got.Email)
@@ -135,7 +135,7 @@ func TestGit_Head(t *testing.T) {
 	want, err := commit(repo, time.Now())
 	exitOnErr(t, err)
 
-	g, err := gogit.NewGit(gogit.GitOptions{
+	g, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
 	exitOnErr(t, err)
@@ -148,7 +148,7 @@ func TestGit_Head(t *testing.T) {
 func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to main", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -164,7 +164,7 @@ func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to specified trunk", func(t *testing.T) {
 		branchName := "test-branch"
 		_, dir := initRepo(t, branchName)
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: branchName,
 		})
@@ -180,7 +180,7 @@ func TestGit_Checkout(t *testing.T) {
 
 	t.Run("ok: checkout to new branch", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -195,7 +195,7 @@ func TestGit_Checkout(t *testing.T) {
 
 	t.Run("bad: checkout to existing branch with create opt", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -207,7 +207,7 @@ func TestGit_Checkout(t *testing.T) {
 
 	t.Run("bad: checkout to new branch without create opt", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -222,7 +222,7 @@ func TestGit_Commit(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		exitOnErr(t, addFile(repo, "test", "dummy"))
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -235,7 +235,7 @@ func TestGit_Commit(t *testing.T) {
 		repo, dir := initRepo(t, testTrunk)
 		exitOnErr(t, addFile(repo, "test", "dummy"))
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: testTrunk,
 		})
@@ -253,7 +253,7 @@ func TestGit_Commit(t *testing.T) {
 	t.Run("ok: commit even when no change", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
 		exitOnErr(t, err)
@@ -274,7 +274,7 @@ func TestGit_Push(t *testing.T) {
 		})
 		exitOnErr(t, err)
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: testRemote,
 		})
@@ -299,7 +299,7 @@ func TestGit_Push(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		noExistRemote := "not-exist"
 
-		g, err := gogit.NewGit(gogit.GitOptions{
+		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: noExistRemote,
 		})
@@ -323,7 +323,7 @@ func TestGit_SetUpstream(t *testing.T) {
 		URLs: []string{dirBare},
 	})
 	exitOnErr(t, err)
-	git, err := gogit.NewGit(gogit.GitOptions{
+	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path:       dir,
 		RemoteName: testRemote,
 	})
@@ -351,7 +351,7 @@ func TestGit_SetUpstream(t *testing.T) {
 
 func TestGit_Branches(t *testing.T) {
 	_, dir := initRepo(t, "main")
-	git, err := gogit.NewGit(gogit.GitOptions{
+	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
 	exitOnErr(t, err)
@@ -380,7 +380,7 @@ func TestGit_Pull(t *testing.T) {
 			URLs: []string{dirBare},
 		})
 		exitOnErr(t, err)
-		gitPusher, err := gogit.NewGit(gogit.GitOptions{
+		gitPusher, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dirPusher,
 			RemoteName: testRemote,
 		})
@@ -398,7 +398,7 @@ func TestGit_Pull(t *testing.T) {
 			URL:        dirBare,
 			RemoteName: testRemote,
 		})
-		gitPuller, err := gogit.NewGit(gogit.GitOptions{
+		gitPuller, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dirPuller,
 			RemoteName: testRemote,
 		})
@@ -467,7 +467,7 @@ func TestGit_Pull(t *testing.T) {
 
 	t.Run("err: remote repo not exist", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
-		git, err := gogit.NewGit(gogit.GitOptions{
+		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: testRemote,
 		})
@@ -481,7 +481,7 @@ func TestGit_Pull(t *testing.T) {
 
 func TestGit_Reset(t *testing.T) {
 	repo, dir := initRepo(t, "main")
-	git, err := gogit.NewGit(gogit.GitOptions{
+	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
 	exitOnErr(t, err)

@@ -168,14 +168,7 @@ func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigReq
 func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	l := logger.FromContext(ctx)
 
-	g, err := gogit.NewGit(gogit.GitOptions{
-		Path:        s.cfg.RootPath,
-		TrunkBranch: s.cfg.GitTrunk,
-		RemoteName:  s.cfg.GitRemote,
-		Token:       s.cfg.GitToken,
-		User:        s.cfg.GitUser,
-		Email:       s.cfg.GitEmail,
-	})
+	g, err := gogit.NewGit(s.cfg.GitOptions())
 	if err != nil {
 		return fmt.Errorf("setup git: %w", err)
 	}
