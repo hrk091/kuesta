@@ -20,18 +20,29 @@
  * THE SOFTWARE.
  */
 
-package cmd
+package nwctl
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 )
 
-func newGitCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "git",
-		Short: "Execute Git operations",
-	}
-	cmd.AddCommand(newGitCommitCmd())
-	cmd.AddCommand(newGitMergeDevicesCmd())
-	return cmd
+type GitMergeDevicesCfg struct {
+	RootCfg
+}
+
+// Validate validates exposed fields according to the `validate` tag.
+func (c *GitMergeDevicesCfg) Validate() error {
+	return common.Validate(c)
+}
+
+// RunGitMergeDevicesCfg runs the main process of the `git merge-devices` command.
+func RunGitMergeDevicesCfg(ctx context.Context, cfg *GitMergeDevicesCfg) error {
+	l := logger.FromContext(ctx)
+	l.Debug("git merge-devices called")
+
+	//git, err := gogit.NewGit(cfg.GitOptions())
+
+	return nil
 }

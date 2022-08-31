@@ -23,15 +23,35 @@
 package cmd
 
 import (
+	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/spf13/cobra"
 )
 
-func newGitCmd() *cobra.Command {
+func newGitMergeDevicesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "git",
-		Short: "Execute Git operations",
+		Use:   "merge-devices",
+		Short: "Merge subscribed device config updates",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := newGitMergeDevicesCfg(cmd, args)
+			if err != nil {
+				return err
+			}
+			logger.Setup(cfg.Devel, cfg.Verbose)
+
+			return nwctl.RunGitMergeDevicesCfg(cmd.Context(), cfg)
+		},
 	}
-	cmd.AddCommand(newGitCommitCmd())
-	cmd.AddCommand(newGitMergeDevicesCmd())
 	return cmd
+}
+
+func newGitMergeDevicesCfg(cmd *cobra.Command, args []string) (*nwctl.GitMergeDevicesCfg, error) {
+	rootCfg, err := newRootCfg(cmd)
+	if err != nil {
+		return nil, err
+	}
+	cfg := &nwctl.GitMergeDevicesCfg{
+		RootCfg: *rootCfg,
+	}
+	return cfg, cfg.Validate()
 }
