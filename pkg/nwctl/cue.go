@@ -26,6 +26,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/format"
 	"cuelang.org/go/cue/load"
+	cuejson "cuelang.org/go/encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 )
@@ -43,6 +44,19 @@ func NewValueFromBuf(cctx *cue.Context, buf []byte) (cue.Value, error) {
 	v := cctx.CompileBytes(buf)
 	if v.Err() != nil {
 		return cue.Value{}, errors.WithStack(v.Err())
+	}
+	return v, nil
+}
+
+// NewValueFromJson creates cue.Value from the given JSON []byte.
+func NewValueFromJson(cctx *cue.Context, buf []byte) (cue.Value, error) {
+	expr, err := cuejson.Extract("from json", buf)
+	if err != nil {
+		return cue.Value{}, errors.WithStack(fmt.Errorf("extract JSON: %w", err))
+	}
+	v := cctx.BuildExpr(expr)
+	if v.Err() != nil {
+		return cue.Value{}, errors.WithStack(fmt.Errorf("build cue.Value from expr: %w", v.Err()))
 	}
 	return v, nil
 }

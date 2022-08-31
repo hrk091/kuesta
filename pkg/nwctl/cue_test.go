@@ -99,6 +99,7 @@ config: {
 )
 
 func TestNewValueFromBuf(t *testing.T) {
+	cctx := cuecontext.New()
 	tests := []struct {
 		name    string
 		given   []byte
@@ -120,11 +121,48 @@ func TestNewValueFromBuf(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := nwctl.NewValueFromBuf(cuecontext.New(), tt.given)
+			v, err := nwctl.NewValueFromBuf(cctx, tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.Equal(t, tt.want, fmt.Sprint(v))
+			}
+		})
+	}
+}
+
+func TestNewValueFromJson(t *testing.T) {
+	cctx := cuecontext.New()
+	tests := []struct {
+		name    string
+		given   string
+		want    string
+		wantErr bool
+	}{
+		{
+			"ok",
+			`{"foo": "bar"}`,
+			`{foo: "bar"}`,
+			false,
+		},
+		{
+			"err: invalid json",
+			`{"foo": "bar"`,
+			"",
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := nwctl.NewValueFromJson(cctx, []byte(tt.given))
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				w, err := nwctl.NewValueFromBuf(cctx, []byte(tt.want))
+				exitOnErr(t, err)
+				assert.Equal(t, fmt.Sprint(w), fmt.Sprint(got))
 			}
 		})
 	}
