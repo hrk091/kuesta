@@ -26,6 +26,7 @@ import (
 	"context"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -361,5 +362,234 @@ func TestNorthboundServer_Get(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestNorthboundServer_DoDelete(t *testing.T) {
+	serviceInput := []byte(`{port: 1}`)
+	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
+
+	tests := []struct {
+		name        string
+		path        *pb.Path
+		setup       func(dir string)
+		want        *pb.UpdateResult
+		pathRemoved string
+		wantErr     codes.Code
+	}{
+		{
+			"ok",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+			},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_DELETE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			codes.OK,
+		},
+		{
+			"ok: already deleted",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+			},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_DELETE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			codes.OK,
+		},
+		{
+			"err: metadata not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			func(dir string) {},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_DELETE,
+			},
+			"",
+			codes.InvalidArgument,
+		},
+	}
+
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			tt.setup(dir)
+			s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+				RootCfg: nwctl.RootCfg{
+					RootPath: dir,
+				},
+			})
+
+			got, err := s.DoDelete(context.Background(), nil, tt.path)
+			if tt.wantErr != codes.OK {
+				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr, status.Code(err))
+			} else {
+				t.Log(err)
+				assert.Nil(t, err)
+				tt.want.Path = tt.path
+				assert.Equal(t, tt.want.String(), got.String())
+
+				_, err := os.ReadFile(filepath.Join(dir, tt.pathRemoved))
+				assert.True(t, errors.Is(err, os.ErrNotExist))
+			}
+		})
+	}
+}
+
+func TestNorthboundServer_DoReplace(t *testing.T) {
+	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
+	serviceInput := []byte(`{port: 1, mtu: 9000}`)
+	requestJson := []byte(`{"port": 2, "desc": "test"}`)
+	invalidJson := []byte(`{"port": 2`)
+
+	tests := []struct {
+		name        string
+		path        *pb.Path
+		val         *pb.TypedValue
+		setup       func(dir string)
+		want        *pb.UpdateResult
+		pathUpdated string
+		valUpdated  []byte
+		wantErr     codes.Code
+	}{
+		{
+			"ok: replace existing",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+			},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_REPLACE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			[]byte(`{
+	bar:  "one"
+	baz:  "two"
+	desc: "test"
+	port: 2.0
+}`),
+			codes.OK,
+		},
+		{
+			"ok: new service",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+			},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_REPLACE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			[]byte(`{
+	bar:  "one"
+	baz:  "two"
+	desc: "test"
+	port: 2.0
+}`),
+			codes.OK,
+		},
+		{
+			"err: metadata not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_REPLACE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.InvalidArgument,
+		},
+		{
+			"err: invalid json input",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: invalidJson},
+			},
+			func(dir string) {},
+			&pb.UpdateResult{
+				Op: pb.UpdateResult_REPLACE,
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.InvalidArgument,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			tt.setup(dir)
+			s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+				RootCfg: nwctl.RootCfg{
+					RootPath: dir,
+				},
+			})
+
+			got, err := s.DoReplace(context.Background(), nil, tt.path, tt.val)
+			if tt.wantErr != codes.OK {
+				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr, status.Code(err))
+			} else {
+				t.Log(err)
+				assert.Nil(t, err)
+				tt.want.Path = tt.path
+				assert.Equal(t, tt.want.String(), got.String())
+
+				buf, err := os.ReadFile(filepath.Join(dir, tt.pathUpdated))
+				assert.Nil(t, err)
+				t.Logf("%s", string(buf))
+				assert.Equal(t, tt.valUpdated, buf)
+			}
+		})
+	}
 }

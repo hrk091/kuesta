@@ -78,6 +78,7 @@ type NorthboundServer struct {
 	git       *gogit.Git
 }
 
+// NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
 func NewNorthboundServer(cfg *ServeCfg) *NorthboundServer {
 	return &NorthboundServer{
 		cfg:       cfg,
@@ -86,6 +87,7 @@ func NewNorthboundServer(cfg *ServeCfg) *NorthboundServer {
 	}
 }
 
+// Error shows an error with stacktrace if attached.
 func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
 	if st := common.GetStackTrace(err); st != "" {
@@ -96,6 +98,7 @@ func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kv
 
 var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
 
+// Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
 	l := logger.FromContext(ctx)
 	l.Debug("Capabilities called")
@@ -122,6 +125,7 @@ func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityR
 	}, nil
 }
 
+// Get responds the multiple service inputs requested by GetRequest.
 func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	if !s.mu.TryRLock() {
 		return nil, status.Error(codes.Unavailable, "locked")
@@ -145,6 +149,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	return &pb.GetResponse{Notification: notifications}, nil
 }
 
+// DoGet returns the service input stored at the supplied path.
 func (s *NorthboundServer) DoGet(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error) {
 	l := logger.FromContext(ctx)
 
@@ -195,6 +200,7 @@ func (s *NorthboundServer) DoGet(ctx context.Context, prefix, path *pb.Path) (*p
 	return &pb.Notification{Prefix: prefix, Update: []*pb.Update{update}}, nil
 }
 
+// Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
 func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
 	l := logger.FromContext(ctx)
 	l.Debugw("Set called")
@@ -268,6 +274,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	}, nil
 }
 
+// DoDelete deletes the service input stored at the supplied path.
 func (s *NorthboundServer) DoDelete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
@@ -286,9 +293,7 @@ func (s *NorthboundServer) DoDelete(ctx context.Context, prefix, path *pb.Path) 
 
 	sp := r.Path()
 	if err = os.Remove(sp.ServiceInputPath(IncludeRoot)); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		} else {
+		if !errors.Is(err, os.ErrNotExist) {
 			s.Error(l, err, "delete file")
 			return nil, status.Errorf(codes.Internal, "failed to delete file: %s", r.String())
 		}
@@ -296,6 +301,7 @@ func (s *NorthboundServer) DoDelete(ctx context.Context, prefix, path *pb.Path) 
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_DELETE}, nil
 }
 
+// DoReplace replaces the service input stored at the supplied path.
 func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
@@ -340,6 +346,7 @@ func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path,
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_REPLACE}, nil
 }
 
+// DoUpdate updates the service input stored at the supplied path.
 func (s *NorthboundServer) DoUpdate(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
