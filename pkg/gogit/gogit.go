@@ -297,6 +297,34 @@ func (g *Git) Pull(opts ...PullOpts) error {
 // PullOpts enables modification of the go-git PullOptions.
 type PullOpts func(o *extgogit.PullOptions)
 
+// ResetOpts enables modification of the go-git ResetOptions.
+type ResetOpts func(o *extgogit.ResetOptions)
+
+func ResetOptsHard() ResetOpts {
+	return func(o *extgogit.ResetOptions) {
+		o.Mode = extgogit.HardReset
+	}
+}
+
+// Reset runs git-reset with supplied options.
+func (g *Git) Reset(opts ...ResetOpts) error {
+	o := &extgogit.ResetOptions{
+		Mode: extgogit.HardReset,
+	}
+	for _, tr := range opts {
+		tr(o)
+	}
+
+	w, err := g.repo.Worktree()
+	if err != nil {
+		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
+	}
+	if err := w.Reset(o); err != nil {
+		return errors.WithStack(fmt.Errorf("run git-reset: %w", err))
+	}
+	return nil
+}
+
 // IsTrackedAndChanged returns true if git file status is neither untracked nor unmodified.
 func IsTrackedAndChanged(c extgogit.StatusCode) bool {
 	return c != extgogit.Untracked && c != extgogit.Unmodified

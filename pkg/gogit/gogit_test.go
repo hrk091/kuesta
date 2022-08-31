@@ -479,6 +479,29 @@ func TestGit_Pull(t *testing.T) {
 
 }
 
+func TestGit_Reset(t *testing.T) {
+	repo, dir := initRepo(t, "main")
+	git, err := gogit.NewGit(gogit.GitOptions{
+		Path: dir,
+	})
+	exitOnErr(t, err)
+	exitOnErr(t, addFile(repo, "test", "hash"))
+
+	w, err := repo.Worktree()
+	exitOnErr(t, err)
+
+	st, err := w.Status()
+	exitOnErr(t, err)
+	assert.Greater(t, len(st), 0)
+
+	err = git.Reset(gogit.ResetOptsHard())
+	assert.Nil(t, err)
+
+	st, err = w.Status()
+	exitOnErr(t, err)
+	assert.Equal(t, len(st), 0)
+}
+
 func TestIsTrackedAndChanged(t *testing.T) {
 	tests := []struct {
 		given extgogit.StatusCode
