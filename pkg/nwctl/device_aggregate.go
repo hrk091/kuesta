@@ -26,6 +26,7 @@ import (
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/logger"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -85,6 +86,14 @@ func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 	}
 }
 
+func (s *DeviceAggregateServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
+	l = l.WithOptions(zap.AddCallerSkip(1))
+	if st := common.GetStackTrace(err); st != "" {
+		l = l.With("stacktrace", st)
+	}
+	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
+}
+
 // HandleFunc handles API call to persist actual device config.
 func (s *DeviceAggregateServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -123,7 +132,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					l.Errorf("save actual device config: %v", err)
+					s.Error(l, err, "save actual device config")
 				}
 			case <-ctx.Done():
 				return
@@ -142,7 +151,7 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 			case <-time.After(UpdateCheckDuration):
 				l.Info("Checking git status...")
 				if err := s.GitPushSyncBranch(ctx); err != nil {
-					l.Errorf("push sync branch: %v", err)
+					s.Error(l, err, "push sync branch")
 				}
 			case <-ctx.Done():
 				return
@@ -170,8 +179,16 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 		return fmt.Errorf("init git: %w", err)
 	}
 
+	if _, err := g.Checkout(); err != nil {
+		return fmt.Errorf("git checkout to trunk: %w", err)
+	}
+
 	if err := g.Pull(); err != nil {
 		return fmt.Errorf("git pull: %w", err)
+	}
+
+	if err := g.RemoveGoneBranches(); err != nil {
+		return fmt.Errorf("remove gone branches: %w", err)
 	}
 
 	branches, err := g.Branches()
@@ -186,7 +203,7 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	}
 	w, err := g.Checkout(opt)
 	if err != nil {
-		return fmt.Errorf("git checkout: %w", err)
+		return fmt.Errorf("git checkout to %s: %w", latestSyncBr, err)
 	}
 
 	_, err = w.Add("devices")

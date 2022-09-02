@@ -150,6 +150,7 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 
 		syncBranch := "SYNC-1662097098"
 		exitOnErr(t, createBranch(repo, syncBranch))
+		exitOnErr(t, push(repo, syncBranch, testRemote))
 		exitOnErr(t, checkout(repo, trunkBranch))
 
 		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
