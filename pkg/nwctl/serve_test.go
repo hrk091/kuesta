@@ -84,11 +84,12 @@ func TestNorthboundServer_Capabilities(t *testing.T) {
 	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), barMeta))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+	s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
 		RootCfg: nwctl.RootCfg{
 			RootPath: dir,
 		},
 	})
+	exitOnErr(t, err)
 	got, err := s.Capabilities(context.Background(), &pb.CapabilityRequest{})
 	assert.Nil(t, err)
 	assert.Contains(t, got.SupportedModels, fooModel)
@@ -339,11 +340,12 @@ func TestNorthboundServer_Get(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
+			exitOnErr(t, err)
 			got, err := s.Get(context.Background(), tt.given)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
@@ -427,11 +429,12 @@ func TestNorthboundServer_DoDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
+			exitOnErr(t, err)
 
 			got, err := s.DoDelete(context.Background(), nil, tt.path)
 			if tt.wantErr != codes.OK {
@@ -563,11 +566,12 @@ func TestNorthboundServer_DoReplace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
+			exitOnErr(t, err)
 
 			got, err := s.DoReplace(context.Background(), nil, tt.path, tt.val)
 			if tt.wantErr != codes.OK {

@@ -29,8 +29,11 @@ import (
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"net"
 	"os"
 	"sync"
 )
@@ -60,6 +63,26 @@ func (c *ServeCfg) Validate() error {
 func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("serve called")
+
+	// TODO credential
+	//opts := credentials.ServerCredentials()
+	g := grpc.NewServer()
+	s, err := NewNorthboundServer(cfg)
+	if err != nil {
+		return fmt.Errorf("init gNMI impl server: %w", err)
+	}
+	pb.RegisterGNMIServer(g, s)
+	reflection.Register(g)
+
+	l.Infow("starting to listen", "address", cfg.Addr)
+	listen, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+
+	if err := g.Serve(listen); err != nil {
+		return fmt.Errorf("serve: %w", err)
+	}
 	return nil
 }
 
@@ -73,12 +96,18 @@ type NorthboundServer struct {
 }
 
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
-func NewNorthboundServer(cfg *ServeCfg) *NorthboundServer {
-	return &NorthboundServer{
+func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
+	git, err := gogit.NewGit(cfg.GitOptions())
+	if err != nil {
+		return nil, err
+	}
+	s := &NorthboundServer{
 		cfg:       cfg,
 		converter: NewGnmiPathConverter(cfg),
 		mu:        sync.RWMutex{},
+		git:       git,
 	}
+	return s, nil
 }
 
 // Error shows an error with stacktrace if attached.
@@ -318,9 +347,10 @@ func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path,
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
 	}
-	for k, v := range r.Keys() {
-		input[k] = v
-	}
+	// TODO set primary keys
+	//for k, v := range r.Keys() {
+	//	input[k] = v
+	//}
 
 	inputVal := cctx.Encode(input)
 	if inputVal.Err() != nil {
@@ -357,6 +387,50 @@ func (s *NorthboundServer) DoUpdate(ctx context.Context, prefix, path *pb.Path, 
 	l = l.With("path", req.String())
 	l.Debugw("update")
 
-	// TODO implement
-	return nil, status.Error(codes.Unimplemented, "")
+	cctx := cuecontext.New()
+	sp := r.Path()
+
+	// load current input
+	buf, err := sp.ReadServiceInput()
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, status.Errorf(codes.NotFound, "not found: %s", req.String())
+		} else {
+			s.Error(l, err, "open file")
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+	}
+	curInputVal := cctx.CompileBytes(buf)
+
+	curInput := map[string]any{}
+	if err := curInputVal.Decode(&curInput); err != nil {
+		return nil, status.Errorf(codes.Internal, "decode current input")
+	}
+
+	// merge current and new inputs
+	input := map[string]any{}
+	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
+	}
+	input = common.MergeMap(curInput, input)
+	// TODO set primary keys
+	//for k, v := range r.Keys() {
+	//	input[k] = v
+	//}
+
+	inputVal := cctx.Encode(input)
+	if inputVal.Err() != nil {
+		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())
+	}
+
+	b, err := FormatCue(inputVal, cue.Final())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
+	}
+	if err := sp.WriteServiceInputFile(b); err != nil {
+		s.Error(l, err, "write service input")
+		return nil, status.Errorf(codes.Internal, "failed to write service input: %s", req.String())
+	}
+
+	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_REPLACE}, nil
 }

@@ -102,7 +102,7 @@ func NewGit(o *GitOptions) (*Git, error) {
 	g := NewGitWithoutRepo(o)
 	repo, err := extgogit.PlainOpen(g.opts.Path)
 	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("open git repo: %w", err))
+		return nil, errors.WithStack(fmt.Errorf("open git repo %s: %w", g.opts.Path, err))
 	}
 	g.repo = repo
 	return g, nil
