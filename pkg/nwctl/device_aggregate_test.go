@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -121,9 +122,11 @@ func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 
 func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 	testRemote := "test-remote"
+	trunkBranch := "main"
 
-	t.Run("ok", func(t *testing.T) {
+	t.Run("ok: new branch", func(t *testing.T) {
 		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
+
 		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
 			RootCfg: nwctl.RootCfg{
 				RootPath:  dir,
@@ -133,14 +136,85 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 		err := s.GitPushSyncBranch(context.Background())
 		exitOnErr(t, err)
 
-		exists := false
+		count := 0
 		for _, b := range getRemoteBranches(t, repo, testRemote) {
 			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
-				exists = true
+				count++
 			}
 		}
-		assert.True(t, exists)
+		assert.Equal(t, 1, count)
 	})
+
+	t.Run("ok: existing branch", func(t *testing.T) {
+		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
+
+		syncBranch := "SYNC-1662097098"
+		exitOnErr(t, createBranch(repo, syncBranch))
+		exitOnErr(t, checkout(repo, trunkBranch))
+
+		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
+			RootCfg: nwctl.RootCfg{
+				RootPath:  dir,
+				GitRemote: testRemote,
+				GitTrunk:  trunkBranch,
+			},
+		})
+		err := s.GitPushSyncBranch(context.Background())
+		exitOnErr(t, err)
+
+		count := 0
+		for _, b := range getRemoteBranches(t, repo, testRemote) {
+			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
+				count++
+				assert.Equal(t, syncBranch, b.Name().Short())
+			}
+		}
+		assert.Equal(t, 1, count)
+	})
+}
+
+func TestLatestSyncBranch(t *testing.T) {
+	syncBrOld := "SYNC-1662097098"
+	syncBrNew := "SYNC-1700000000"
+	dummyBr := "DUMMY-123"
+
+	tests := []struct {
+		name  string
+		given []*plumbing.Reference
+		want  string
+	}{
+		{
+			"ok: select one from multi",
+			[]*plumbing.Reference{
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrOld).String(), "test"),
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrNew).String(), "test"),
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
+			},
+			"SYNC-1700000000",
+		},
+		{
+			"ok: single",
+			[]*plumbing.Reference{
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrNew).String(), "test"),
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
+			},
+			"SYNC-1700000000",
+		},
+		{
+			"ok: not found",
+			[]*plumbing.Reference{
+				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
+			},
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := nwctl.LatestSyncBranch(tt.given)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
 }
 
 func TestDeviceAggregateServer_Run(t *testing.T) {

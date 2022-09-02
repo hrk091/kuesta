@@ -153,6 +153,18 @@ func push(repo *extgogit.Repository, branch, remote string) error {
 	return repo.Push(o)
 }
 
+func checkout(repo *extgogit.Repository, branch string) error {
+	w, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+	opt := &extgogit.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
+		Keep:   true,
+	}
+	return w.Checkout(opt)
+}
+
 func createBranch(repo *extgogit.Repository, branch string) error {
 	wt, err := repo.Worktree()
 	if err != nil {

@@ -18,15 +18,18 @@ package nwctl
 
 import (
 	"context"
+	"cuelang.org/go/pkg/strconv"
 	"encoding/json"
 	"fmt"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"io"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -170,10 +173,22 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	if err := g.Pull(); err != nil {
 		return fmt.Errorf("git pull: %w", err)
 	}
-	w, err := g.Checkout()
+
+	branches, err := g.Branches()
+	if err != nil {
+		return fmt.Errorf("get local branches: %w", err)
+	}
+	latestSyncBr := LatestSyncBranch(branches)
+
+	var opt gogit.CheckoutOpts
+	if latestSyncBr != "" {
+		opt = gogit.CheckoutOptsTo(latestSyncBr)
+	}
+	w, err := g.Checkout(opt)
 	if err != nil {
 		return fmt.Errorf("git checkout: %w", err)
 	}
+
 	_, err = w.Add("devices")
 	if err != nil {
 		return fmt.Errorf("git add devices: %v", err)
@@ -192,8 +207,15 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 		return fmt.Errorf("check files are either staged or unmodified: %w", err)
 	}
 
-	branchName := fmt.Sprintf("SYNC-%d", time.Now().Unix())
-	if w, err = g.Checkout(gogit.CheckoutOptsTo(branchName), gogit.CheckoutOptsCreateNew()); err != nil {
+	var toOpts []gogit.CheckoutOpts
+	toBranch := latestSyncBr
+	if toBranch == "" {
+		toBranch = fmt.Sprintf("SYNC-%d", time.Now().Unix())
+		toOpts = append(toOpts, gogit.CheckoutOptsCreateNew(), gogit.CheckoutOptsTo(toBranch))
+	} else {
+		toOpts = append(toOpts, gogit.CheckoutOptsTo(latestSyncBr))
+	}
+	if w, err = g.Checkout(toOpts...); err != nil {
 		return fmt.Errorf("create new branch: %w", err)
 	}
 
@@ -201,11 +223,32 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	if _, err := g.Commit(commitMsg); err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}
-	if err := g.Push(gogit.PushOptBranch(branchName)); err != nil {
+	if err := g.Push(gogit.PushOptBranch(toBranch)); err != nil {
 		return fmt.Errorf("git push: %w", err)
 	}
 
 	return nil
+}
+
+// LatestSyncBranch returns the latest sync branch name or empty string if there are no sync branch.
+func LatestSyncBranch(branches []*plumbing.Reference) string {
+	re := regexp.MustCompile(`SYNC-(\d+)`)
+
+	var max int
+	for _, b := range branches {
+		matched := re.FindStringSubmatch(b.Name().Short())
+		if len(matched) == 0 {
+			continue
+		}
+		ts, _ := strconv.Atoi(matched[1])
+		if ts > max {
+			max = ts
+		}
+	}
+	if max != 0 {
+		return fmt.Sprintf("SYNC-%d", max)
+	}
+	return ""
 }
 
 type SaveConfigRequest struct {
