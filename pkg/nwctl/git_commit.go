@@ -164,11 +164,7 @@ func CheckGitIsStagedOrUnmodified(stmap extgogit.Status) error {
 		err = multierr.Append(err, CheckGitFileIsStagedOrUnmodified(path, *st))
 	}
 	if err != nil {
-		msg := []string{"check git status:"}
-		for _, err := range multierr.Errors(err) {
-			msg = append(msg, err.Error())
-		}
-		return fmt.Errorf("%s", strings.Join(msg, "\n "))
+		return common.JoinErr("check git status:", err)
 	}
 	return nil
 }
