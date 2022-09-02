@@ -17,10 +17,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	origzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -33,8 +35,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	nwctlv1alpha1 "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
+	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
+	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
 	"github.com/hrk091/nwctl/device-operator/controllers"
+	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -46,7 +50,9 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(nwctlv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(deviceoperator.AddToScheme(scheme))
+	utilruntime.Must(provisioner.AddToScheme(scheme))
+	utilruntime.Must(fluxcd.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -114,6 +120,16 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &deviceoperator.OcDemo{}, deviceoperator.RefField, func(rawObj client.Object) []string {
+		d := rawObj.(*deviceoperator.OcDemo)
+		if d.Spec.RolloutRef == "" {
+			return nil
+		}
+		return []string{d.Spec.RolloutRef}
+	}); err != nil {
 		os.Exit(1)
 	}
 
