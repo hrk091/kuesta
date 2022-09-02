@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
+	"strings"
 )
 
 var cfgFile string
@@ -122,6 +123,7 @@ func initConfig() {
 		viper.SetConfigName(".nwctl")
 	}
 
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.SetEnvPrefix("NWCTL")
 	viper.AutomaticEnv() // read in environment variables that match
 
