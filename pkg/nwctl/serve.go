@@ -472,5 +472,5 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.Internal, "failed to write service input: %s", req.String())
 	}
 
-	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_REPLACE}, nil
+	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_UPDATE}, nil
 }
