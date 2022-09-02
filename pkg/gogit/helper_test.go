@@ -23,6 +23,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/hrk091/nwctl/pkg/gogit"
 	"io/ioutil"
+	"os"
 	"runtime/debug"
 	"testing"
 	"time"
@@ -59,14 +60,20 @@ func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	return repo, dir
 }
 
-func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
+func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, string) {
 	_, dirBare := initBareRepo(t)
-	repo, dir := initRepo(t, "main")
+	repo, dir := initRepo(t, branch)
 	_, err := repo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
 		URLs: []string{dirBare},
 	})
 	exitOnErr(t, err)
+
+	return repo, dir
+}
+
+func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
+	_, dir := initRepoWithRemote(t, "main")
 
 	opt.Path = dir
 	git, err := gogit.NewGit(opt)
@@ -117,6 +124,17 @@ func commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
 		Author:    mockSignature(time),
 		Committer: mockSignature(time),
 	})
+}
+
+func push(repo *extgogit.Repository, branch, remote string) error {
+	o := &extgogit.PushOptions{
+		RemoteName: remote,
+		Progress:   os.Stdout,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(plumbing.NewBranchReferenceName(branch) + ":" + plumbing.NewBranchReferenceName(branch)),
+		},
+	}
+	return repo.Push(o)
 }
 
 func createBranch(repo *extgogit.Repository, branch string) error {

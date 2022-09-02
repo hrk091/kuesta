@@ -25,6 +25,7 @@ import (
 	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 	"os"
 	"strings"
 	"time"
@@ -367,6 +368,37 @@ func (g *Git) Reset(opts ...ResetOpts) error {
 func (g *Git) RemoveBranch(rn plumbing.ReferenceName) error {
 	err := g.repo.Storer.RemoveReference(rn)
 	return errors.WithStack(err)
+}
+
+// RemoveGoneBranches removes all gone branches.
+func (g *Git) RemoveGoneBranches() error {
+	remote, err := g.Remote("")
+	if err != nil {
+		return err
+	}
+	remoteBrs, err := remote.Branches()
+	if err != nil {
+		return err
+	}
+	nameSet := common.NewSet[string]()
+	for _, br := range remoteBrs {
+		nameSet.Add(br.Name().Short())
+	}
+
+	localBrs, err := g.Branches()
+	if err != nil {
+		return err
+	}
+	for _, br := range localBrs {
+		if !nameSet.Has(br.Name().Short()) {
+			err = multierr.Append(err, g.RemoveBranch(br.Name()))
+		}
+	}
+	if err != nil {
+		return common.JoinErr("remote gone branches:", err)
+	}
+
+	return nil
 }
 
 // Remote returns GitRemote of the supplied remote name. If not supplied, it returns the one of GitOptions.RemoteName.

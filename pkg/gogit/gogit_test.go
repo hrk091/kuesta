@@ -519,6 +519,37 @@ func TestGit_RemoveBranch(t *testing.T) {
 	assert.Len(t, refs, 2)
 }
 
+func TestGit_RemoveGoneBranches(t *testing.T) {
+	repo, dir := initRepoWithRemote(t, "main")
+	exitOnErr(t, push(repo, "main", "origin"))
+
+	exitOnErr(t, createBranch(repo, "foo"))
+	exitOnErr(t, push(repo, "foo", "origin"))
+
+	exitOnErr(t, createBranch(repo, "bar"))
+	exitOnErr(t, push(repo, "bar", "origin"))
+
+	g, err := gogit.NewGit(&gogit.GitOptions{
+		Path: dir,
+	})
+	exitOnErr(t, err)
+
+	refs, err := g.Branches()
+	exitOnErr(t, err)
+	assert.Len(t, refs, 4)
+
+	remote, err := g.Remote("origin")
+	exitOnErr(t, err)
+	exitOnErr(t, remote.RemoveBranch(plumbing.NewBranchReferenceName("bar")))
+
+	err = g.RemoveGoneBranches()
+	assert.Nil(t, err)
+
+	refs, err = g.Branches()
+	exitOnErr(t, err)
+	assert.Len(t, refs, 2)
+}
+
 func TestGit_Branch(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		_, dirBare := initBareRepo(t)
