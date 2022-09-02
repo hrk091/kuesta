@@ -115,7 +115,12 @@ func NewGitWithoutRepo(o *GitOptions) *Git {
 	}
 }
 
-// Repo returns containing go-git repository.
+// Options returns internal GitOptions.
+func (g *Git) Options() *GitOptions {
+	return g.opts
+}
+
+// Repo returns internal go-git repository.
 func (g *Git) Repo() *extgogit.Repository {
 	return g.repo
 }
@@ -196,7 +201,9 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 		Keep:   true,
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 
 	ref, _ := g.repo.Head()
@@ -238,7 +245,9 @@ func (g *Git) Commit(msg string, opts ...CommitOpts) (plumbing.Hash, error) {
 		Committer: g.Signature(),
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 	h, err := w.Commit(msg, o)
 	if err != nil {
@@ -262,7 +271,9 @@ func (g *Git) Push(opts ...PushOpts) error {
 		Auth: g.BasicAuth(),
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 	if err := g.repo.Push(o); err != nil {
 		if err != extgogit.NoErrAlreadyUpToDate {
@@ -296,7 +307,9 @@ func (g *Git) Pull(opts ...PullOpts) error {
 		o.ReferenceName = ref.Name()
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 
 	w, err := g.repo.Worktree()
@@ -335,7 +348,9 @@ func (g *Git) Reset(opts ...ResetOpts) error {
 		Mode: extgogit.HardReset,
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 
 	w, err := g.repo.Worktree()
@@ -394,7 +409,9 @@ func (r *GitRemote) Branches(opts ...ListOpts) ([]*plumbing.Reference, error) {
 		Auth: r.BasicAuth(),
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 	refs, err := r.remote.List(o)
 	if err != nil {
@@ -421,7 +438,9 @@ func (r *GitRemote) RemoveBranch(rn plumbing.ReferenceName, opts ...PushOpts) er
 		Auth: r.BasicAuth(),
 	}
 	for _, tr := range opts {
-		tr(o)
+		if tr != nil {
+			tr(o)
+		}
 	}
 	err := r.remote.Push(o)
 	if err != nil && err != extgogit.NoErrAlreadyUpToDate {
