@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - nwctl.hrk091.dev
+  resources:
+  - ocdemoes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nwctl.hrk091.dev
+  resources:
+  - ocdemoes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - nwctl.hrk091.dev
+  resources:
+  - ocdemoes/status
+  verbs:
+  - get
+  - patch
+  - update
