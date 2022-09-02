@@ -73,7 +73,7 @@ func TestServeCfg_Validate(t *testing.T) {
 	}
 }
 
-func TestNorthboundServer_Capabilities(t *testing.T) {
+func TestNorthboundServerImpl_Capabilities(t *testing.T) {
 	dir := t.TempDir()
 	fooMeta := []byte(`{"keys": ["device", "port"], "organization": "org-foo", "version": "0.1.0"}`)
 	barMeta := []byte(`{"keys": ["vlan"]}`)
@@ -84,12 +84,11 @@ func TestNorthboundServer_Capabilities(t *testing.T) {
 	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), barMeta))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+	s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 		RootCfg: nwctl.RootCfg{
 			RootPath: dir,
 		},
 	})
-	exitOnErr(t, err)
 	got, err := s.Capabilities(context.Background(), &pb.CapabilityRequest{})
 	assert.Nil(t, err)
 	assert.Contains(t, got.SupportedModels, fooModel)
@@ -98,7 +97,7 @@ func TestNorthboundServer_Capabilities(t *testing.T) {
 	assert.NotNil(t, got.GNMIVersion)
 }
 
-func TestNorthboundServer_Get(t *testing.T) {
+func TestNorthboundServerImpl_Get(t *testing.T) {
 	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
 	serviceInput := []byte(`{port: 1}`)
 	serviceInputJson := []byte(`{"port":1}`)
@@ -114,28 +113,19 @@ func TestNorthboundServer_Get(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		given   *pb.GetRequest
+		prefix  *pb.Path
+		path    *pb.Path
 		setup   func(dir string)
-		want    *pb.GetResponse
+		want    *pb.Notification
 		wantErr codes.Code
 	}{
 		{
-			"ok: without prefix",
-			&pb.GetRequest{
-				Prefix: nil,
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "services"},
-							{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-						},
-					},
-					{
-						Elem: []*pb.PathElem{
-							{Name: "devices"},
-							{Name: "device", Key: map[string]string{"name": "device1"}},
-						},
-					},
+			"ok: service",
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 				},
 			},
 			func(dir string) {
@@ -143,35 +133,47 @@ func TestNorthboundServer_Get(t *testing.T) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
 			},
-			&pb.GetResponse{
-				Notification: []*pb.Notification{
+			&pb.Notification{
+				Prefix: nil,
+				Update: []*pb.Update{
 					{
-						Prefix: nil,
-						Update: []*pb.Update{
-							{
-								Path: &pb.Path{
-									Elem: []*pb.PathElem{
-										{Name: "services"},
-										{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-									},
-								},
-								Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: serviceInputJson}},
+						Path: &pb.Path{
+							Elem: []*pb.PathElem{
+								{Name: "services"},
+								{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 							},
 						},
+						Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: serviceInputJson}},
 					},
+				},
+			},
+			codes.OK,
+		},
+		{
+			"ok: device",
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "devices"},
+					{Name: "device", Key: map[string]string{"name": "device1"}},
+				},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
+			},
+			&pb.Notification{
+				Prefix: nil,
+				Update: []*pb.Update{
 					{
-						Prefix: nil,
-						Update: []*pb.Update{
-							{
-								Path: &pb.Path{
-									Elem: []*pb.PathElem{
-										{Name: "devices"},
-										{Name: "device", Key: map[string]string{"name": "device1"}},
-									},
-								},
-								Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: deviceConfigJson}},
+						Path: &pb.Path{
+							Elem: []*pb.PathElem{
+								{Name: "devices"},
+								{Name: "device", Key: map[string]string{"name": "device1"}},
 							},
 						},
+						Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: deviceConfigJson}},
 					},
 				},
 			},
@@ -179,42 +181,34 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"ok: service with prefix",
-			&pb.GetRequest{
-				Prefix: &pb.Path{
-					Elem: []*pb.PathElem{
-						{Name: "services"},
-					},
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
 				},
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-						},
-					},
+			},
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 				},
 			},
 			func(dir string) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
-			&pb.GetResponse{
-				Notification: []*pb.Notification{
+			&pb.Notification{
+				Prefix: &pb.Path{
+					Elem: []*pb.PathElem{
+						{Name: "services"},
+					},
+				},
+				Update: []*pb.Update{
 					{
-						Prefix: &pb.Path{
+						Path: &pb.Path{
 							Elem: []*pb.PathElem{
-								{Name: "services"},
+								{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 							},
 						},
-						Update: []*pb.Update{
-							{
-								Path: &pb.Path{
-									Elem: []*pb.PathElem{
-										{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-									},
-								},
-								Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: serviceInputJson}},
-							},
-						},
+						Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: serviceInputJson}},
 					},
 				},
 			},
@@ -222,41 +216,33 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"ok: device with prefix",
-			&pb.GetRequest{
-				Prefix: &pb.Path{
-					Elem: []*pb.PathElem{
-						{Name: "devices"},
-					},
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "devices"},
 				},
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "device", Key: map[string]string{"name": "device1"}},
-						},
-					},
+			},
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "device", Key: map[string]string{"name": "device1"}},
 				},
 			},
 			func(dir string) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
 			},
-			&pb.GetResponse{
-				Notification: []*pb.Notification{
+			&pb.Notification{
+				Prefix: &pb.Path{
+					Elem: []*pb.PathElem{
+						{Name: "devices"},
+					},
+				},
+				Update: []*pb.Update{
 					{
-						Prefix: &pb.Path{
+						Path: &pb.Path{
 							Elem: []*pb.PathElem{
-								{Name: "devices"},
+								{Name: "device", Key: map[string]string{"name": "device1"}},
 							},
 						},
-						Update: []*pb.Update{
-							{
-								Path: &pb.Path{
-									Elem: []*pb.PathElem{
-										{Name: "device", Key: map[string]string{"name": "device1"}},
-									},
-								},
-								Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: deviceConfigJson}},
-							},
-						},
+						Val: &pb.TypedValue{Value: &pb.TypedValue_JsonVal{JsonVal: deviceConfigJson}},
 					},
 				},
 			},
@@ -264,14 +250,11 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"err: service not found",
-			&pb.GetRequest{
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "services"},
-							{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-						},
-					},
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 				},
 			},
 			func(dir string) {
@@ -282,14 +265,11 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"err: device not found",
-			&pb.GetRequest{
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "devices"},
-							{Name: "device", Key: map[string]string{"name": "device1"}},
-						},
-					},
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "devices"},
+					{Name: "device", Key: map[string]string{"name": "device1"}},
 				},
 			},
 			nil,
@@ -298,14 +278,11 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"err: invalid service input",
-			&pb.GetRequest{
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "services"},
-							{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-						},
-					},
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
 				},
 			},
 			func(dir string) {
@@ -317,14 +294,11 @@ func TestNorthboundServer_Get(t *testing.T) {
 		},
 		{
 			"err: invalid device input",
-			&pb.GetRequest{
-				Path: []*pb.Path{
-					{
-						Elem: []*pb.PathElem{
-							{Name: "devices"},
-							{Name: "device", Key: map[string]string{"name": "device1"}},
-						},
-					},
+			nil,
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "devices"},
+					{Name: "device", Key: map[string]string{"name": "device1"}},
 				},
 			},
 			func(dir string) {
@@ -340,27 +314,24 @@ func TestNorthboundServer_Get(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
-			exitOnErr(t, err)
-			got, err := s.Get(context.Background(), tt.given)
+			got, err := s.Get(context.Background(), tt.prefix, tt.path)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantErr, status.Code(err))
 			} else {
 				assert.Nil(t, err)
-				for i, noti := range got.Notification {
-					assert.Equal(t, tt.want.Notification[i].String(), noti.String())
-				}
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
 }
 
-func TestNorthboundServer_DoDelete(t *testing.T) {
+func TestNorthboundServerImpl_Delete(t *testing.T) {
 	serviceInput := []byte(`{port: 1}`)
 	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
 
@@ -429,14 +400,13 @@ func TestNorthboundServer_DoDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
-			exitOnErr(t, err)
 
-			got, err := s.DoDelete(context.Background(), nil, tt.path)
+			got, err := s.Delete(context.Background(), nil, tt.path)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantErr, status.Code(err))
@@ -453,7 +423,7 @@ func TestNorthboundServer_DoDelete(t *testing.T) {
 	}
 }
 
-func TestNorthboundServer_DoReplace(t *testing.T) {
+func TestNorthboundServerImpl_Replace(t *testing.T) {
 	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
 	serviceInput := []byte(`{port: 1, mtu: 9000}`)
 	requestJson := []byte(`{"port": 2, "desc": "test"}`)
@@ -566,14 +536,13 @@ func TestNorthboundServer_DoReplace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s, err := nwctl.NewNorthboundServer(&nwctl.ServeCfg{
+			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					RootPath: dir,
 				},
 			})
-			exitOnErr(t, err)
 
-			got, err := s.DoReplace(context.Background(), nil, tt.path, tt.val)
+			got, err := s.Replace(context.Background(), nil, tt.path, tt.val)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantErr, status.Code(err))

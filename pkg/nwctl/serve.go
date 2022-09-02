@@ -89,10 +89,10 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 type NorthboundServer struct {
 	pb.UnimplementedGNMIServer
 
-	mu        sync.RWMutex // mu is the RW lock to protect the access to config
-	cfg       *ServeCfg
-	converter *GnmiPathConverter
-	git       *gogit.Git
+	mu   sync.RWMutex // mu is the RW lock to protect the access to config
+	cfg  *ServeCfg
+	git  *gogit.Git
+	impl GnmiRequestHandler
 }
 
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
@@ -102,10 +102,10 @@ func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
 		return nil, err
 	}
 	s := &NorthboundServer{
-		cfg:       cfg,
-		converter: NewGnmiPathConverter(cfg),
-		mu:        sync.RWMutex{},
-		git:       git,
+		cfg:  cfg,
+		mu:   sync.RWMutex{},
+		git:  git,
+		impl: NewNorthboundServerImpl(cfg),
 	}
 	return s, nil
 }
@@ -126,26 +126,7 @@ func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityR
 	l := logger.FromContext(ctx)
 	l.Debug("Capabilities called")
 
-	ver, err := gnmi.GetGNMIServiceVersion()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
-	}
-	p := ServicePath{RootDir: s.cfg.RootPath}
-	mlist, err := p.ReadServiceMetaAll()
-	if err != nil {
-		return nil, err
-	}
-
-	models := make([]*pb.ModelData, len(mlist))
-	for i, m := range mlist {
-		models[i] = m.ModelData()
-	}
-
-	return &pb.CapabilityResponse{
-		SupportedModels:    models,
-		SupportedEncodings: supportedEncodings,
-		GNMIVersion:        *ver,
-	}, nil
+	return s.impl.Capabilities(ctx, req)
 }
 
 // Get responds the multiple service inputs requested by GetRequest.
@@ -162,7 +143,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 
 	// TODO support wildcard
 	for _, path := range paths {
-		n, grpcerr := s.DoGet(ctx, prefix, path)
+		n, grpcerr := s.impl.Get(ctx, prefix, path)
 		if grpcerr != nil {
 			return nil, grpcerr
 		}
@@ -172,8 +153,141 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	return &pb.GetResponse{Notification: notifications}, nil
 }
 
-// DoGet returns the service input stored at the supplied path.
-func (s *NorthboundServer) DoGet(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error) {
+// Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
+func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
+	l := logger.FromContext(ctx)
+	l.Debugw("Set called")
+
+	s.mu.Lock()
+	defer func() {
+		if err := s.git.Reset(gogit.ResetOptsHard()); err != nil {
+			s.Error(l, err, "git reset")
+		}
+		s.mu.Unlock()
+	}()
+
+	// TODO run git merge-devices before set
+	// TODO block when git worktree is dirty
+	w, err := s.git.Checkout()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to checkout to %s", s.cfg.GitTrunk)
+	}
+
+	prefix := req.GetPrefix()
+	var results []*pb.UpdateResult
+
+	// TODO performance enhancement
+	// TODO support wildcard
+	for _, path := range req.GetDelete() {
+		res, grpcerr := s.impl.Delete(ctx, prefix, path)
+		if grpcerr != nil {
+			return nil, grpcerr
+		}
+		results = append(results, res)
+	}
+	for _, upd := range req.GetReplace() {
+		res, grpcerr := s.impl.Replace(ctx, prefix, upd.GetPath(), upd.GetVal())
+		if grpcerr != nil {
+			return nil, grpcerr
+		}
+		results = append(results, res)
+	}
+	for _, upd := range req.GetUpdate() {
+		res, grpcerr := s.impl.Update(ctx, prefix, upd.GetPath(), upd.GetVal())
+		if grpcerr != nil {
+			return nil, grpcerr
+		}
+		results = append(results, res)
+	}
+
+	sp := ServicePath{RootDir: s.cfg.RootPath}
+	if _, err := w.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
+		s.Error(l, err, "git add")
+		return nil, status.Errorf(codes.Internal, "failed to git-add")
+	}
+
+	serviceApplyCfg := ServiceApplyCfg{RootCfg: s.cfg.RootCfg}
+	if err := RunServiceApply(ctx, &serviceApplyCfg); err != nil {
+		s.Error(l, err, "service apply")
+		return nil, status.Errorf(codes.Internal, "failed to apply service template")
+	}
+
+	gitCommitCfg := GitCommitCfg{
+		RootCfg:    s.cfg.RootCfg,
+		PushToMain: true,
+	}
+	if err := RunGitCommit(ctx, &gitCommitCfg); err != nil {
+		s.Error(l, err, "git commit")
+		return nil, status.Errorf(codes.Internal, "failed to git push to %s", s.cfg.GitTrunk)
+	}
+
+	return &pb.SetResponse{
+		Prefix:   prefix,
+		Response: results,
+	}, nil
+}
+
+type GnmiRequestHandler interface {
+	Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error)
+	Get(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error)
+	Delete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error)
+	Update(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error)
+	Replace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error)
+}
+
+var _ GnmiRequestHandler = &NorthboundServerImpl{}
+
+type NorthboundServerImpl struct {
+	cfg       *ServeCfg
+	converter *GnmiPathConverter
+}
+
+func NewNorthboundServerImpl(cfg *ServeCfg) *NorthboundServerImpl {
+	return &NorthboundServerImpl{
+		cfg:       cfg,
+		converter: NewGnmiPathConverter(cfg),
+	}
+}
+
+// Error shows an error with stacktrace if attached.
+func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
+	l = l.WithOptions(zap.AddCallerSkip(1))
+	if st := common.GetStackTrace(err); st != "" {
+		l = l.With("stacktrace", st)
+	}
+	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
+}
+
+// Capabilities responds the server capabilities containing the available services.
+func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
+	l := logger.FromContext(ctx)
+
+	ver, err := gnmi.GetGNMIServiceVersion()
+	if err != nil {
+		s.Error(l, err, "get gnmi service version")
+		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
+	}
+	p := ServicePath{RootDir: s.cfg.RootPath}
+	mlist, err := p.ReadServiceMetaAll()
+	if err != nil {
+		s.Error(l, err, "get gnmi service version")
+		return nil, err
+	}
+
+	models := make([]*pb.ModelData, len(mlist))
+	for i, m := range mlist {
+		models[i] = m.ModelData()
+	}
+
+	return &pb.CapabilityResponse{
+		SupportedModels:    models,
+		SupportedEncodings: supportedEncodings,
+		GNMIVersion:        *ver,
+	}, nil
+}
+
+// Get returns the service input stored at the supplied path.
+func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error) {
 	l := logger.FromContext(ctx)
 
 	req, err := s.converter.Convert(prefix, path)
@@ -223,82 +337,8 @@ func (s *NorthboundServer) DoGet(ctx context.Context, prefix, path *pb.Path) (*p
 	return &pb.Notification{Prefix: prefix, Update: []*pb.Update{update}}, nil
 }
 
-// Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
-func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
-	l := logger.FromContext(ctx)
-	l.Debugw("Set called")
-
-	s.mu.Lock()
-	defer func() {
-		if err := s.git.Reset(gogit.ResetOptsHard()); err != nil {
-			s.Error(l, err, "git reset")
-		}
-		s.mu.Unlock()
-	}()
-
-	// TODO run git merge-devices before set
-	// TODO block when git worktree is dirty
-	w, err := s.git.Checkout()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to checkout to %s", s.cfg.GitTrunk)
-	}
-
-	prefix := req.GetPrefix()
-	var results []*pb.UpdateResult
-
-	// TODO performance enhancement
-	// TODO support wildcard
-	for _, path := range req.GetDelete() {
-		res, grpcerr := s.DoDelete(ctx, prefix, path)
-		if grpcerr != nil {
-			return nil, grpcerr
-		}
-		results = append(results, res)
-	}
-	for _, upd := range req.GetReplace() {
-		res, grpcerr := s.DoReplace(ctx, prefix, upd.GetPath(), upd.GetVal())
-		if grpcerr != nil {
-			return nil, grpcerr
-		}
-		results = append(results, res)
-	}
-	for _, upd := range req.GetUpdate() {
-		res, grpcerr := s.DoUpdate(ctx, prefix, upd.GetPath(), upd.GetVal())
-		if grpcerr != nil {
-			return nil, grpcerr
-		}
-		results = append(results, res)
-	}
-
-	sp := ServicePath{RootDir: s.cfg.RootPath}
-	if _, err := w.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
-		s.Error(l, err, "git add")
-		return nil, status.Errorf(codes.Internal, "failed to git-add")
-	}
-
-	serviceApplyCfg := ServiceApplyCfg{RootCfg: s.cfg.RootCfg}
-	if err := RunServiceApply(ctx, &serviceApplyCfg); err != nil {
-		s.Error(l, err, "service apply")
-		return nil, status.Errorf(codes.Internal, "failed to apply service template")
-	}
-
-	gitCommitCfg := GitCommitCfg{
-		RootCfg:    s.cfg.RootCfg,
-		PushToMain: true,
-	}
-	if err := RunGitCommit(ctx, &gitCommitCfg); err != nil {
-		s.Error(l, err, "git commit")
-		return nil, status.Errorf(codes.Internal, "failed to git push to %s", s.cfg.GitTrunk)
-	}
-
-	return &pb.SetResponse{
-		Prefix:   prefix,
-		Response: results,
-	}, nil
-}
-
-// DoDelete deletes the service input stored at the supplied path.
-func (s *NorthboundServer) DoDelete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error) {
+// Delete deletes the service input stored at the supplied path.
+func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
 	// TODO delete partial nested data
@@ -324,8 +364,8 @@ func (s *NorthboundServer) DoDelete(ctx context.Context, prefix, path *pb.Path) 
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_DELETE}, nil
 }
 
-// DoReplace replaces the service input stored at the supplied path.
-func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
+// Replace replaces the service input stored at the supplied path.
+func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
 	// TODO replace partial nested data
@@ -347,10 +387,10 @@ func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path,
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
 	}
-	// TODO set primary keys
-	//for k, v := range r.Keys() {
-	//	input[k] = v
-	//}
+	// TODO fix type conversion
+	for k, v := range r.Keys() {
+		input[k] = v
+	}
 
 	inputVal := cctx.Encode(input)
 	if inputVal.Err() != nil {
@@ -370,8 +410,8 @@ func (s *NorthboundServer) DoReplace(ctx context.Context, prefix, path *pb.Path,
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_REPLACE}, nil
 }
 
-// DoUpdate updates the service input stored at the supplied path.
-func (s *NorthboundServer) DoUpdate(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
+// Update updates the service input stored at the supplied path.
+func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
 	// TODO update partial nested data
