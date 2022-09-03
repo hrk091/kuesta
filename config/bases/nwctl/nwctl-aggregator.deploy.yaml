@@ -43,8 +43,6 @@ spec:
             - containerPort: 8000
               name: http
               protocol: TCP
-      securityContext:
-        runAsNonRoot: true
       volumes:
         - name: nwctl-aggregator-data
           persistentVolumeClaim:

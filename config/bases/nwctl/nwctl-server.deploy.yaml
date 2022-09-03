@@ -42,8 +42,6 @@ spec:
             - name: grpc
               containerPort: 9339
               protocol: TCP
-      securityContext:
-        runAsNonRoot: true
       volumes:
         - name: nwctl-server-data
           persistentVolumeClaim:
