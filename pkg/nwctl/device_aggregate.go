@@ -43,7 +43,7 @@ var (
 type DeviceAggregateCfg struct {
 	RootCfg
 
-	Port string
+	Addr string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -62,9 +62,9 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	s := NewDeviceAggregateServer(cfg)
 	s.Run(ctx)
 
-	l.Infof("Start simple api server on %s", cfg.Port)
+	l.Infof("Start simple api server on %s", cfg.Addr)
 	http.HandleFunc("/commit", s.HandleFunc)
-	if err := http.ListenAndServe(cfg.Port, nil); err != nil {
+	if err := http.ListenAndServe(cfg.Addr, nil); err != nil {
 		return err
 	}
 	return nil

@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	FlagAddr = "addr"
+	FlagServeAddr = "serve-addr"
 )
 
 func newServeCmd() *cobra.Command {
@@ -41,7 +41,7 @@ func newServeCmd() *cobra.Command {
 			return nwctl.RunServe(cmd.Context(), cfg)
 		},
 	}
-	cmd.Flags().StringP(FlagAddr, "a", ":9339", "Bind address of gNMI northbound API.")
+	cmd.Flags().StringP(FlagServeAddr, "a", ":9339", "Bind address of gNMI northbound API.")
 	mustBindToViper(cmd)
 
 	return cmd
@@ -54,7 +54,7 @@ func newServeCfg(cmd *cobra.Command, args []string) (*nwctl.ServeCfg, error) {
 	}
 	cfg := &nwctl.ServeCfg{
 		RootCfg: *rootCfg,
-		Addr:    viper.GetString(FlagAddr),
+		Addr:    viper.GetString(FlagServeAddr),
 	}
 	return cfg, cfg.Validate()
 }

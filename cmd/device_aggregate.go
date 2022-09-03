@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	FlagAggregatePort = "aggregate-port"
+	FlagAggregateAddr = "aggregate-addr"
 )
 
 func newDeviceAggregateCmd() *cobra.Command {
@@ -41,7 +41,7 @@ func newDeviceAggregateCmd() *cobra.Command {
 			return nwctl.RunDeviceAggregate(cmd.Context(), cfg)
 		},
 	}
-	cmd.PersistentFlags().StringP(FlagAggregatePort, "", ":8000", "Listen port")
+	cmd.PersistentFlags().StringP(FlagAggregateAddr, "", ":8000", "Bind address of device aggregator")
 	mustBindToViper(cmd)
 
 	return cmd
@@ -54,7 +54,7 @@ func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceAggr
 	}
 	cfg := &nwctl.DeviceAggregateCfg{
 		RootCfg: *rootCfg,
-		Port:    viper.GetString(FlagAggregatePort),
+		Addr:    viper.GetString(FlagAggregateAddr),
 	}
 	return cfg, cfg.Validate()
 }
