@@ -28,7 +28,7 @@ spec:
             - name: NWCTL_ROOTPATH
               value: /data/repo
             - name: NWCTL_REPO_URL
-              value: /path/to/repo
+              value: https://path/to/repo
             - name: NWCTL_GIT_TOKEN
               valueFrom:
                 secretKeyRef:

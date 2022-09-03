@@ -1,4 +1,5 @@
 IMG ?= nwctl:latest
+KUSTOMIZE_ROOT ?= default
 
 .PHONY: docker-build
 docker-build: test
@@ -11,12 +12,12 @@ docker-push:
 .PHONY: manifests
 manifests: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
-	kubectl kustomize config/default
+	kubectl kustomize config/${KUSTOMIZE_ROOT}
 
 .PHONY: install
 install: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
-	kubectl apply -k config/default
+	kubectl apply -k config/${KUSTOMIZE_ROOT}
 
 ##@ Build Dependencies
 

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nwctl-aggregator
+spec:
+  template:
+    spec:
+      containers:
+        - name: nwctl
+          env:
+            - name: NWCTL_REPO_URL
+              value: https://github.com/nwctl/nwctl-testdata
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nwctl-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: nwctl
+          env:
+            - name: NWCTL_REPO_URL
+              value: https://github.com/nwctl/nwctl-testdata
