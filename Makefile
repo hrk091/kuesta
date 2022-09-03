@@ -19,6 +19,11 @@ install: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
 	kubectl apply -k config/${KUSTOMIZE_ROOT}
 
+.PHONY: uninstall
+uninstall: kustomize
+	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
+	kubectl delete -k config/${KUSTOMIZE_ROOT}
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
