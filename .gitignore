@@ -20,3 +20,6 @@ cover.html
 
 # Binary dependencies
 bin
+
+# Environment variables
+.env*
