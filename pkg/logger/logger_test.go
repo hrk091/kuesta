@@ -46,3 +46,13 @@ func TestFromContext(t *testing.T) {
 	ctx := logger.WithLogger(context.Background(), want)
 	assert.Equal(t, want, logger.FromContext(ctx))
 }
+
+func TestSetup(t *testing.T) {
+	core := logger.NewLogger().Desugar().Core()
+	assert.Equal(t, false, core.Enabled(zapcore.DebugLevel))
+
+	logger.Setup(true, 2)
+	core = logger.NewLogger().Desugar().Core()
+	assert.Equal(t, true, core.Enabled(zapcore.DebugLevel))
+	logger.SetDefault()
+}

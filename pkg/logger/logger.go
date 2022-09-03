@@ -30,6 +30,10 @@ var (
 )
 
 func init() {
+	SetDefault()
+}
+
+func SetDefault() {
 	config = zap.NewProductionConfig()
 	rootLogger, _ = config.Build()
 }
