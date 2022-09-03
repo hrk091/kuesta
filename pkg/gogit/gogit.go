@@ -31,15 +31,6 @@ import (
 	"time"
 )
 
-type GitOptions struct {
-	Token       string
-	Path        string `validate:"required"`
-	TrunkBranch string
-	RemoteName  string
-	User        string
-	Email       string
-}
-
 const (
 	DefaultAuthUser    = "anonymous"
 	DefaultTrunkBranch = "main"
@@ -47,6 +38,18 @@ const (
 	DefaultGitUser     = "nwctl"
 	DefaultGitEmail    = "nwctl@example.com"
 )
+
+type GitOptions struct {
+	shouldClone bool
+
+	RepoUrl     string
+	Token       string
+	Path        string `validate:"required"`
+	TrunkBranch string
+	RemoteName  string
+	User        string
+	Email       string
+}
 
 // Validate validates exposed fields according to the `validate` tag.
 func (g *GitOptions) Validate() error {
@@ -56,6 +59,10 @@ func (g *GitOptions) Validate() error {
 	g.RemoteName = common.Or(g.RemoteName, DefaultRemoteName)
 
 	return common.Validate(g)
+}
+
+func (g *GitOptions) ShouldCloneIfNotExist() {
+	g.shouldClone = true
 }
 
 func (g *GitOptions) basicAuth() *gogithttp.BasicAuth {
@@ -102,8 +109,16 @@ func NewGit(o *GitOptions) (*Git, error) {
 	}
 	g := NewGitWithoutRepo(o)
 	repo, err := extgogit.PlainOpen(g.opts.Path)
-	if err != nil {
+	if err == nil {
+		g.repo = repo
+		return g, nil
+	}
+	if !g.opts.shouldClone {
 		return nil, errors.WithStack(fmt.Errorf("open git repo %s: %w", g.opts.Path, err))
+	}
+	repo, err = g.Clone()
+	if err != nil {
+		return nil, err
 	}
 	g.repo = repo
 	return g, nil
@@ -115,6 +130,30 @@ func NewGitWithoutRepo(o *GitOptions) *Git {
 		opts: o,
 	}
 }
+
+func (g *Git) Clone(opts ...CloneOpts) (*extgogit.Repository, error) {
+	o := &extgogit.CloneOptions{
+		URL:           g.opts.RepoUrl,
+		Auth:          g.BasicAuth(),
+		RemoteName:    g.opts.RemoteName,
+		ReferenceName: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
+		Progress:      os.Stdout,
+	}
+	for _, tr := range opts {
+		if tr != nil {
+			tr(o)
+		}
+	}
+
+	repo, err := extgogit.PlainClone(g.opts.Path, false, o)
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("git clone: %w", err))
+	}
+	return repo, nil
+}
+
+// CloneOpts enables modification of the go-git CheckoutOptions.
+type CloneOpts func(o *extgogit.CloneOptions)
 
 // Options returns internal GitOptions.
 func (g *Git) Options() *GitOptions {

@@ -60,7 +60,7 @@ func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	return repo, dir
 }
 
-func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, string) {
+func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, string, string) {
 	_, dirBare := initBareRepo(t)
 	repo, dir := initRepo(t, branch)
 	_, err := repo.CreateRemote(&config.RemoteConfig{
@@ -69,11 +69,11 @@ func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, stri
 	})
 	exitOnErr(t, err)
 
-	return repo, dir
+	return repo, dir, dirBare
 }
 
 func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
-	_, dir := initRepoWithRemote(t, "main")
+	_, dir, _ := initRepoWithRemote(t, "main")
 
 	opt.Path = dir
 	git, err := gogit.NewGit(opt)

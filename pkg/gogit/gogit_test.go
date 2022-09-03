@@ -67,6 +67,89 @@ func TestGitOptions_Validate(t *testing.T) {
 	}
 }
 
+func TestNewGit(t *testing.T) {
+	t.Run("ok: use existing", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		opt := &gogit.GitOptions{
+			Path: dir,
+		}
+		exitOnErr(t, opt.Validate())
+
+		g, err := gogit.NewGit(opt)
+		assert.Nil(t, err)
+		assert.Equal(t, opt, g.Options())
+
+		want, _ := repo.Head()
+		got, _ := g.Repo().Head()
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("ok: clone", func(t *testing.T) {
+		repoPusher, dir, remoteUrl := initRepoWithRemote(t, "main")
+		exitOnErr(t, push(repoPusher, "main", "origin"))
+
+		opt := &gogit.GitOptions{
+			RepoUrl: remoteUrl,
+			Path:    dir,
+		}
+		exitOnErr(t, opt.Validate())
+		opt.ShouldCloneIfNotExist()
+
+		g, err := gogit.NewGit(opt)
+		assert.Nil(t, err)
+		assert.Equal(t, opt, g.Options())
+
+		want, _ := repoPusher.Head()
+		got, _ := g.Repo().Head()
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("err: no repo without shouldClone flag", func(t *testing.T) {
+		repoPusher, _, remoteUrl := initRepoWithRemote(t, "main")
+		exitOnErr(t, push(repoPusher, "main", "origin"))
+
+		dir := t.TempDir()
+		opt := &gogit.GitOptions{
+			RepoUrl: remoteUrl,
+			Path:    dir,
+		}
+		exitOnErr(t, opt.Validate())
+
+		_, err := gogit.NewGit(opt)
+		assert.Error(t, err)
+	})
+
+}
+
+func TestGit_Clone(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		repoPusher, _, remoteUrl := initRepoWithRemote(t, "main")
+		exitOnErr(t, push(repoPusher, "main", "origin"))
+
+		dir := t.TempDir()
+		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
+			RepoUrl: remoteUrl,
+			Path:    dir,
+		})
+		exitOnErr(t, g.Options().Validate())
+
+		_, err := g.Clone()
+		assert.Nil(t, err)
+	})
+
+	t.Run("err: url not given", func(t *testing.T) {
+		dir := t.TempDir()
+		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
+			Path: dir,
+		})
+		exitOnErr(t, g.Options().Validate())
+
+		_, err := g.Clone()
+		assert.Error(t, err)
+	})
+}
+
 func TestGit_BasicAuth(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -520,7 +603,7 @@ func TestGit_RemoveBranch(t *testing.T) {
 }
 
 func TestGit_RemoveGoneBranches(t *testing.T) {
-	repo, dir := initRepoWithRemote(t, "main")
+	repo, dir, _ := initRepoWithRemote(t, "main")
 	exitOnErr(t, push(repo, "main", "origin"))
 
 	exitOnErr(t, createBranch(repo, "foo"))
