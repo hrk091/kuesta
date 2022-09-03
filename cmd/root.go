@@ -47,6 +47,7 @@ const (
 	FlagRootPath   = "rootpath"
 	FlagVerbose    = "verbose"
 	FlagGitTrunk   = "git-trunk"
+	FlagGitRepoUrl = "git-repo-url"
 	FlagGitRemote  = "git-remote-name"
 	FlagGitToken   = "git-token"
 	FlagGitUser    = "git-user"
@@ -68,8 +69,9 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
-	cmd.PersistentFlags().StringP(FlagRootPath, "r", "", "path to the repository root")
+	cmd.PersistentFlags().StringP(FlagRootPath, "p", "", "path to the repository root")
 	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
+	cmd.PersistentFlags().StringP(FlagGitRepoUrl, "r", "", "git repository url")
 	cmd.PersistentFlags().StringP(FlagGitTrunk, "", gogit.DefaultTrunkBranch, "git trunk branch")
 	cmd.PersistentFlags().StringP(FlagGitRemote, "", gogit.DefaultRemoteName, "git remote name to be used for gitops")
 	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
@@ -95,14 +97,15 @@ func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	}
 
 	cfg := &nwctl.RootCfg{
-		Verbose:   cast.ToUint8(viper.GetUint(FlagVerbose)),
-		Devel:     viper.GetBool(FlagDevel),
-		RootPath:  viper.GetString(FlagRootPath),
-		GitTrunk:  viper.GetString(FlagGitTrunk),
-		GitToken:  viper.GetString(FlagGitToken),
-		GitRemote: viper.GetString(FlagGitRemote),
-		GitUser:   gitUser,
-		GitEmail:  gitEmail,
+		Verbose:    cast.ToUint8(viper.GetUint(FlagVerbose)),
+		Devel:      viper.GetBool(FlagDevel),
+		RootPath:   viper.GetString(FlagRootPath),
+		GitRepoUrl: viper.GetString(FlagGitRepoUrl),
+		GitTrunk:   viper.GetString(FlagGitTrunk),
+		GitToken:   viper.GetString(FlagGitToken),
+		GitRemote:  viper.GetString(FlagGitRemote),
+		GitUser:    gitUser,
+		GitEmail:   gitEmail,
 	}
 	return cfg, cfg.Validate()
 }

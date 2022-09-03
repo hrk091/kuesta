@@ -240,6 +240,7 @@ func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	if _, err := g.Commit(commitMsg); err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}
+	l.Infof("commited: %s\n", commitMsg)
 	if err := g.Push(gogit.PushOptBranch(toBranch)); err != nil {
 		return fmt.Errorf("git push: %w", err)
 	}

@@ -22,14 +22,15 @@ import (
 )
 
 type RootCfg struct {
-	Verbose   uint8 `validate:"min=0,max=3"`
-	Devel     bool
-	RootPath  string `validate:"required,dir"`
-	GitTrunk  string
-	GitRemote string
-	GitToken  string
-	GitUser   string
-	GitEmail  string
+	Verbose    uint8 `validate:"min=0,max=3"`
+	Devel      bool
+	RootPath   string `validate:"required,dir"`
+	GitRepoUrl string
+	GitTrunk   string
+	GitRemote  string
+	GitToken   string
+	GitUser    string
+	GitEmail   string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -39,6 +40,7 @@ func (c *RootCfg) Validate() error {
 
 func (c *RootCfg) GitOptions() *gogit.GitOptions {
 	return &gogit.GitOptions{
+		RepoUrl:     c.GitRepoUrl,
 		Path:        c.RootPath,
 		TrunkBranch: c.GitTrunk,
 		RemoteName:  c.GitRemote,
