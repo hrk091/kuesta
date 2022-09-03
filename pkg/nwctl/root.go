@@ -24,7 +24,7 @@ import (
 type RootCfg struct {
 	Verbose    uint8 `validate:"min=0,max=3"`
 	Devel      bool
-	RootPath   string `validate:"required,dir"`
+	RootPath   string `validate:"required"`
 	GitRepoUrl string
 	GitTrunk   string
 	GitRemote  string

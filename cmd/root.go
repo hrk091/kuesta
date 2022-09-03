@@ -70,7 +70,6 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
 	cmd.PersistentFlags().StringP(FlagRootPath, "p", "", "path to the repository root")
-	_ = cmd.MarkPersistentFlagRequired(FlagRootPath)
 	cmd.PersistentFlags().StringP(FlagGitRepoUrl, "r", "", "git repository url")
 	cmd.PersistentFlags().StringP(FlagGitTrunk, "", gogit.DefaultTrunkBranch, "git trunk branch")
 	cmd.PersistentFlags().StringP(FlagGitRemote, "", gogit.DefaultRemoteName, "git remote name to be used for gitops")

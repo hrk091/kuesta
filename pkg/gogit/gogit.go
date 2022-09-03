@@ -117,6 +117,10 @@ func NewGit(o *GitOptions) (*Git, error) {
 	if !g.opts.shouldClone {
 		return nil, errors.WithStack(fmt.Errorf("open git repo %s: %w", g.opts.Path, err))
 	}
+
+	if err := os.MkdirAll(g.opts.Path, 0755); err != nil {
+		return nil, errors.WithStack(fmt.Errorf("make dir %s: %w", g.opts.Path, err))
+	}
 	repo, err = g.Clone()
 	if err != nil {
 		return nil, err
