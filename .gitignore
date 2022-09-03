@@ -17,3 +17,6 @@ cover.html
 
 # Editor
 .idea
+
+# Binary dependencies
+bin

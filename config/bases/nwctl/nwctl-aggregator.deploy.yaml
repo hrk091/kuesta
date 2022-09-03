@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nwctl-aggregator
+spec:
+  selector:
+    matchLabels:
+      app: nwctl-aggregator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nwctl-aggregator
+    spec:
+      containers:
+        - name: nwctl
+          image: nwctl:latest
+          command:
+            - /bin/nwctl
+          args:
+            - device
+            - aggregate
+          env:
+            - name: NWCTL_DEVEL
+              value: "true"
+            - name: NWCTL_VERBOSE
+              value: "2"
+            - name: NWCTL_ROOTPATH
+              value: /data/repo
+            - name: NWCTL_REPO_URL
+              value: /path/to/repo
+            - name: NWCTL_GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nwctl-secrets
+                  key: gitToken
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - mountPath: /data
+              name: nwctl-aggregator-data
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+      securityContext:
+        runAsNonRoot: true
+      volumes:
+        - name: nwctl-aggregator-data
+          persistentVolumeClaim:
+            claimName: nwctl-aggregator-data

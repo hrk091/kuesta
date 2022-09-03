@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nwctl-server
+spec:
+  selector:
+    matchLabels:
+      app: nwctl-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nwctl-server
+    spec:
+      containers:
+        - name: nwctl
+          image: nwctl:latest
+          command:
+            - /bin/nwctl
+          args:
+            - serve
+          env:
+            - name: NWCTL_DEVEL
+              value: "true"
+            - name: NWCTL_VERBOSE
+              value: "2"
+            - name: NWCTL_ROOTPATH
+              value: /data/repo
+            - name: NWCTL_REPO_URL
+              value: /path/to/repo
+            - name: NWCTL_GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nwctl-secrets
+                  key: gitToken
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - mountPath: /data
+              name: nwctl-server-data
+          ports:
+            - name: grpc
+              containerPort: 9339
+              protocol: TCP
+      securityContext:
+        runAsNonRoot: true
+      volumes:
+        - name: nwctl-server-data
+          persistentVolumeClaim:
+            claimName: nwctl-server-data
