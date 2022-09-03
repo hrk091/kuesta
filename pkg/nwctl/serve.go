@@ -97,7 +97,7 @@ type NorthboundServer struct {
 
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
 func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
-	git, err := gogit.NewGit(cfg.GitOptions())
+	git, err := gogit.NewGit(cfg.GitOptions().ShouldCloneIfNotExist())
 	if err != nil {
 		return nil, err
 	}

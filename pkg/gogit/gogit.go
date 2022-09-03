@@ -61,8 +61,9 @@ func (g *GitOptions) Validate() error {
 	return common.Validate(g)
 }
 
-func (g *GitOptions) ShouldCloneIfNotExist() {
+func (g *GitOptions) ShouldCloneIfNotExist() *GitOptions {
 	g.shouldClone = true
+	return g
 }
 
 func (g *GitOptions) basicAuth() *gogithttp.BasicAuth {

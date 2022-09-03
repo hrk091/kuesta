@@ -174,7 +174,7 @@ func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigReq
 func (s *DeviceAggregateServer) GitPushSyncBranch(ctx context.Context) error {
 	l := logger.FromContext(ctx)
 
-	g, err := gogit.NewGit(s.cfg.GitOptions())
+	g, err := gogit.NewGit(s.cfg.GitOptions().ShouldCloneIfNotExist())
 	if err != nil {
 		return fmt.Errorf("init git: %w", err)
 	}
