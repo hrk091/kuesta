@@ -14,13 +14,13 @@ manifests: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
 	kubectl kustomize config/${KUSTOMIZE_ROOT}
 
-.PHONY: install
-install: kustomize
+.PHONY: deploy
+deploy: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
 	kubectl apply -k config/${KUSTOMIZE_ROOT}
 
-.PHONY: uninstall
-uninstall: kustomize
+.PHONY: undeploy
+undeploy: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
 	kubectl delete -k config/${KUSTOMIZE_ROOT}
 
