@@ -8,6 +8,22 @@ rules:
 - apiGroups:
   - nwctl.hrk091.dev
   resources:
+  - devicerollouts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nwctl.hrk091.dev
+  resources:
+  - devicerollouts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - nwctl.hrk091.dev
+  resources:
   - ocdemoes
   verbs:
   - create
@@ -31,3 +47,11 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - gitrepositories
+  verbs:
+  - get
+  - list
+  - watch
