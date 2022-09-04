@@ -134,6 +134,9 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	if !s.mu.TryRLock() {
 		return nil, status.Error(codes.Unavailable, "locked")
 	}
+	defer func() {
+		s.mu.RUnlock()
+	}()
 	l := logger.FromContext(ctx)
 	l.Debugw("Get called")
 
@@ -158,7 +161,9 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	l := logger.FromContext(ctx)
 	l.Debugw("Set called")
 
-	s.mu.Lock()
+	if !s.mu.TryLock() {
+		return nil, status.Error(codes.Unavailable, "locked")
+	}
 	defer func() {
 		if err := s.git.Reset(gogit.ResetOptsHard()); err != nil {
 			s.Error(l, err, "git reset")
