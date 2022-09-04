@@ -4,5 +4,12 @@ kind: Kustomization
 resources:
 - ../../default
 
+namespace: nwctl-system
+
+secretGenerator:
+  - envs:
+      - .env.secret
+    name: nwctl-secrets
+
 patches:
 - patch.yaml

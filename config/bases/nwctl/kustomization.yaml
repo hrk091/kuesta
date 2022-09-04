@@ -9,12 +9,6 @@ resources:
 - nwctl-server.svc.yaml
 - nwctl-server.pvc.yaml
 
-secretGenerator:
-- name: nwctl-secrets
-  envs:
-  - .env.secret
-
-
 images:
 - name: nwctl
   newName: nwctl

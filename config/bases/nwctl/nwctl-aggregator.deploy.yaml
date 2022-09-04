@@ -27,7 +27,7 @@ spec:
               value: "2"
             - name: NWCTL_ROOTPATH
               value: /data/repo
-            - name: NWCTL_REPO_URL
+            - name: NWCTL_GIT_REPO_URL
               value: https://path/to/repo
             - name: NWCTL_GIT_TOKEN
               valueFrom:
