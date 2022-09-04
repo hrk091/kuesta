@@ -21,6 +21,7 @@ import (
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 type Config struct {
@@ -62,10 +63,10 @@ func NewRootCmd() *cobra.Command {
 	cmd.Flags().StringP("username", "u", "admin", "Username of the target device")
 	cmd.Flags().StringP("password", "p", "admin", "Password of the target device")
 	cmd.Flags().StringP("device", "d", "", "Name of the target device")
-	cobra.CheckErr(cmd.MarkFlagRequired("device"))
 	cmd.Flags().StringP("aggregator-url", "", "", "URL of the aggregator")
 
 	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.SetEnvPrefix("NWCTL")
 	viper.AutomaticEnv()
 
