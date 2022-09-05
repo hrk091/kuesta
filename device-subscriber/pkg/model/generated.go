@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/goyang/pkg/yang"
+	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
 )
 
@@ -43,7 +43,7 @@ func init() {
 	var err error
 	initΛEnumTypes()
 	if SchemaTree, err = UnzipSchema(); err != nil {
-		panic("schema error: " +  err.Error())
+		panic("schema error: " + err.Error())
 	}
 }
 
@@ -55,9 +55,9 @@ func Schema() (*ytypes.Schema, error) {
 	}
 
 	return &ytypes.Schema{
-		Root: &Device{},
+		Root:       &Device{},
 		SchemaTree: uzp,
-		Unmarshal: Unmarshal,
+		Unmarshal:  Unmarshal,
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func Unmarshal(data []byte, destStruct ygot.GoStruct, opts ...ytypes.UnmarshalOp
 	tn := reflect.TypeOf(destStruct).Elem().Name()
 	schema, ok := SchemaTree[tn]
 	if !ok {
-		return fmt.Errorf("could not find schema for type %s", tn )
+		return fmt.Errorf("could not find schema for type %s", tn)
 	}
 	var jsonTree interface{}
 	if err := json.Unmarshal([]byte(data), &jsonTree); err != nil {
@@ -93,8 +93,8 @@ func Unmarshal(data []byte, destStruct ygot.GoStruct, opts ...ytypes.UnmarshalOp
 
 // Device represents the /device YANG schema element.
 type Device struct {
-	Interface	map[string]*Interface	`path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"`
-	Vlan	map[uint16]*Vlan	`path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"`
+	Interface map[string]*Interface `path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"`
+	Vlan      map[uint16]*Vlan      `path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Device implements the yang.GoStruct
@@ -105,7 +105,7 @@ func (*Device) IsYANGGoStruct() {}
 // NewInterface creates a new entry in the Interface list of the
 // Device struct. The keys of the list are populated from the input
 // arguments.
-func (t *Device) NewInterface(Name string) (*Interface, error){
+func (t *Device) NewInterface(Name string) (*Interface, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -132,7 +132,7 @@ func (t *Device) NewInterface(Name string) (*Interface, error){
 // NewVlan creates a new entry in the Vlan list of the
 // Device struct. The keys of the list are populated from the input
 // arguments.
-func (t *Device) NewVlan(VlanId uint16) (*Vlan, error){
+func (t *Device) NewVlan(VlanId uint16) (*Vlan, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -179,24 +179,23 @@ func (*Device) ΛBelongingModule() string {
 	return ""
 }
 
-
 // Interface represents the /openconfig-interfaces/interfaces/interface YANG schema element.
 type Interface struct {
-	AdminStatus	E_Interface_AdminStatus	`path:"state/admin-status" module:"openconfig-interfaces/openconfig-interfaces"`
-	Aggregation	*Interface_Aggregation	`path:"aggregation" module:"openconfig-if-aggregate"`
-	Counters	*Interface_Counters	`path:"state/counters" module:"openconfig-interfaces/openconfig-interfaces"`
-	Description	*string	`path:"config/description" module:"openconfig-interfaces/openconfig-interfaces"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-interfaces/openconfig-interfaces"`
-	Ethernet	*Interface_Ethernet	`path:"ethernet" module:"openconfig-if-ethernet"`
-	HoldTime	*Interface_HoldTime	`path:"hold-time" module:"openconfig-interfaces"`
-	Ifindex	*uint32	`path:"state/ifindex" module:"openconfig-interfaces/openconfig-interfaces"`
-	LastChange	*uint32	`path:"state/last-change" module:"openconfig-interfaces/openconfig-interfaces"`
-	Mtu	*uint16	`path:"config/mtu" module:"openconfig-interfaces/openconfig-interfaces"`
-	Name	*string	`path:"config/name|name" module:"openconfig-interfaces/openconfig-interfaces|openconfig-interfaces"`
-	OperStatus	E_Interface_OperStatus	`path:"state/oper-status" module:"openconfig-interfaces/openconfig-interfaces"`
-	RoutedVlan	*Interface_RoutedVlan	`path:"routed-vlan" module:"openconfig-vlan"`
-	Subinterface	map[uint32]*Interface_Subinterface	`path:"subinterfaces/subinterface" module:"openconfig-interfaces/openconfig-interfaces"`
-	Type	E_IETFInterfaces_InterfaceType	`path:"config/type" module:"openconfig-interfaces/openconfig-interfaces"`
+	AdminStatus  E_Interface_AdminStatus            `path:"state/admin-status" module:"openconfig-interfaces/openconfig-interfaces"`
+	Aggregation  *Interface_Aggregation             `path:"aggregation" module:"openconfig-if-aggregate"`
+	Counters     *Interface_Counters                `path:"state/counters" module:"openconfig-interfaces/openconfig-interfaces"`
+	Description  *string                            `path:"config/description" module:"openconfig-interfaces/openconfig-interfaces"`
+	Enabled      *bool                              `path:"config/enabled" module:"openconfig-interfaces/openconfig-interfaces"`
+	Ethernet     *Interface_Ethernet                `path:"ethernet" module:"openconfig-if-ethernet"`
+	HoldTime     *Interface_HoldTime                `path:"hold-time" module:"openconfig-interfaces"`
+	Ifindex      *uint32                            `path:"state/ifindex" module:"openconfig-interfaces/openconfig-interfaces"`
+	LastChange   *uint32                            `path:"state/last-change" module:"openconfig-interfaces/openconfig-interfaces"`
+	Mtu          *uint16                            `path:"config/mtu" module:"openconfig-interfaces/openconfig-interfaces"`
+	Name         *string                            `path:"config/name|name" module:"openconfig-interfaces/openconfig-interfaces|openconfig-interfaces"`
+	OperStatus   E_Interface_OperStatus             `path:"state/oper-status" module:"openconfig-interfaces/openconfig-interfaces"`
+	RoutedVlan   *Interface_RoutedVlan              `path:"routed-vlan" module:"openconfig-vlan"`
+	Subinterface map[uint32]*Interface_Subinterface `path:"subinterfaces/subinterface" module:"openconfig-interfaces/openconfig-interfaces"`
+	Type         E_IETFInterfaces_InterfaceType     `path:"config/type" module:"openconfig-interfaces/openconfig-interfaces"`
 }
 
 // IsYANGGoStruct ensures that Interface implements the yang.GoStruct
@@ -207,7 +206,7 @@ func (*Interface) IsYANGGoStruct() {}
 // NewSubinterface creates a new entry in the Subinterface list of the
 // Interface struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface) NewSubinterface(Index uint32) (*Interface_Subinterface, error){
+func (t *Interface) NewSubinterface(Index uint32) (*Interface_Subinterface, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -265,14 +264,13 @@ func (*Interface) ΛBelongingModule() string {
 	return "openconfig-interfaces"
 }
 
-
 // Interface_Aggregation represents the /openconfig-interfaces/interfaces/interface/aggregation YANG schema element.
 type Interface_Aggregation struct {
-	LagSpeed	*uint32	`path:"state/lag-speed" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
-	LagType	E_OpenconfigIfAggregate_AggregationType	`path:"config/lag-type" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
-	Member	[]string	`path:"state/member" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
-	MinLinks	*uint16	`path:"config/min-links" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
-	SwitchedVlan	*Interface_Aggregation_SwitchedVlan	`path:"switched-vlan" module:"openconfig-vlan"`
+	LagSpeed     *uint32                                 `path:"state/lag-speed" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
+	LagType      E_OpenconfigIfAggregate_AggregationType `path:"config/lag-type" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
+	Member       []string                                `path:"state/member" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
+	MinLinks     *uint16                                 `path:"config/min-links" module:"openconfig-if-aggregate/openconfig-if-aggregate"`
+	SwitchedVlan *Interface_Aggregation_SwitchedVlan     `path:"switched-vlan" module:"openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Aggregation implements the yang.GoStruct
@@ -303,13 +301,12 @@ func (*Interface_Aggregation) ΛBelongingModule() string {
 	return "openconfig-if-aggregate"
 }
 
-
 // Interface_Aggregation_SwitchedVlan represents the /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan YANG schema element.
 type Interface_Aggregation_SwitchedVlan struct {
-	AccessVlan	Interface_Aggregation_SwitchedVlan_AccessVlan_Union	`path:"config/access-vlan" module:"openconfig-vlan/openconfig-vlan"`
-	InterfaceMode	E_OpenconfigVlanTypes_VlanModeType	`path:"config/interface-mode" module:"openconfig-vlan/openconfig-vlan"`
-	NativeVlan	Interface_Aggregation_SwitchedVlan_NativeVlan_Union	`path:"config/native-vlan" module:"openconfig-vlan/openconfig-vlan"`
-	TrunkVlans	[]Interface_Aggregation_SwitchedVlan_TrunkVlans_Union	`path:"config/trunk-vlans" module:"openconfig-vlan/openconfig-vlan"`
+	AccessVlan    Interface_Aggregation_SwitchedVlan_AccessVlan_Union   `path:"config/access-vlan" module:"openconfig-vlan/openconfig-vlan"`
+	InterfaceMode E_OpenconfigVlanTypes_VlanModeType                    `path:"config/interface-mode" module:"openconfig-vlan/openconfig-vlan"`
+	NativeVlan    Interface_Aggregation_SwitchedVlan_NativeVlan_Union   `path:"config/native-vlan" module:"openconfig-vlan/openconfig-vlan"`
+	TrunkVlans    []Interface_Aggregation_SwitchedVlan_TrunkVlans_Union `path:"config/trunk-vlans" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Aggregation_SwitchedVlan implements the yang.GoStruct
@@ -332,7 +329,9 @@ func (t *Interface_Aggregation_SwitchedVlan) Validate(opts ...ygot.ValidationOpt
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Aggregation_SwitchedVlan) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Aggregation_SwitchedVlan) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Aggregation_SwitchedVlan.
@@ -349,22 +348,24 @@ type Interface_Aggregation_SwitchedVlan_AccessVlan_Union interface {
 // Interface_Aggregation_SwitchedVlan_AccessVlan_Union_String is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/access-vlan
 // is to be set to a string value.
 type Interface_Aggregation_SwitchedVlan_AccessVlan_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union ensures that Interface_Aggregation_SwitchedVlan_AccessVlan_Union_String
 // implements the Interface_Aggregation_SwitchedVlan_AccessVlan_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_AccessVlan_Union_String) Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_AccessVlan_Union_String) Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union() {
+}
 
 // Interface_Aggregation_SwitchedVlan_AccessVlan_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/access-vlan
 // is to be set to a uint16 value.
 type Interface_Aggregation_SwitchedVlan_AccessVlan_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union ensures that Interface_Aggregation_SwitchedVlan_AccessVlan_Union_Uint16
 // implements the Interface_Aggregation_SwitchedVlan_AccessVlan_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_AccessVlan_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_AccessVlan_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_AccessVlan_Union() {
+}
 
 // To_Interface_Aggregation_SwitchedVlan_AccessVlan_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Aggregation_SwitchedVlan_AccessVlan_Union union. It returns an error if the interface{} supplied
@@ -389,22 +390,24 @@ type Interface_Aggregation_SwitchedVlan_NativeVlan_Union interface {
 // Interface_Aggregation_SwitchedVlan_NativeVlan_Union_String is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/native-vlan
 // is to be set to a string value.
 type Interface_Aggregation_SwitchedVlan_NativeVlan_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union ensures that Interface_Aggregation_SwitchedVlan_NativeVlan_Union_String
 // implements the Interface_Aggregation_SwitchedVlan_NativeVlan_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_NativeVlan_Union_String) Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_NativeVlan_Union_String) Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union() {
+}
 
 // Interface_Aggregation_SwitchedVlan_NativeVlan_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/native-vlan
 // is to be set to a uint16 value.
 type Interface_Aggregation_SwitchedVlan_NativeVlan_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union ensures that Interface_Aggregation_SwitchedVlan_NativeVlan_Union_Uint16
 // implements the Interface_Aggregation_SwitchedVlan_NativeVlan_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_NativeVlan_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_NativeVlan_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_NativeVlan_Union() {
+}
 
 // To_Interface_Aggregation_SwitchedVlan_NativeVlan_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Aggregation_SwitchedVlan_NativeVlan_Union union. It returns an error if the interface{} supplied
@@ -429,22 +432,24 @@ type Interface_Aggregation_SwitchedVlan_TrunkVlans_Union interface {
 // Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_String is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/trunk-vlans
 // is to be set to a string value.
 type Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union ensures that Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_String
 // implements the Interface_Aggregation_SwitchedVlan_TrunkVlans_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_String) Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_String) Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union() {
+}
 
 // Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/aggregation/switched-vlan/config/trunk-vlans
 // is to be set to a uint16 value.
 type Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union ensures that Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_Uint16
 // implements the Interface_Aggregation_SwitchedVlan_TrunkVlans_Union interface.
-func (*Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union() {}
+func (*Interface_Aggregation_SwitchedVlan_TrunkVlans_Union_Uint16) Is_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union() {
+}
 
 // To_Interface_Aggregation_SwitchedVlan_TrunkVlans_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Aggregation_SwitchedVlan_TrunkVlans_Union union. It returns an error if the interface{} supplied
@@ -460,23 +465,22 @@ func (t *Interface_Aggregation_SwitchedVlan) To_Interface_Aggregation_SwitchedVl
 	}
 }
 
-
 // Interface_Counters represents the /openconfig-interfaces/interfaces/interface/state/counters YANG schema element.
 type Interface_Counters struct {
-	InBroadcastPkts	*uint64	`path:"in-broadcast-pkts" module:"openconfig-interfaces"`
-	InDiscards	*uint64	`path:"in-discards" module:"openconfig-interfaces"`
-	InErrors	*uint64	`path:"in-errors" module:"openconfig-interfaces"`
-	InMulticastPkts	*uint64	`path:"in-multicast-pkts" module:"openconfig-interfaces"`
-	InOctets	*uint64	`path:"in-octets" module:"openconfig-interfaces"`
-	InUnicastPkts	*uint64	`path:"in-unicast-pkts" module:"openconfig-interfaces"`
-	InUnknownProtos	*uint32	`path:"in-unknown-protos" module:"openconfig-interfaces"`
-	LastClear	*string	`path:"last-clear" module:"openconfig-interfaces"`
-	OutBroadcastPkts	*uint64	`path:"out-broadcast-pkts" module:"openconfig-interfaces"`
-	OutDiscards	*uint64	`path:"out-discards" module:"openconfig-interfaces"`
-	OutErrors	*uint64	`path:"out-errors" module:"openconfig-interfaces"`
-	OutMulticastPkts	*uint64	`path:"out-multicast-pkts" module:"openconfig-interfaces"`
-	OutOctets	*uint64	`path:"out-octets" module:"openconfig-interfaces"`
-	OutUnicastPkts	*uint64	`path:"out-unicast-pkts" module:"openconfig-interfaces"`
+	InBroadcastPkts  *uint64 `path:"in-broadcast-pkts" module:"openconfig-interfaces"`
+	InDiscards       *uint64 `path:"in-discards" module:"openconfig-interfaces"`
+	InErrors         *uint64 `path:"in-errors" module:"openconfig-interfaces"`
+	InMulticastPkts  *uint64 `path:"in-multicast-pkts" module:"openconfig-interfaces"`
+	InOctets         *uint64 `path:"in-octets" module:"openconfig-interfaces"`
+	InUnicastPkts    *uint64 `path:"in-unicast-pkts" module:"openconfig-interfaces"`
+	InUnknownProtos  *uint32 `path:"in-unknown-protos" module:"openconfig-interfaces"`
+	LastClear        *string `path:"last-clear" module:"openconfig-interfaces"`
+	OutBroadcastPkts *uint64 `path:"out-broadcast-pkts" module:"openconfig-interfaces"`
+	OutDiscards      *uint64 `path:"out-discards" module:"openconfig-interfaces"`
+	OutErrors        *uint64 `path:"out-errors" module:"openconfig-interfaces"`
+	OutMulticastPkts *uint64 `path:"out-multicast-pkts" module:"openconfig-interfaces"`
+	OutOctets        *uint64 `path:"out-octets" module:"openconfig-interfaces"`
+	OutUnicastPkts   *uint64 `path:"out-unicast-pkts" module:"openconfig-interfaces"`
 }
 
 // IsYANGGoStruct ensures that Interface_Counters implements the yang.GoStruct
@@ -507,21 +511,20 @@ func (*Interface_Counters) ΛBelongingModule() string {
 	return "openconfig-interfaces"
 }
 
-
 // Interface_Ethernet represents the /openconfig-interfaces/interfaces/interface/ethernet YANG schema element.
 type Interface_Ethernet struct {
-	AggregateId	*string	`path:"config/aggregate-id" module:"openconfig-if-ethernet/openconfig-if-aggregate"`
-	AutoNegotiate	*bool	`path:"config/auto-negotiate" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	Counters	*Interface_Ethernet_Counters	`path:"state/counters" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	DuplexMode	E_Ethernet_DuplexMode	`path:"config/duplex-mode" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	EffectiveSpeed	*uint32	`path:"state/effective-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	EnableFlowControl	*bool	`path:"config/enable-flow-control" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	HwMacAddress	*string	`path:"state/hw-mac-address" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	MacAddress	*string	`path:"config/mac-address" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	NegotiatedDuplexMode	E_Ethernet_NegotiatedDuplexMode	`path:"state/negotiated-duplex-mode" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	NegotiatedPortSpeed	E_OpenconfigIfEthernet_ETHERNET_SPEED	`path:"state/negotiated-port-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	PortSpeed	E_OpenconfigIfEthernet_ETHERNET_SPEED	`path:"config/port-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
-	SwitchedVlan	*Interface_Ethernet_SwitchedVlan	`path:"switched-vlan" module:"openconfig-vlan"`
+	AggregateId          *string                               `path:"config/aggregate-id" module:"openconfig-if-ethernet/openconfig-if-aggregate"`
+	AutoNegotiate        *bool                                 `path:"config/auto-negotiate" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	Counters             *Interface_Ethernet_Counters          `path:"state/counters" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	DuplexMode           E_Ethernet_DuplexMode                 `path:"config/duplex-mode" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	EffectiveSpeed       *uint32                               `path:"state/effective-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	EnableFlowControl    *bool                                 `path:"config/enable-flow-control" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	HwMacAddress         *string                               `path:"state/hw-mac-address" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	MacAddress           *string                               `path:"config/mac-address" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	NegotiatedDuplexMode E_Ethernet_NegotiatedDuplexMode       `path:"state/negotiated-duplex-mode" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	NegotiatedPortSpeed  E_OpenconfigIfEthernet_ETHERNET_SPEED `path:"state/negotiated-port-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	PortSpeed            E_OpenconfigIfEthernet_ETHERNET_SPEED `path:"config/port-speed" module:"openconfig-if-ethernet/openconfig-if-ethernet"`
+	SwitchedVlan         *Interface_Ethernet_SwitchedVlan      `path:"switched-vlan" module:"openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Ethernet implements the yang.GoStruct
@@ -552,19 +555,18 @@ func (*Interface_Ethernet) ΛBelongingModule() string {
 	return "openconfig-if-ethernet"
 }
 
-
 // Interface_Ethernet_Counters represents the /openconfig-interfaces/interfaces/interface/ethernet/state/counters YANG schema element.
 type Interface_Ethernet_Counters struct {
-	In_8021QFrames	*uint64	`path:"in-8021q-frames" module:"openconfig-if-ethernet"`
-	InCrcErrors	*uint64	`path:"in-crc-errors" module:"openconfig-if-ethernet"`
-	InFragmentFrames	*uint64	`path:"in-fragment-frames" module:"openconfig-if-ethernet"`
-	InJabberFrames	*uint64	`path:"in-jabber-frames" module:"openconfig-if-ethernet"`
-	InMacControlFrames	*uint64	`path:"in-mac-control-frames" module:"openconfig-if-ethernet"`
-	InMacPauseFrames	*uint64	`path:"in-mac-pause-frames" module:"openconfig-if-ethernet"`
-	InOversizeFrames	*uint64	`path:"in-oversize-frames" module:"openconfig-if-ethernet"`
-	Out_8021QFrames	*uint64	`path:"out-8021q-frames" module:"openconfig-if-ethernet"`
-	OutMacControlFrames	*uint64	`path:"out-mac-control-frames" module:"openconfig-if-ethernet"`
-	OutMacPauseFrames	*uint64	`path:"out-mac-pause-frames" module:"openconfig-if-ethernet"`
+	In_8021QFrames      *uint64 `path:"in-8021q-frames" module:"openconfig-if-ethernet"`
+	InCrcErrors         *uint64 `path:"in-crc-errors" module:"openconfig-if-ethernet"`
+	InFragmentFrames    *uint64 `path:"in-fragment-frames" module:"openconfig-if-ethernet"`
+	InJabberFrames      *uint64 `path:"in-jabber-frames" module:"openconfig-if-ethernet"`
+	InMacControlFrames  *uint64 `path:"in-mac-control-frames" module:"openconfig-if-ethernet"`
+	InMacPauseFrames    *uint64 `path:"in-mac-pause-frames" module:"openconfig-if-ethernet"`
+	InOversizeFrames    *uint64 `path:"in-oversize-frames" module:"openconfig-if-ethernet"`
+	Out_8021QFrames     *uint64 `path:"out-8021q-frames" module:"openconfig-if-ethernet"`
+	OutMacControlFrames *uint64 `path:"out-mac-control-frames" module:"openconfig-if-ethernet"`
+	OutMacPauseFrames   *uint64 `path:"out-mac-pause-frames" module:"openconfig-if-ethernet"`
 }
 
 // IsYANGGoStruct ensures that Interface_Ethernet_Counters implements the yang.GoStruct
@@ -595,13 +597,12 @@ func (*Interface_Ethernet_Counters) ΛBelongingModule() string {
 	return "openconfig-if-ethernet"
 }
 
-
 // Interface_Ethernet_SwitchedVlan represents the /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan YANG schema element.
 type Interface_Ethernet_SwitchedVlan struct {
-	AccessVlan	Interface_Ethernet_SwitchedVlan_AccessVlan_Union	`path:"config/access-vlan" module:"openconfig-vlan/openconfig-vlan"`
-	InterfaceMode	E_OpenconfigVlanTypes_VlanModeType	`path:"config/interface-mode" module:"openconfig-vlan/openconfig-vlan"`
-	NativeVlan	Interface_Ethernet_SwitchedVlan_NativeVlan_Union	`path:"config/native-vlan" module:"openconfig-vlan/openconfig-vlan"`
-	TrunkVlans	[]Interface_Ethernet_SwitchedVlan_TrunkVlans_Union	`path:"config/trunk-vlans" module:"openconfig-vlan/openconfig-vlan"`
+	AccessVlan    Interface_Ethernet_SwitchedVlan_AccessVlan_Union   `path:"config/access-vlan" module:"openconfig-vlan/openconfig-vlan"`
+	InterfaceMode E_OpenconfigVlanTypes_VlanModeType                 `path:"config/interface-mode" module:"openconfig-vlan/openconfig-vlan"`
+	NativeVlan    Interface_Ethernet_SwitchedVlan_NativeVlan_Union   `path:"config/native-vlan" module:"openconfig-vlan/openconfig-vlan"`
+	TrunkVlans    []Interface_Ethernet_SwitchedVlan_TrunkVlans_Union `path:"config/trunk-vlans" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Ethernet_SwitchedVlan implements the yang.GoStruct
@@ -624,7 +625,9 @@ func (t *Interface_Ethernet_SwitchedVlan) Validate(opts ...ygot.ValidationOption
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Ethernet_SwitchedVlan) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Ethernet_SwitchedVlan) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Ethernet_SwitchedVlan.
@@ -641,22 +644,24 @@ type Interface_Ethernet_SwitchedVlan_AccessVlan_Union interface {
 // Interface_Ethernet_SwitchedVlan_AccessVlan_Union_String is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/access-vlan
 // is to be set to a string value.
 type Interface_Ethernet_SwitchedVlan_AccessVlan_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union ensures that Interface_Ethernet_SwitchedVlan_AccessVlan_Union_String
 // implements the Interface_Ethernet_SwitchedVlan_AccessVlan_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_AccessVlan_Union_String) Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_AccessVlan_Union_String) Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union() {
+}
 
 // Interface_Ethernet_SwitchedVlan_AccessVlan_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/access-vlan
 // is to be set to a uint16 value.
 type Interface_Ethernet_SwitchedVlan_AccessVlan_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union ensures that Interface_Ethernet_SwitchedVlan_AccessVlan_Union_Uint16
 // implements the Interface_Ethernet_SwitchedVlan_AccessVlan_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_AccessVlan_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_AccessVlan_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_AccessVlan_Union() {
+}
 
 // To_Interface_Ethernet_SwitchedVlan_AccessVlan_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Ethernet_SwitchedVlan_AccessVlan_Union union. It returns an error if the interface{} supplied
@@ -681,22 +686,24 @@ type Interface_Ethernet_SwitchedVlan_NativeVlan_Union interface {
 // Interface_Ethernet_SwitchedVlan_NativeVlan_Union_String is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/native-vlan
 // is to be set to a string value.
 type Interface_Ethernet_SwitchedVlan_NativeVlan_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union ensures that Interface_Ethernet_SwitchedVlan_NativeVlan_Union_String
 // implements the Interface_Ethernet_SwitchedVlan_NativeVlan_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_NativeVlan_Union_String) Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_NativeVlan_Union_String) Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union() {
+}
 
 // Interface_Ethernet_SwitchedVlan_NativeVlan_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/native-vlan
 // is to be set to a uint16 value.
 type Interface_Ethernet_SwitchedVlan_NativeVlan_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union ensures that Interface_Ethernet_SwitchedVlan_NativeVlan_Union_Uint16
 // implements the Interface_Ethernet_SwitchedVlan_NativeVlan_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_NativeVlan_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_NativeVlan_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_NativeVlan_Union() {
+}
 
 // To_Interface_Ethernet_SwitchedVlan_NativeVlan_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Ethernet_SwitchedVlan_NativeVlan_Union union. It returns an error if the interface{} supplied
@@ -721,22 +728,24 @@ type Interface_Ethernet_SwitchedVlan_TrunkVlans_Union interface {
 // Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_String is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/trunk-vlans
 // is to be set to a string value.
 type Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union ensures that Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_String
 // implements the Interface_Ethernet_SwitchedVlan_TrunkVlans_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_String) Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_String) Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union() {
+}
 
 // Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/ethernet/switched-vlan/config/trunk-vlans
 // is to be set to a uint16 value.
 type Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union ensures that Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_Uint16
 // implements the Interface_Ethernet_SwitchedVlan_TrunkVlans_Union interface.
-func (*Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union() {}
+func (*Interface_Ethernet_SwitchedVlan_TrunkVlans_Union_Uint16) Is_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union() {
+}
 
 // To_Interface_Ethernet_SwitchedVlan_TrunkVlans_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Ethernet_SwitchedVlan_TrunkVlans_Union union. It returns an error if the interface{} supplied
@@ -752,11 +761,10 @@ func (t *Interface_Ethernet_SwitchedVlan) To_Interface_Ethernet_SwitchedVlan_Tru
 	}
 }
 
-
 // Interface_HoldTime represents the /openconfig-interfaces/interfaces/interface/hold-time YANG schema element.
 type Interface_HoldTime struct {
-	Down	*uint32	`path:"config/down" module:"openconfig-interfaces/openconfig-interfaces"`
-	Up	*uint32	`path:"config/up" module:"openconfig-interfaces/openconfig-interfaces"`
+	Down *uint32 `path:"config/down" module:"openconfig-interfaces/openconfig-interfaces"`
+	Up   *uint32 `path:"config/up" module:"openconfig-interfaces/openconfig-interfaces"`
 }
 
 // IsYANGGoStruct ensures that Interface_HoldTime implements the yang.GoStruct
@@ -787,12 +795,11 @@ func (*Interface_HoldTime) ΛBelongingModule() string {
 	return "openconfig-interfaces"
 }
 
-
 // Interface_RoutedVlan represents the /openconfig-interfaces/interfaces/interface/routed-vlan YANG schema element.
 type Interface_RoutedVlan struct {
-	Ipv4	*Interface_RoutedVlan_Ipv4	`path:"ipv4" module:"openconfig-if-ip"`
-	Ipv6	*Interface_RoutedVlan_Ipv6	`path:"ipv6" module:"openconfig-if-ip"`
-	Vlan	Interface_RoutedVlan_Vlan_Union	`path:"config/vlan" module:"openconfig-vlan/openconfig-vlan"`
+	Ipv4 *Interface_RoutedVlan_Ipv4      `path:"ipv4" module:"openconfig-if-ip"`
+	Ipv6 *Interface_RoutedVlan_Ipv6      `path:"ipv6" module:"openconfig-if-ip"`
+	Vlan Interface_RoutedVlan_Vlan_Union `path:"config/vlan" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan implements the yang.GoStruct
@@ -832,7 +839,7 @@ type Interface_RoutedVlan_Vlan_Union interface {
 // Interface_RoutedVlan_Vlan_Union_String is used when /openconfig-interfaces/interfaces/interface/routed-vlan/config/vlan
 // is to be set to a string value.
 type Interface_RoutedVlan_Vlan_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_RoutedVlan_Vlan_Union ensures that Interface_RoutedVlan_Vlan_Union_String
@@ -842,7 +849,7 @@ func (*Interface_RoutedVlan_Vlan_Union_String) Is_Interface_RoutedVlan_Vlan_Unio
 // Interface_RoutedVlan_Vlan_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/routed-vlan/config/vlan
 // is to be set to a uint16 value.
 type Interface_RoutedVlan_Vlan_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_RoutedVlan_Vlan_Union ensures that Interface_RoutedVlan_Vlan_Union_Uint16
@@ -863,14 +870,13 @@ func (t *Interface_RoutedVlan) To_Interface_RoutedVlan_Vlan_Union(i interface{})
 	}
 }
 
-
 // Interface_RoutedVlan_Ipv4 represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4 YANG schema element.
 type Interface_RoutedVlan_Ipv4 struct {
-	Address	map[string]*Interface_RoutedVlan_Ipv4_Address	`path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	Mtu	*uint16	`path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
-	Neighbor	map[string]*Interface_RoutedVlan_Ipv4_Neighbor	`path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
-	Unnumbered	*Interface_RoutedVlan_Ipv4_Unnumbered	`path:"unnumbered" module:"openconfig-if-ip"`
+	Address    map[string]*Interface_RoutedVlan_Ipv4_Address  `path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
+	Enabled    *bool                                          `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	Mtu        *uint16                                        `path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
+	Neighbor   map[string]*Interface_RoutedVlan_Ipv4_Neighbor `path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
+	Unnumbered *Interface_RoutedVlan_Ipv4_Unnumbered          `path:"unnumbered" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4 implements the yang.GoStruct
@@ -881,7 +887,7 @@ func (*Interface_RoutedVlan_Ipv4) IsYANGGoStruct() {}
 // NewAddress creates a new entry in the Address list of the
 // Interface_RoutedVlan_Ipv4 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv4) NewAddress(Ip string) (*Interface_RoutedVlan_Ipv4_Address, error){
+func (t *Interface_RoutedVlan_Ipv4) NewAddress(Ip string) (*Interface_RoutedVlan_Ipv4_Address, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -908,7 +914,7 @@ func (t *Interface_RoutedVlan_Ipv4) NewAddress(Ip string) (*Interface_RoutedVlan
 // NewNeighbor creates a new entry in the Neighbor list of the
 // Interface_RoutedVlan_Ipv4 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv4) NewNeighbor(Ip string) (*Interface_RoutedVlan_Ipv4_Neighbor, error){
+func (t *Interface_RoutedVlan_Ipv4) NewNeighbor(Ip string) (*Interface_RoutedVlan_Ipv4_Neighbor, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -955,13 +961,12 @@ func (*Interface_RoutedVlan_Ipv4) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Address represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/addresses/address YANG schema element.
 type Interface_RoutedVlan_Ipv4_Address struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_IpAddressOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
-	PrefixLength	*uint8	`path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
-	VrrpGroup	map[uint8]*Interface_RoutedVlan_Ipv4_Address_VrrpGroup	`path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip           *string                                                `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	Origin       E_OpenconfigIfIp_IpAddressOrigin                       `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	PrefixLength *uint8                                                 `path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
+	VrrpGroup    map[uint8]*Interface_RoutedVlan_Ipv4_Address_VrrpGroup `path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Address implements the yang.GoStruct
@@ -972,7 +977,7 @@ func (*Interface_RoutedVlan_Ipv4_Address) IsYANGGoStruct() {}
 // NewVrrpGroup creates a new entry in the VrrpGroup list of the
 // Interface_RoutedVlan_Ipv4_Address struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv4_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_RoutedVlan_Ipv4_Address_VrrpGroup, error){
+func (t *Interface_RoutedVlan_Ipv4_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_RoutedVlan_Ipv4_Address_VrrpGroup, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1022,7 +1027,9 @@ func (t *Interface_RoutedVlan_Ipv4_Address) Validate(opts ...ygot.ValidationOpti
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Address) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Address) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Address.
@@ -1030,18 +1037,17 @@ func (*Interface_RoutedVlan_Ipv4_Address) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Address_VrrpGroup represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/addresses/address/vrrp/vrrp-group YANG schema element.
 type Interface_RoutedVlan_Ipv4_Address_VrrpGroup struct {
-	AcceptMode	*bool	`path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
-	AdvertisementInterval	*uint16	`path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
-	CurrentPriority	*uint8	`path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceTracking	*Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking	`path:"interface-tracking" module:"openconfig-if-ip"`
-	Preempt	*bool	`path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
-	PreemptDelay	*uint16	`path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
-	Priority	*uint8	`path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualAddress	[]string	`path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualRouterId	*uint8	`path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	AcceptMode            *bool                                                          `path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
+	AdvertisementInterval *uint16                                                        `path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
+	CurrentPriority       *uint8                                                         `path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceTracking     *Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking `path:"interface-tracking" module:"openconfig-if-ip"`
+	Preempt               *bool                                                          `path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
+	PreemptDelay          *uint16                                                        `path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
+	Priority              *uint8                                                         `path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualAddress        []string                                                       `path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualRouterId       *uint8                                                         `path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Address_VrrpGroup implements the yang.GoStruct
@@ -1075,7 +1081,9 @@ func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup) Validate(opts ...ygot.Vali
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Address_VrrpGroup.
@@ -1083,11 +1091,10 @@ func (*Interface_RoutedVlan_Ipv4_Address_VrrpGroup) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/addresses/address/vrrp/vrrp-group/interface-tracking YANG schema element.
 type Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking struct {
-	PriorityDecrement	*uint8	`path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
-	TrackInterface	*string	`path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	PriorityDecrement *uint8  `path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
+	TrackInterface    *string `path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking implements the yang.GoStruct
@@ -1110,7 +1117,9 @@ func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking) Validate
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking.
@@ -1118,12 +1127,11 @@ func (*Interface_RoutedVlan_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛBelongin
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Neighbor represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/neighbors/neighbor YANG schema element.
 type Interface_RoutedVlan_Ipv4_Neighbor struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	LinkLayerAddress	*string	`path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_NeighborOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip               *string                         `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	LinkLayerAddress *string                         `path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	Origin           E_OpenconfigIfIp_NeighborOrigin `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Neighbor implements the yang.GoStruct
@@ -1157,7 +1165,9 @@ func (t *Interface_RoutedVlan_Ipv4_Neighbor) Validate(opts ...ygot.ValidationOpt
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Neighbor.
@@ -1165,11 +1175,10 @@ func (*Interface_RoutedVlan_Ipv4_Neighbor) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Unnumbered represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/unnumbered YANG schema element.
 type Interface_RoutedVlan_Ipv4_Unnumbered struct {
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceRef	*Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef	`path:"interface-ref" module:"openconfig-if-ip"`
+	Enabled      *bool                                              `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceRef *Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef `path:"interface-ref" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Unnumbered implements the yang.GoStruct
@@ -1192,7 +1201,9 @@ func (t *Interface_RoutedVlan_Ipv4_Unnumbered) Validate(opts ...ygot.ValidationO
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Unnumbered.
@@ -1200,11 +1211,10 @@ func (*Interface_RoutedVlan_Ipv4_Unnumbered) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv4/unnumbered/interface-ref YANG schema element.
 type Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef struct {
-	Interface	*string	`path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
-	Subinterface	*uint32	`path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Interface    *string `path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Subinterface *uint32 `path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef implements the yang.GoStruct
@@ -1227,7 +1237,9 @@ func (t *Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef) Validate(opts ...ygo
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef.
@@ -1235,15 +1247,14 @@ func (*Interface_RoutedVlan_Ipv4_Unnumbered_InterfaceRef) ΛBelongingModule() st
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6 represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6 YANG schema element.
 type Interface_RoutedVlan_Ipv6 struct {
-	Address	map[string]*Interface_RoutedVlan_Ipv6_Address	`path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
-	DupAddrDetectTransmits	*uint32	`path:"config/dup-addr-detect-transmits" module:"openconfig-if-ip/openconfig-if-ip"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	Mtu	*uint32	`path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
-	Neighbor	map[string]*Interface_RoutedVlan_Ipv6_Neighbor	`path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
-	Unnumbered	*Interface_RoutedVlan_Ipv6_Unnumbered	`path:"unnumbered" module:"openconfig-if-ip"`
+	Address                map[string]*Interface_RoutedVlan_Ipv6_Address  `path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
+	DupAddrDetectTransmits *uint32                                        `path:"config/dup-addr-detect-transmits" module:"openconfig-if-ip/openconfig-if-ip"`
+	Enabled                *bool                                          `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	Mtu                    *uint32                                        `path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
+	Neighbor               map[string]*Interface_RoutedVlan_Ipv6_Neighbor `path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
+	Unnumbered             *Interface_RoutedVlan_Ipv6_Unnumbered          `path:"unnumbered" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6 implements the yang.GoStruct
@@ -1254,7 +1265,7 @@ func (*Interface_RoutedVlan_Ipv6) IsYANGGoStruct() {}
 // NewAddress creates a new entry in the Address list of the
 // Interface_RoutedVlan_Ipv6 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv6) NewAddress(Ip string) (*Interface_RoutedVlan_Ipv6_Address, error){
+func (t *Interface_RoutedVlan_Ipv6) NewAddress(Ip string) (*Interface_RoutedVlan_Ipv6_Address, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1281,7 +1292,7 @@ func (t *Interface_RoutedVlan_Ipv6) NewAddress(Ip string) (*Interface_RoutedVlan
 // NewNeighbor creates a new entry in the Neighbor list of the
 // Interface_RoutedVlan_Ipv6 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv6) NewNeighbor(Ip string) (*Interface_RoutedVlan_Ipv6_Neighbor, error){
+func (t *Interface_RoutedVlan_Ipv6) NewNeighbor(Ip string) (*Interface_RoutedVlan_Ipv6_Neighbor, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1328,14 +1339,13 @@ func (*Interface_RoutedVlan_Ipv6) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Address represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/addresses/address YANG schema element.
 type Interface_RoutedVlan_Ipv6_Address struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_IpAddressOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
-	PrefixLength	*uint8	`path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
-	Status	E_Address_Status	`path:"state/status" module:"openconfig-if-ip/openconfig-if-ip"`
-	VrrpGroup	map[uint8]*Interface_RoutedVlan_Ipv6_Address_VrrpGroup	`path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip           *string                                                `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	Origin       E_OpenconfigIfIp_IpAddressOrigin                       `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	PrefixLength *uint8                                                 `path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
+	Status       E_Address_Status                                       `path:"state/status" module:"openconfig-if-ip/openconfig-if-ip"`
+	VrrpGroup    map[uint8]*Interface_RoutedVlan_Ipv6_Address_VrrpGroup `path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Address implements the yang.GoStruct
@@ -1346,7 +1356,7 @@ func (*Interface_RoutedVlan_Ipv6_Address) IsYANGGoStruct() {}
 // NewVrrpGroup creates a new entry in the VrrpGroup list of the
 // Interface_RoutedVlan_Ipv6_Address struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_RoutedVlan_Ipv6_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_RoutedVlan_Ipv6_Address_VrrpGroup, error){
+func (t *Interface_RoutedVlan_Ipv6_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_RoutedVlan_Ipv6_Address_VrrpGroup, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1396,7 +1406,9 @@ func (t *Interface_RoutedVlan_Ipv6_Address) Validate(opts ...ygot.ValidationOpti
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Address) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Address) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Address.
@@ -1404,19 +1416,18 @@ func (*Interface_RoutedVlan_Ipv6_Address) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Address_VrrpGroup represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/addresses/address/vrrp/vrrp-group YANG schema element.
 type Interface_RoutedVlan_Ipv6_Address_VrrpGroup struct {
-	AcceptMode	*bool	`path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
-	AdvertisementInterval	*uint16	`path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
-	CurrentPriority	*uint8	`path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceTracking	*Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking	`path:"interface-tracking" module:"openconfig-if-ip"`
-	Preempt	*bool	`path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
-	PreemptDelay	*uint16	`path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
-	Priority	*uint8	`path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualAddress	[]string	`path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualLinkLocal	*string	`path:"config/virtual-link-local" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualRouterId	*uint8	`path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	AcceptMode            *bool                                                          `path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
+	AdvertisementInterval *uint16                                                        `path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
+	CurrentPriority       *uint8                                                         `path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceTracking     *Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking `path:"interface-tracking" module:"openconfig-if-ip"`
+	Preempt               *bool                                                          `path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
+	PreemptDelay          *uint16                                                        `path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
+	Priority              *uint8                                                         `path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualAddress        []string                                                       `path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualLinkLocal      *string                                                        `path:"config/virtual-link-local" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualRouterId       *uint8                                                         `path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Address_VrrpGroup implements the yang.GoStruct
@@ -1450,7 +1461,9 @@ func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup) Validate(opts ...ygot.Vali
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Address_VrrpGroup.
@@ -1458,11 +1471,10 @@ func (*Interface_RoutedVlan_Ipv6_Address_VrrpGroup) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/addresses/address/vrrp/vrrp-group/interface-tracking YANG schema element.
 type Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking struct {
-	PriorityDecrement	*uint8	`path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
-	TrackInterface	*string	`path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	PriorityDecrement *uint8  `path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
+	TrackInterface    *string `path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking implements the yang.GoStruct
@@ -1485,7 +1497,9 @@ func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking) Validate
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking.
@@ -1493,14 +1507,13 @@ func (*Interface_RoutedVlan_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛBelongin
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Neighbor represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/neighbors/neighbor YANG schema element.
 type Interface_RoutedVlan_Ipv6_Neighbor struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	IsRouter	YANGEmpty	`path:"state/is-router" module:"openconfig-if-ip/openconfig-if-ip"`
-	LinkLayerAddress	*string	`path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	NeighborState	E_Neighbor_NeighborState	`path:"state/neighbor-state" module:"openconfig-if-ip/openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_NeighborOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip               *string                         `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	IsRouter         YANGEmpty                       `path:"state/is-router" module:"openconfig-if-ip/openconfig-if-ip"`
+	LinkLayerAddress *string                         `path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	NeighborState    E_Neighbor_NeighborState        `path:"state/neighbor-state" module:"openconfig-if-ip/openconfig-if-ip"`
+	Origin           E_OpenconfigIfIp_NeighborOrigin `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Neighbor implements the yang.GoStruct
@@ -1534,7 +1547,9 @@ func (t *Interface_RoutedVlan_Ipv6_Neighbor) Validate(opts ...ygot.ValidationOpt
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Neighbor.
@@ -1542,11 +1557,10 @@ func (*Interface_RoutedVlan_Ipv6_Neighbor) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Unnumbered represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/unnumbered YANG schema element.
 type Interface_RoutedVlan_Ipv6_Unnumbered struct {
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceRef	*Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef	`path:"interface-ref" module:"openconfig-if-ip"`
+	Enabled      *bool                                              `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceRef *Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef `path:"interface-ref" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Unnumbered implements the yang.GoStruct
@@ -1569,7 +1583,9 @@ func (t *Interface_RoutedVlan_Ipv6_Unnumbered) Validate(opts ...ygot.ValidationO
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Unnumbered.
@@ -1577,11 +1593,10 @@ func (*Interface_RoutedVlan_Ipv6_Unnumbered) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef represents the /openconfig-interfaces/interfaces/interface/routed-vlan/ipv6/unnumbered/interface-ref YANG schema element.
 type Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef struct {
-	Interface	*string	`path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
-	Subinterface	*uint32	`path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Interface    *string `path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Subinterface *uint32 `path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef implements the yang.GoStruct
@@ -1604,7 +1619,9 @@ func (t *Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef) Validate(opts ...ygo
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef.
@@ -1612,21 +1629,20 @@ func (*Interface_RoutedVlan_Ipv6_Unnumbered_InterfaceRef) ΛBelongingModule() st
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface YANG schema element.
 type Interface_Subinterface struct {
-	AdminStatus	E_Interface_AdminStatus	`path:"state/admin-status" module:"openconfig-interfaces/openconfig-interfaces"`
-	Counters	*Interface_Subinterface_Counters	`path:"state/counters" module:"openconfig-interfaces/openconfig-interfaces"`
-	Description	*string	`path:"config/description" module:"openconfig-interfaces/openconfig-interfaces"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-interfaces/openconfig-interfaces"`
-	Ifindex	*uint32	`path:"state/ifindex" module:"openconfig-interfaces/openconfig-interfaces"`
-	Index	*uint32	`path:"config/index|index" module:"openconfig-interfaces/openconfig-interfaces|openconfig-interfaces"`
-	Ipv4	*Interface_Subinterface_Ipv4	`path:"ipv4" module:"openconfig-if-ip"`
-	Ipv6	*Interface_Subinterface_Ipv6	`path:"ipv6" module:"openconfig-if-ip"`
-	LastChange	*uint32	`path:"state/last-change" module:"openconfig-interfaces/openconfig-interfaces"`
-	Name	*string	`path:"config/name" module:"openconfig-interfaces/openconfig-interfaces"`
-	OperStatus	E_Interface_OperStatus	`path:"state/oper-status" module:"openconfig-interfaces/openconfig-interfaces"`
-	Vlan	*Interface_Subinterface_Vlan	`path:"vlan" module:"openconfig-vlan"`
+	AdminStatus E_Interface_AdminStatus          `path:"state/admin-status" module:"openconfig-interfaces/openconfig-interfaces"`
+	Counters    *Interface_Subinterface_Counters `path:"state/counters" module:"openconfig-interfaces/openconfig-interfaces"`
+	Description *string                          `path:"config/description" module:"openconfig-interfaces/openconfig-interfaces"`
+	Enabled     *bool                            `path:"config/enabled" module:"openconfig-interfaces/openconfig-interfaces"`
+	Ifindex     *uint32                          `path:"state/ifindex" module:"openconfig-interfaces/openconfig-interfaces"`
+	Index       *uint32                          `path:"config/index|index" module:"openconfig-interfaces/openconfig-interfaces|openconfig-interfaces"`
+	Ipv4        *Interface_Subinterface_Ipv4     `path:"ipv4" module:"openconfig-if-ip"`
+	Ipv6        *Interface_Subinterface_Ipv6     `path:"ipv6" module:"openconfig-if-ip"`
+	LastChange  *uint32                          `path:"state/last-change" module:"openconfig-interfaces/openconfig-interfaces"`
+	Name        *string                          `path:"config/name" module:"openconfig-interfaces/openconfig-interfaces"`
+	OperStatus  E_Interface_OperStatus           `path:"state/oper-status" module:"openconfig-interfaces/openconfig-interfaces"`
+	Vlan        *Interface_Subinterface_Vlan     `path:"vlan" module:"openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface implements the yang.GoStruct
@@ -1668,23 +1684,22 @@ func (*Interface_Subinterface) ΛBelongingModule() string {
 	return "openconfig-interfaces"
 }
 
-
 // Interface_Subinterface_Counters represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/state/counters YANG schema element.
 type Interface_Subinterface_Counters struct {
-	InBroadcastPkts	*uint64	`path:"in-broadcast-pkts" module:"openconfig-interfaces"`
-	InDiscards	*uint64	`path:"in-discards" module:"openconfig-interfaces"`
-	InErrors	*uint64	`path:"in-errors" module:"openconfig-interfaces"`
-	InMulticastPkts	*uint64	`path:"in-multicast-pkts" module:"openconfig-interfaces"`
-	InOctets	*uint64	`path:"in-octets" module:"openconfig-interfaces"`
-	InUnicastPkts	*uint64	`path:"in-unicast-pkts" module:"openconfig-interfaces"`
-	InUnknownProtos	*uint32	`path:"in-unknown-protos" module:"openconfig-interfaces"`
-	LastClear	*string	`path:"last-clear" module:"openconfig-interfaces"`
-	OutBroadcastPkts	*uint64	`path:"out-broadcast-pkts" module:"openconfig-interfaces"`
-	OutDiscards	*uint64	`path:"out-discards" module:"openconfig-interfaces"`
-	OutErrors	*uint64	`path:"out-errors" module:"openconfig-interfaces"`
-	OutMulticastPkts	*uint64	`path:"out-multicast-pkts" module:"openconfig-interfaces"`
-	OutOctets	*uint64	`path:"out-octets" module:"openconfig-interfaces"`
-	OutUnicastPkts	*uint64	`path:"out-unicast-pkts" module:"openconfig-interfaces"`
+	InBroadcastPkts  *uint64 `path:"in-broadcast-pkts" module:"openconfig-interfaces"`
+	InDiscards       *uint64 `path:"in-discards" module:"openconfig-interfaces"`
+	InErrors         *uint64 `path:"in-errors" module:"openconfig-interfaces"`
+	InMulticastPkts  *uint64 `path:"in-multicast-pkts" module:"openconfig-interfaces"`
+	InOctets         *uint64 `path:"in-octets" module:"openconfig-interfaces"`
+	InUnicastPkts    *uint64 `path:"in-unicast-pkts" module:"openconfig-interfaces"`
+	InUnknownProtos  *uint32 `path:"in-unknown-protos" module:"openconfig-interfaces"`
+	LastClear        *string `path:"last-clear" module:"openconfig-interfaces"`
+	OutBroadcastPkts *uint64 `path:"out-broadcast-pkts" module:"openconfig-interfaces"`
+	OutDiscards      *uint64 `path:"out-discards" module:"openconfig-interfaces"`
+	OutErrors        *uint64 `path:"out-errors" module:"openconfig-interfaces"`
+	OutMulticastPkts *uint64 `path:"out-multicast-pkts" module:"openconfig-interfaces"`
+	OutOctets        *uint64 `path:"out-octets" module:"openconfig-interfaces"`
+	OutUnicastPkts   *uint64 `path:"out-unicast-pkts" module:"openconfig-interfaces"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Counters implements the yang.GoStruct
@@ -1707,7 +1722,9 @@ func (t *Interface_Subinterface_Counters) Validate(opts ...ygot.ValidationOption
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Counters) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Counters) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Counters.
@@ -1715,14 +1732,13 @@ func (*Interface_Subinterface_Counters) ΛBelongingModule() string {
 	return "openconfig-interfaces"
 }
 
-
 // Interface_Subinterface_Ipv4 represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4 YANG schema element.
 type Interface_Subinterface_Ipv4 struct {
-	Address	map[string]*Interface_Subinterface_Ipv4_Address	`path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	Mtu	*uint16	`path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
-	Neighbor	map[string]*Interface_Subinterface_Ipv4_Neighbor	`path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
-	Unnumbered	*Interface_Subinterface_Ipv4_Unnumbered	`path:"unnumbered" module:"openconfig-if-ip"`
+	Address    map[string]*Interface_Subinterface_Ipv4_Address  `path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
+	Enabled    *bool                                            `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	Mtu        *uint16                                          `path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
+	Neighbor   map[string]*Interface_Subinterface_Ipv4_Neighbor `path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
+	Unnumbered *Interface_Subinterface_Ipv4_Unnumbered          `path:"unnumbered" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4 implements the yang.GoStruct
@@ -1733,7 +1749,7 @@ func (*Interface_Subinterface_Ipv4) IsYANGGoStruct() {}
 // NewAddress creates a new entry in the Address list of the
 // Interface_Subinterface_Ipv4 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv4) NewAddress(Ip string) (*Interface_Subinterface_Ipv4_Address, error){
+func (t *Interface_Subinterface_Ipv4) NewAddress(Ip string) (*Interface_Subinterface_Ipv4_Address, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1760,7 +1776,7 @@ func (t *Interface_Subinterface_Ipv4) NewAddress(Ip string) (*Interface_Subinter
 // NewNeighbor creates a new entry in the Neighbor list of the
 // Interface_Subinterface_Ipv4 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv4) NewNeighbor(Ip string) (*Interface_Subinterface_Ipv4_Neighbor, error){
+func (t *Interface_Subinterface_Ipv4) NewNeighbor(Ip string) (*Interface_Subinterface_Ipv4_Neighbor, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1807,13 +1823,12 @@ func (*Interface_Subinterface_Ipv4) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Address represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address YANG schema element.
 type Interface_Subinterface_Ipv4_Address struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_IpAddressOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
-	PrefixLength	*uint8	`path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
-	VrrpGroup	map[uint8]*Interface_Subinterface_Ipv4_Address_VrrpGroup	`path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip           *string                                                  `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	Origin       E_OpenconfigIfIp_IpAddressOrigin                         `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	PrefixLength *uint8                                                   `path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
+	VrrpGroup    map[uint8]*Interface_Subinterface_Ipv4_Address_VrrpGroup `path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Address implements the yang.GoStruct
@@ -1824,7 +1839,7 @@ func (*Interface_Subinterface_Ipv4_Address) IsYANGGoStruct() {}
 // NewVrrpGroup creates a new entry in the VrrpGroup list of the
 // Interface_Subinterface_Ipv4_Address struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv4_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_Subinterface_Ipv4_Address_VrrpGroup, error){
+func (t *Interface_Subinterface_Ipv4_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_Subinterface_Ipv4_Address_VrrpGroup, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -1874,7 +1889,9 @@ func (t *Interface_Subinterface_Ipv4_Address) Validate(opts ...ygot.ValidationOp
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Address) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Address) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Address.
@@ -1882,18 +1899,17 @@ func (*Interface_Subinterface_Ipv4_Address) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Address_VrrpGroup represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address/vrrp/vrrp-group YANG schema element.
 type Interface_Subinterface_Ipv4_Address_VrrpGroup struct {
-	AcceptMode	*bool	`path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
-	AdvertisementInterval	*uint16	`path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
-	CurrentPriority	*uint8	`path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceTracking	*Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking	`path:"interface-tracking" module:"openconfig-if-ip"`
-	Preempt	*bool	`path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
-	PreemptDelay	*uint16	`path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
-	Priority	*uint8	`path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualAddress	[]string	`path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualRouterId	*uint8	`path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	AcceptMode            *bool                                                            `path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
+	AdvertisementInterval *uint16                                                          `path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
+	CurrentPriority       *uint8                                                           `path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceTracking     *Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking `path:"interface-tracking" module:"openconfig-if-ip"`
+	Preempt               *bool                                                            `path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
+	PreemptDelay          *uint16                                                          `path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
+	Priority              *uint8                                                           `path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualAddress        []string                                                         `path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualRouterId       *uint8                                                           `path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Address_VrrpGroup implements the yang.GoStruct
@@ -1927,7 +1943,9 @@ func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup) Validate(opts ...ygot.Va
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Address_VrrpGroup.
@@ -1935,11 +1953,10 @@ func (*Interface_Subinterface_Ipv4_Address_VrrpGroup) ΛBelongingModule() string
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address/vrrp/vrrp-group/interface-tracking YANG schema element.
 type Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking struct {
-	PriorityDecrement	*uint8	`path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
-	TrackInterface	*string	`path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	PriorityDecrement *uint8  `path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
+	TrackInterface    *string `path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking implements the yang.GoStruct
@@ -1962,7 +1979,9 @@ func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking) Valida
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking.
@@ -1970,12 +1989,11 @@ func (*Interface_Subinterface_Ipv4_Address_VrrpGroup_InterfaceTracking) ΛBelong
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Neighbor represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/neighbors/neighbor YANG schema element.
 type Interface_Subinterface_Ipv4_Neighbor struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	LinkLayerAddress	*string	`path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_NeighborOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip               *string                         `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	LinkLayerAddress *string                         `path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	Origin           E_OpenconfigIfIp_NeighborOrigin `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Neighbor implements the yang.GoStruct
@@ -2009,7 +2027,9 @@ func (t *Interface_Subinterface_Ipv4_Neighbor) Validate(opts ...ygot.ValidationO
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Neighbor.
@@ -2017,11 +2037,10 @@ func (*Interface_Subinterface_Ipv4_Neighbor) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Unnumbered represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/unnumbered YANG schema element.
 type Interface_Subinterface_Ipv4_Unnumbered struct {
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceRef	*Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef	`path:"interface-ref" module:"openconfig-if-ip"`
+	Enabled      *bool                                                `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceRef *Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef `path:"interface-ref" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Unnumbered implements the yang.GoStruct
@@ -2044,7 +2063,9 @@ func (t *Interface_Subinterface_Ipv4_Unnumbered) Validate(opts ...ygot.Validatio
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Unnumbered.
@@ -2052,11 +2073,10 @@ func (*Interface_Subinterface_Ipv4_Unnumbered) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv4/unnumbered/interface-ref YANG schema element.
 type Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef struct {
-	Interface	*string	`path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
-	Subinterface	*uint32	`path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Interface    *string `path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Subinterface *uint32 `path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef implements the yang.GoStruct
@@ -2079,7 +2099,9 @@ func (t *Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef) Validate(opts ...y
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef.
@@ -2087,15 +2109,14 @@ func (*Interface_Subinterface_Ipv4_Unnumbered_InterfaceRef) ΛBelongingModule() 
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6 represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6 YANG schema element.
 type Interface_Subinterface_Ipv6 struct {
-	Address	map[string]*Interface_Subinterface_Ipv6_Address	`path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
-	DupAddrDetectTransmits	*uint32	`path:"config/dup-addr-detect-transmits" module:"openconfig-if-ip/openconfig-if-ip"`
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	Mtu	*uint32	`path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
-	Neighbor	map[string]*Interface_Subinterface_Ipv6_Neighbor	`path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
-	Unnumbered	*Interface_Subinterface_Ipv6_Unnumbered	`path:"unnumbered" module:"openconfig-if-ip"`
+	Address                map[string]*Interface_Subinterface_Ipv6_Address  `path:"addresses/address" module:"openconfig-if-ip/openconfig-if-ip"`
+	DupAddrDetectTransmits *uint32                                          `path:"config/dup-addr-detect-transmits" module:"openconfig-if-ip/openconfig-if-ip"`
+	Enabled                *bool                                            `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	Mtu                    *uint32                                          `path:"config/mtu" module:"openconfig-if-ip/openconfig-if-ip"`
+	Neighbor               map[string]*Interface_Subinterface_Ipv6_Neighbor `path:"neighbors/neighbor" module:"openconfig-if-ip/openconfig-if-ip"`
+	Unnumbered             *Interface_Subinterface_Ipv6_Unnumbered          `path:"unnumbered" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6 implements the yang.GoStruct
@@ -2106,7 +2127,7 @@ func (*Interface_Subinterface_Ipv6) IsYANGGoStruct() {}
 // NewAddress creates a new entry in the Address list of the
 // Interface_Subinterface_Ipv6 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv6) NewAddress(Ip string) (*Interface_Subinterface_Ipv6_Address, error){
+func (t *Interface_Subinterface_Ipv6) NewAddress(Ip string) (*Interface_Subinterface_Ipv6_Address, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -2133,7 +2154,7 @@ func (t *Interface_Subinterface_Ipv6) NewAddress(Ip string) (*Interface_Subinter
 // NewNeighbor creates a new entry in the Neighbor list of the
 // Interface_Subinterface_Ipv6 struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv6) NewNeighbor(Ip string) (*Interface_Subinterface_Ipv6_Neighbor, error){
+func (t *Interface_Subinterface_Ipv6) NewNeighbor(Ip string) (*Interface_Subinterface_Ipv6_Neighbor, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -2180,14 +2201,13 @@ func (*Interface_Subinterface_Ipv6) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Address represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address YANG schema element.
 type Interface_Subinterface_Ipv6_Address struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_IpAddressOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
-	PrefixLength	*uint8	`path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
-	Status	E_Address_Status	`path:"state/status" module:"openconfig-if-ip/openconfig-if-ip"`
-	VrrpGroup	map[uint8]*Interface_Subinterface_Ipv6_Address_VrrpGroup	`path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip           *string                                                  `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	Origin       E_OpenconfigIfIp_IpAddressOrigin                         `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	PrefixLength *uint8                                                   `path:"config/prefix-length" module:"openconfig-if-ip/openconfig-if-ip"`
+	Status       E_Address_Status                                         `path:"state/status" module:"openconfig-if-ip/openconfig-if-ip"`
+	VrrpGroup    map[uint8]*Interface_Subinterface_Ipv6_Address_VrrpGroup `path:"vrrp/vrrp-group" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Address implements the yang.GoStruct
@@ -2198,7 +2218,7 @@ func (*Interface_Subinterface_Ipv6_Address) IsYANGGoStruct() {}
 // NewVrrpGroup creates a new entry in the VrrpGroup list of the
 // Interface_Subinterface_Ipv6_Address struct. The keys of the list are populated from the input
 // arguments.
-func (t *Interface_Subinterface_Ipv6_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_Subinterface_Ipv6_Address_VrrpGroup, error){
+func (t *Interface_Subinterface_Ipv6_Address) NewVrrpGroup(VirtualRouterId uint8) (*Interface_Subinterface_Ipv6_Address_VrrpGroup, error) {
 
 	// Initialise the list within the receiver struct if it has not already been
 	// created.
@@ -2248,7 +2268,9 @@ func (t *Interface_Subinterface_Ipv6_Address) Validate(opts ...ygot.ValidationOp
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Address) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Address) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Address.
@@ -2256,19 +2278,18 @@ func (*Interface_Subinterface_Ipv6_Address) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Address_VrrpGroup represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/vrrp/vrrp-group YANG schema element.
 type Interface_Subinterface_Ipv6_Address_VrrpGroup struct {
-	AcceptMode	*bool	`path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
-	AdvertisementInterval	*uint16	`path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
-	CurrentPriority	*uint8	`path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceTracking	*Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking	`path:"interface-tracking" module:"openconfig-if-ip"`
-	Preempt	*bool	`path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
-	PreemptDelay	*uint16	`path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
-	Priority	*uint8	`path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualAddress	[]string	`path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualLinkLocal	*string	`path:"config/virtual-link-local" module:"openconfig-if-ip/openconfig-if-ip"`
-	VirtualRouterId	*uint8	`path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	AcceptMode            *bool                                                            `path:"config/accept-mode" module:"openconfig-if-ip/openconfig-if-ip"`
+	AdvertisementInterval *uint16                                                          `path:"config/advertisement-interval" module:"openconfig-if-ip/openconfig-if-ip"`
+	CurrentPriority       *uint8                                                           `path:"state/current-priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceTracking     *Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking `path:"interface-tracking" module:"openconfig-if-ip"`
+	Preempt               *bool                                                            `path:"config/preempt" module:"openconfig-if-ip/openconfig-if-ip"`
+	PreemptDelay          *uint16                                                          `path:"config/preempt-delay" module:"openconfig-if-ip/openconfig-if-ip"`
+	Priority              *uint8                                                           `path:"config/priority" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualAddress        []string                                                         `path:"config/virtual-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualLinkLocal      *string                                                          `path:"config/virtual-link-local" module:"openconfig-if-ip/openconfig-if-ip"`
+	VirtualRouterId       *uint8                                                           `path:"config/virtual-router-id|virtual-router-id" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Address_VrrpGroup implements the yang.GoStruct
@@ -2302,7 +2323,9 @@ func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup) Validate(opts ...ygot.Va
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Address_VrrpGroup.
@@ -2310,11 +2333,10 @@ func (*Interface_Subinterface_Ipv6_Address_VrrpGroup) ΛBelongingModule() string
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/vrrp/vrrp-group/interface-tracking YANG schema element.
 type Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking struct {
-	PriorityDecrement	*uint8	`path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
-	TrackInterface	*string	`path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	PriorityDecrement *uint8  `path:"config/priority-decrement" module:"openconfig-if-ip/openconfig-if-ip"`
+	TrackInterface    *string `path:"config/track-interface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking implements the yang.GoStruct
@@ -2337,7 +2359,9 @@ func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking) Valida
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking.
@@ -2345,14 +2369,13 @@ func (*Interface_Subinterface_Ipv6_Address_VrrpGroup_InterfaceTracking) ΛBelong
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Neighbor represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/neighbors/neighbor YANG schema element.
 type Interface_Subinterface_Ipv6_Neighbor struct {
-	Ip	*string	`path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
-	IsRouter	YANGEmpty	`path:"state/is-router" module:"openconfig-if-ip/openconfig-if-ip"`
-	LinkLayerAddress	*string	`path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
-	NeighborState	E_Neighbor_NeighborState	`path:"state/neighbor-state" module:"openconfig-if-ip/openconfig-if-ip"`
-	Origin	E_OpenconfigIfIp_NeighborOrigin	`path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
+	Ip               *string                         `path:"config/ip|ip" module:"openconfig-if-ip/openconfig-if-ip|openconfig-if-ip"`
+	IsRouter         YANGEmpty                       `path:"state/is-router" module:"openconfig-if-ip/openconfig-if-ip"`
+	LinkLayerAddress *string                         `path:"config/link-layer-address" module:"openconfig-if-ip/openconfig-if-ip"`
+	NeighborState    E_Neighbor_NeighborState        `path:"state/neighbor-state" module:"openconfig-if-ip/openconfig-if-ip"`
+	Origin           E_OpenconfigIfIp_NeighborOrigin `path:"state/origin" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Neighbor implements the yang.GoStruct
@@ -2386,7 +2409,9 @@ func (t *Interface_Subinterface_Ipv6_Neighbor) Validate(opts ...ygot.ValidationO
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Neighbor) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Neighbor.
@@ -2394,11 +2419,10 @@ func (*Interface_Subinterface_Ipv6_Neighbor) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Unnumbered represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/unnumbered YANG schema element.
 type Interface_Subinterface_Ipv6_Unnumbered struct {
-	Enabled	*bool	`path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
-	InterfaceRef	*Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef	`path:"interface-ref" module:"openconfig-if-ip"`
+	Enabled      *bool                                                `path:"config/enabled" module:"openconfig-if-ip/openconfig-if-ip"`
+	InterfaceRef *Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef `path:"interface-ref" module:"openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Unnumbered implements the yang.GoStruct
@@ -2421,7 +2445,9 @@ func (t *Interface_Subinterface_Ipv6_Unnumbered) Validate(opts ...ygot.Validatio
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Unnumbered) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Unnumbered.
@@ -2429,11 +2455,10 @@ func (*Interface_Subinterface_Ipv6_Unnumbered) ΛBelongingModule() string {
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/ipv6/unnumbered/interface-ref YANG schema element.
 type Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef struct {
-	Interface	*string	`path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
-	Subinterface	*uint32	`path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Interface    *string `path:"config/interface" module:"openconfig-if-ip/openconfig-if-ip"`
+	Subinterface *uint32 `path:"config/subinterface" module:"openconfig-if-ip/openconfig-if-ip"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef implements the yang.GoStruct
@@ -2456,7 +2481,9 @@ func (t *Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef) Validate(opts ...y
 
 // ΛEnumTypeMap returns a map, keyed by YANG schema path, of the enumerated types
 // that are included in the generated code.
-func (t *Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type { return ΛEnumTypes }
+func (t *Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef) ΛEnumTypeMap() map[string][]reflect.Type {
+	return ΛEnumTypes
+}
 
 // ΛBelongingModule returns the name of the module that defines the namespace
 // of Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef.
@@ -2464,10 +2491,9 @@ func (*Interface_Subinterface_Ipv6_Unnumbered_InterfaceRef) ΛBelongingModule() 
 	return "openconfig-if-ip"
 }
 
-
 // Interface_Subinterface_Vlan represents the /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/vlan YANG schema element.
 type Interface_Subinterface_Vlan struct {
-	VlanId	Interface_Subinterface_Vlan_VlanId_Union	`path:"config/vlan-id" module:"openconfig-vlan/openconfig-vlan"`
+	VlanId Interface_Subinterface_Vlan_VlanId_Union `path:"config/vlan-id" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Interface_Subinterface_Vlan implements the yang.GoStruct
@@ -2507,22 +2533,24 @@ type Interface_Subinterface_Vlan_VlanId_Union interface {
 // Interface_Subinterface_Vlan_VlanId_Union_String is used when /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/vlan/config/vlan-id
 // is to be set to a string value.
 type Interface_Subinterface_Vlan_VlanId_Union_String struct {
-	String	string
+	String string
 }
 
 // Is_Interface_Subinterface_Vlan_VlanId_Union ensures that Interface_Subinterface_Vlan_VlanId_Union_String
 // implements the Interface_Subinterface_Vlan_VlanId_Union interface.
-func (*Interface_Subinterface_Vlan_VlanId_Union_String) Is_Interface_Subinterface_Vlan_VlanId_Union() {}
+func (*Interface_Subinterface_Vlan_VlanId_Union_String) Is_Interface_Subinterface_Vlan_VlanId_Union() {
+}
 
 // Interface_Subinterface_Vlan_VlanId_Union_Uint16 is used when /openconfig-interfaces/interfaces/interface/subinterfaces/subinterface/vlan/config/vlan-id
 // is to be set to a uint16 value.
 type Interface_Subinterface_Vlan_VlanId_Union_Uint16 struct {
-	Uint16	uint16
+	Uint16 uint16
 }
 
 // Is_Interface_Subinterface_Vlan_VlanId_Union ensures that Interface_Subinterface_Vlan_VlanId_Union_Uint16
 // implements the Interface_Subinterface_Vlan_VlanId_Union interface.
-func (*Interface_Subinterface_Vlan_VlanId_Union_Uint16) Is_Interface_Subinterface_Vlan_VlanId_Union() {}
+func (*Interface_Subinterface_Vlan_VlanId_Union_Uint16) Is_Interface_Subinterface_Vlan_VlanId_Union() {
+}
 
 // To_Interface_Subinterface_Vlan_VlanId_Union takes an input interface{} and attempts to convert it to a struct
 // which implements the Interface_Subinterface_Vlan_VlanId_Union union. It returns an error if the interface{} supplied
@@ -2538,14 +2566,13 @@ func (t *Interface_Subinterface_Vlan) To_Interface_Subinterface_Vlan_VlanId_Unio
 	}
 }
 
-
 // Vlan represents the /openconfig-vlan/vlans/vlan YANG schema element.
 type Vlan struct {
-	Member	[]*Vlan_Member	`path:"members/member" module:"openconfig-vlan/openconfig-vlan"`
-	Name	*string	`path:"config/name" module:"openconfig-vlan/openconfig-vlan"`
-	Status	E_Vlan_Status	`path:"config/status" module:"openconfig-vlan/openconfig-vlan"`
-	Tpid	E_OpenconfigVlanTypes_TPID_TYPES	`path:"config/tpid" module:"openconfig-vlan/openconfig-vlan"`
-	VlanId	*uint16	`path:"config/vlan-id|vlan-id" module:"openconfig-vlan/openconfig-vlan|openconfig-vlan"`
+	Member []*Vlan_Member                   `path:"members/member" module:"openconfig-vlan/openconfig-vlan"`
+	Name   *string                          `path:"config/name" module:"openconfig-vlan/openconfig-vlan"`
+	Status E_Vlan_Status                    `path:"config/status" module:"openconfig-vlan/openconfig-vlan"`
+	Tpid   E_OpenconfigVlanTypes_TPID_TYPES `path:"config/tpid" module:"openconfig-vlan/openconfig-vlan"`
+	VlanId *uint16                          `path:"config/vlan-id|vlan-id" module:"openconfig-vlan/openconfig-vlan|openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Vlan implements the yang.GoStruct
@@ -2587,10 +2614,9 @@ func (*Vlan) ΛBelongingModule() string {
 	return "openconfig-vlan"
 }
 
-
 // Vlan_Member represents the /openconfig-vlan/vlans/vlan/members/member YANG schema element.
 type Vlan_Member struct {
-	InterfaceRef	*Vlan_Member_InterfaceRef	`path:"interface-ref" module:"openconfig-vlan"`
+	InterfaceRef *Vlan_Member_InterfaceRef `path:"interface-ref" module:"openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Vlan_Member implements the yang.GoStruct
@@ -2621,11 +2647,10 @@ func (*Vlan_Member) ΛBelongingModule() string {
 	return "openconfig-vlan"
 }
 
-
 // Vlan_Member_InterfaceRef represents the /openconfig-vlan/vlans/vlan/members/member/interface-ref YANG schema element.
 type Vlan_Member_InterfaceRef struct {
-	Interface	*string	`path:"state/interface" module:"openconfig-vlan/openconfig-vlan"`
-	Subinterface	*uint32	`path:"state/subinterface" module:"openconfig-vlan/openconfig-vlan"`
+	Interface    *string `path:"state/interface" module:"openconfig-vlan/openconfig-vlan"`
+	Subinterface *uint32 `path:"state/subinterface" module:"openconfig-vlan/openconfig-vlan"`
 }
 
 // IsYANGGoStruct ensures that Vlan_Member_InterfaceRef implements the yang.GoStruct
@@ -2656,7 +2681,6 @@ func (*Vlan_Member_InterfaceRef) ΛBelongingModule() string {
 	return "openconfig-vlan"
 }
 
-
 // E_Address_Status is a derived int64 type which is used to represent
 // the enumerated node Address_Status. An additional value named
 // Address_Status_UNSET is added to the enumeration which is used as
@@ -2670,7 +2694,7 @@ type E_Address_Status int64
 func (E_Address_Status) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Address_Status.
-func (E_Address_Status) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Address_Status) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Address_Status.
 func (e E_Address_Status) String() string {
@@ -2698,7 +2722,6 @@ const (
 	Address_Status_OPTIMISTIC E_Address_Status = 8
 )
 
-
 // E_Ethernet_DuplexMode is a derived int64 type which is used to represent
 // the enumerated node Ethernet_DuplexMode. An additional value named
 // Ethernet_DuplexMode_UNSET is added to the enumeration which is used as
@@ -2712,7 +2735,7 @@ type E_Ethernet_DuplexMode int64
 func (E_Ethernet_DuplexMode) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Ethernet_DuplexMode.
-func (E_Ethernet_DuplexMode) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Ethernet_DuplexMode) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Ethernet_DuplexMode.
 func (e E_Ethernet_DuplexMode) String() string {
@@ -2728,7 +2751,6 @@ const (
 	Ethernet_DuplexMode_HALF E_Ethernet_DuplexMode = 2
 )
 
-
 // E_Ethernet_NegotiatedDuplexMode is a derived int64 type which is used to represent
 // the enumerated node Ethernet_NegotiatedDuplexMode. An additional value named
 // Ethernet_NegotiatedDuplexMode_UNSET is added to the enumeration which is used as
@@ -2742,7 +2764,9 @@ type E_Ethernet_NegotiatedDuplexMode int64
 func (E_Ethernet_NegotiatedDuplexMode) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Ethernet_NegotiatedDuplexMode.
-func (E_Ethernet_NegotiatedDuplexMode) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Ethernet_NegotiatedDuplexMode) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_Ethernet_NegotiatedDuplexMode.
 func (e E_Ethernet_NegotiatedDuplexMode) String() string {
@@ -2758,7 +2782,6 @@ const (
 	Ethernet_NegotiatedDuplexMode_HALF E_Ethernet_NegotiatedDuplexMode = 2
 )
 
-
 // E_IETFInterfaces_InterfaceType is a derived int64 type which is used to represent
 // the enumerated node IETFInterfaces_InterfaceType. An additional value named
 // IETFInterfaces_InterfaceType_UNSET is added to the enumeration which is used as
@@ -2772,7 +2795,7 @@ type E_IETFInterfaces_InterfaceType int64
 func (E_IETFInterfaces_InterfaceType) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  IETFInterfaces_InterfaceType.
-func (E_IETFInterfaces_InterfaceType) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_IETFInterfaces_InterfaceType) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_IETFInterfaces_InterfaceType.
 func (e E_IETFInterfaces_InterfaceType) String() string {
@@ -3330,7 +3353,6 @@ const (
 	IETFInterfaces_InterfaceType_x86Laps E_IETFInterfaces_InterfaceType = 273
 )
 
-
 // E_Interface_AdminStatus is a derived int64 type which is used to represent
 // the enumerated node Interface_AdminStatus. An additional value named
 // Interface_AdminStatus_UNSET is added to the enumeration which is used as
@@ -3344,7 +3366,7 @@ type E_Interface_AdminStatus int64
 func (E_Interface_AdminStatus) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Interface_AdminStatus.
-func (E_Interface_AdminStatus) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Interface_AdminStatus) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Interface_AdminStatus.
 func (e E_Interface_AdminStatus) String() string {
@@ -3362,7 +3384,6 @@ const (
 	Interface_AdminStatus_TESTING E_Interface_AdminStatus = 3
 )
 
-
 // E_Interface_OperStatus is a derived int64 type which is used to represent
 // the enumerated node Interface_OperStatus. An additional value named
 // Interface_OperStatus_UNSET is added to the enumeration which is used as
@@ -3376,7 +3397,7 @@ type E_Interface_OperStatus int64
 func (E_Interface_OperStatus) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Interface_OperStatus.
-func (E_Interface_OperStatus) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Interface_OperStatus) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Interface_OperStatus.
 func (e E_Interface_OperStatus) String() string {
@@ -3402,7 +3423,6 @@ const (
 	Interface_OperStatus_LOWER_LAYER_DOWN E_Interface_OperStatus = 7
 )
 
-
 // E_Neighbor_NeighborState is a derived int64 type which is used to represent
 // the enumerated node Neighbor_NeighborState. An additional value named
 // Neighbor_NeighborState_UNSET is added to the enumeration which is used as
@@ -3416,7 +3436,7 @@ type E_Neighbor_NeighborState int64
 func (E_Neighbor_NeighborState) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Neighbor_NeighborState.
-func (E_Neighbor_NeighborState) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Neighbor_NeighborState) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Neighbor_NeighborState.
 func (e E_Neighbor_NeighborState) String() string {
@@ -3438,7 +3458,6 @@ const (
 	Neighbor_NeighborState_PROBE E_Neighbor_NeighborState = 5
 )
 
-
 // E_OpenconfigIfAggregate_AggregationType is a derived int64 type which is used to represent
 // the enumerated node OpenconfigIfAggregate_AggregationType. An additional value named
 // OpenconfigIfAggregate_AggregationType_UNSET is added to the enumeration which is used as
@@ -3452,7 +3471,9 @@ type E_OpenconfigIfAggregate_AggregationType int64
 func (E_OpenconfigIfAggregate_AggregationType) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigIfAggregate_AggregationType.
-func (E_OpenconfigIfAggregate_AggregationType) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigIfAggregate_AggregationType) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigIfAggregate_AggregationType.
 func (e E_OpenconfigIfAggregate_AggregationType) String() string {
@@ -3468,7 +3489,6 @@ const (
 	OpenconfigIfAggregate_AggregationType_STATIC E_OpenconfigIfAggregate_AggregationType = 2
 )
 
-
 // E_OpenconfigIfEthernet_ETHERNET_SPEED is a derived int64 type which is used to represent
 // the enumerated node OpenconfigIfEthernet_ETHERNET_SPEED. An additional value named
 // OpenconfigIfEthernet_ETHERNET_SPEED_UNSET is added to the enumeration which is used as
@@ -3482,7 +3502,9 @@ type E_OpenconfigIfEthernet_ETHERNET_SPEED int64
 func (E_OpenconfigIfEthernet_ETHERNET_SPEED) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigIfEthernet_ETHERNET_SPEED.
-func (E_OpenconfigIfEthernet_ETHERNET_SPEED) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigIfEthernet_ETHERNET_SPEED) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigIfEthernet_ETHERNET_SPEED.
 func (e E_OpenconfigIfEthernet_ETHERNET_SPEED) String() string {
@@ -3512,7 +3534,6 @@ const (
 	OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_UNKNOWN E_OpenconfigIfEthernet_ETHERNET_SPEED = 9
 )
 
-
 // E_OpenconfigIfIp_IpAddressOrigin is a derived int64 type which is used to represent
 // the enumerated node OpenconfigIfIp_IpAddressOrigin. An additional value named
 // OpenconfigIfIp_IpAddressOrigin_UNSET is added to the enumeration which is used as
@@ -3526,7 +3547,9 @@ type E_OpenconfigIfIp_IpAddressOrigin int64
 func (E_OpenconfigIfIp_IpAddressOrigin) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigIfIp_IpAddressOrigin.
-func (E_OpenconfigIfIp_IpAddressOrigin) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigIfIp_IpAddressOrigin) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigIfIp_IpAddressOrigin.
 func (e E_OpenconfigIfIp_IpAddressOrigin) String() string {
@@ -3548,7 +3571,6 @@ const (
 	OpenconfigIfIp_IpAddressOrigin_RANDOM E_OpenconfigIfIp_IpAddressOrigin = 5
 )
 
-
 // E_OpenconfigIfIp_NeighborOrigin is a derived int64 type which is used to represent
 // the enumerated node OpenconfigIfIp_NeighborOrigin. An additional value named
 // OpenconfigIfIp_NeighborOrigin_UNSET is added to the enumeration which is used as
@@ -3562,7 +3584,9 @@ type E_OpenconfigIfIp_NeighborOrigin int64
 func (E_OpenconfigIfIp_NeighborOrigin) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigIfIp_NeighborOrigin.
-func (E_OpenconfigIfIp_NeighborOrigin) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigIfIp_NeighborOrigin) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigIfIp_NeighborOrigin.
 func (e E_OpenconfigIfIp_NeighborOrigin) String() string {
@@ -3580,7 +3604,6 @@ const (
 	OpenconfigIfIp_NeighborOrigin_DYNAMIC E_OpenconfigIfIp_NeighborOrigin = 3
 )
 
-
 // E_OpenconfigVlanTypes_TPID_TYPES is a derived int64 type which is used to represent
 // the enumerated node OpenconfigVlanTypes_TPID_TYPES. An additional value named
 // OpenconfigVlanTypes_TPID_TYPES_UNSET is added to the enumeration which is used as
@@ -3594,7 +3617,9 @@ type E_OpenconfigVlanTypes_TPID_TYPES int64
 func (E_OpenconfigVlanTypes_TPID_TYPES) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigVlanTypes_TPID_TYPES.
-func (E_OpenconfigVlanTypes_TPID_TYPES) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigVlanTypes_TPID_TYPES) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigVlanTypes_TPID_TYPES.
 func (e E_OpenconfigVlanTypes_TPID_TYPES) String() string {
@@ -3614,7 +3639,6 @@ const (
 	OpenconfigVlanTypes_TPID_TYPES_TPID_0x9100 E_OpenconfigVlanTypes_TPID_TYPES = 4
 )
 
-
 // E_OpenconfigVlanTypes_VlanModeType is a derived int64 type which is used to represent
 // the enumerated node OpenconfigVlanTypes_VlanModeType. An additional value named
 // OpenconfigVlanTypes_VlanModeType_UNSET is added to the enumeration which is used as
@@ -3628,7 +3652,9 @@ type E_OpenconfigVlanTypes_VlanModeType int64
 func (E_OpenconfigVlanTypes_VlanModeType) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  OpenconfigVlanTypes_VlanModeType.
-func (E_OpenconfigVlanTypes_VlanModeType) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_OpenconfigVlanTypes_VlanModeType) ΛMap() map[string]map[int64]ygot.EnumDefinition {
+	return ΛEnum
+}
 
 // String returns a logging-friendly string for E_OpenconfigVlanTypes_VlanModeType.
 func (e E_OpenconfigVlanTypes_VlanModeType) String() string {
@@ -3644,7 +3670,6 @@ const (
 	OpenconfigVlanTypes_VlanModeType_TRUNK E_OpenconfigVlanTypes_VlanModeType = 2
 )
 
-
 // E_Vlan_Status is a derived int64 type which is used to represent
 // the enumerated node Vlan_Status. An additional value named
 // Vlan_Status_UNSET is added to the enumeration which is used as
@@ -3658,7 +3683,7 @@ type E_Vlan_Status int64
 func (E_Vlan_Status) IsYANGGoEnum() {}
 
 // ΛMap returns the value lookup map associated with  Vlan_Status.
-func (E_Vlan_Status) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum; }
+func (E_Vlan_Status) ΛMap() map[string]map[int64]ygot.EnumDefinition { return ΛEnum }
 
 // String returns a logging-friendly string for E_Vlan_Status.
 func (e E_Vlan_Status) String() string {
@@ -3673,7 +3698,6 @@ const (
 	// Vlan_Status_SUSPENDED corresponds to the value SUSPENDED of Vlan_Status
 	Vlan_Status_SUSPENDED E_Vlan_Status = 2
 )
-
 
 // ΛEnum is a map, keyed by the name of the type defined for each enum in the
 // generated Go code, which provides a mapping between the constant int64 value
@@ -3700,105 +3724,105 @@ var ΛEnum = map[string]map[int64]ygot.EnumDefinition{
 		2: {Name: "HALF"},
 	},
 	"E_IETFInterfaces_InterfaceType": {
-		1: {Name: "a12MppSwitch", DefiningModule: "iana-if-type"},
-		2: {Name: "aal2", DefiningModule: "iana-if-type"},
-		3: {Name: "aal5", DefiningModule: "iana-if-type"},
-		4: {Name: "actelisMetaLOOP", DefiningModule: "iana-if-type"},
-		5: {Name: "adsl", DefiningModule: "iana-if-type"},
-		6: {Name: "adsl2", DefiningModule: "iana-if-type"},
-		7: {Name: "adsl2plus", DefiningModule: "iana-if-type"},
-		8: {Name: "aflane8023", DefiningModule: "iana-if-type"},
-		9: {Name: "aflane8025", DefiningModule: "iana-if-type"},
-		10: {Name: "aluELP", DefiningModule: "iana-if-type"},
-		11: {Name: "aluEpon", DefiningModule: "iana-if-type"},
-		12: {Name: "aluEponLogicalLink", DefiningModule: "iana-if-type"},
-		13: {Name: "aluEponOnu", DefiningModule: "iana-if-type"},
-		14: {Name: "aluEponPhysicalUni", DefiningModule: "iana-if-type"},
-		15: {Name: "aluGponOnu", DefiningModule: "iana-if-type"},
-		16: {Name: "aluGponPhysicalUni", DefiningModule: "iana-if-type"},
-		17: {Name: "arap", DefiningModule: "iana-if-type"},
-		18: {Name: "arcnet", DefiningModule: "iana-if-type"},
-		19: {Name: "arcnetPlus", DefiningModule: "iana-if-type"},
-		20: {Name: "async", DefiningModule: "iana-if-type"},
-		21: {Name: "atm", DefiningModule: "iana-if-type"},
-		22: {Name: "atmDxi", DefiningModule: "iana-if-type"},
-		23: {Name: "atmFuni", DefiningModule: "iana-if-type"},
-		24: {Name: "atmIma", DefiningModule: "iana-if-type"},
-		25: {Name: "atmLogical", DefiningModule: "iana-if-type"},
-		26: {Name: "atmRadio", DefiningModule: "iana-if-type"},
-		27: {Name: "atmSubInterface", DefiningModule: "iana-if-type"},
-		28: {Name: "atmVciEndPt", DefiningModule: "iana-if-type"},
-		29: {Name: "atmVirtual", DefiningModule: "iana-if-type"},
-		30: {Name: "atmbond", DefiningModule: "iana-if-type"},
-		31: {Name: "aviciOpticalEther", DefiningModule: "iana-if-type"},
-		32: {Name: "basicISDN", DefiningModule: "iana-if-type"},
-		33: {Name: "bgppolicyaccounting", DefiningModule: "iana-if-type"},
-		34: {Name: "bits", DefiningModule: "iana-if-type"},
-		35: {Name: "bridge", DefiningModule: "iana-if-type"},
-		36: {Name: "bsc", DefiningModule: "iana-if-type"},
-		37: {Name: "cableDownstreamRfPort", DefiningModule: "iana-if-type"},
-		38: {Name: "capwapDot11Bss", DefiningModule: "iana-if-type"},
-		39: {Name: "capwapDot11Profile", DefiningModule: "iana-if-type"},
-		40: {Name: "capwapWtpVirtualRadio", DefiningModule: "iana-if-type"},
-		41: {Name: "cblVectaStar", DefiningModule: "iana-if-type"},
-		42: {Name: "cctEmul", DefiningModule: "iana-if-type"},
-		43: {Name: "ces", DefiningModule: "iana-if-type"},
-		44: {Name: "channel", DefiningModule: "iana-if-type"},
-		45: {Name: "ciscoISLvlan", DefiningModule: "iana-if-type"},
-		46: {Name: "cnr", DefiningModule: "iana-if-type"},
-		47: {Name: "coffee", DefiningModule: "iana-if-type"},
-		48: {Name: "compositeLink", DefiningModule: "iana-if-type"},
-		49: {Name: "dcn", DefiningModule: "iana-if-type"},
-		50: {Name: "ddnX25", DefiningModule: "iana-if-type"},
-		51: {Name: "digitalPowerline", DefiningModule: "iana-if-type"},
-		52: {Name: "digitalWrapperOverheadChannel", DefiningModule: "iana-if-type"},
-		53: {Name: "dlsw", DefiningModule: "iana-if-type"},
-		54: {Name: "docsCableDownstream", DefiningModule: "iana-if-type"},
-		55: {Name: "docsCableMCmtsDownstream", DefiningModule: "iana-if-type"},
-		56: {Name: "docsCableMaclayer", DefiningModule: "iana-if-type"},
-		57: {Name: "docsCableUpstream", DefiningModule: "iana-if-type"},
-		58: {Name: "docsCableUpstreamChannel", DefiningModule: "iana-if-type"},
-		59: {Name: "docsCableUpstreamRfPort", DefiningModule: "iana-if-type"},
-		60: {Name: "ds0", DefiningModule: "iana-if-type"},
-		61: {Name: "ds0Bundle", DefiningModule: "iana-if-type"},
-		62: {Name: "ds1", DefiningModule: "iana-if-type"},
-		63: {Name: "ds1FDL", DefiningModule: "iana-if-type"},
-		64: {Name: "ds3", DefiningModule: "iana-if-type"},
-		65: {Name: "dtm", DefiningModule: "iana-if-type"},
-		66: {Name: "dvbAsiIn", DefiningModule: "iana-if-type"},
-		67: {Name: "dvbAsiOut", DefiningModule: "iana-if-type"},
-		68: {Name: "dvbRccDownstream", DefiningModule: "iana-if-type"},
-		69: {Name: "dvbRccMacLayer", DefiningModule: "iana-if-type"},
-		70: {Name: "dvbRccUpstream", DefiningModule: "iana-if-type"},
-		71: {Name: "dvbRcsMacLayer", DefiningModule: "iana-if-type"},
-		72: {Name: "dvbRcsTdma", DefiningModule: "iana-if-type"},
-		73: {Name: "dvbTdm", DefiningModule: "iana-if-type"},
-		74: {Name: "e1", DefiningModule: "iana-if-type"},
-		75: {Name: "econet", DefiningModule: "iana-if-type"},
-		76: {Name: "eon", DefiningModule: "iana-if-type"},
-		77: {Name: "eplrs", DefiningModule: "iana-if-type"},
-		78: {Name: "escon", DefiningModule: "iana-if-type"},
-		79: {Name: "ethernet3Mbit", DefiningModule: "iana-if-type"},
-		80: {Name: "ethernetCsmacd", DefiningModule: "iana-if-type"},
-		81: {Name: "fast", DefiningModule: "iana-if-type"},
-		82: {Name: "fastEther", DefiningModule: "iana-if-type"},
-		83: {Name: "fastEtherFX", DefiningModule: "iana-if-type"},
-		84: {Name: "fcipLink", DefiningModule: "iana-if-type"},
-		85: {Name: "fddi", DefiningModule: "iana-if-type"},
-		86: {Name: "fibreChannel", DefiningModule: "iana-if-type"},
-		87: {Name: "frDlciEndPt", DefiningModule: "iana-if-type"},
-		88: {Name: "frForward", DefiningModule: "iana-if-type"},
-		89: {Name: "frameRelay", DefiningModule: "iana-if-type"},
-		90: {Name: "frameRelayInterconnect", DefiningModule: "iana-if-type"},
-		91: {Name: "frameRelayMPI", DefiningModule: "iana-if-type"},
-		92: {Name: "frameRelayService", DefiningModule: "iana-if-type"},
-		93: {Name: "frf16MfrBundle", DefiningModule: "iana-if-type"},
-		94: {Name: "g703at2mb", DefiningModule: "iana-if-type"},
-		95: {Name: "g703at64k", DefiningModule: "iana-if-type"},
-		96: {Name: "g9981", DefiningModule: "iana-if-type"},
-		97: {Name: "g9982", DefiningModule: "iana-if-type"},
-		98: {Name: "g9983", DefiningModule: "iana-if-type"},
-		99: {Name: "gfp", DefiningModule: "iana-if-type"},
+		1:   {Name: "a12MppSwitch", DefiningModule: "iana-if-type"},
+		2:   {Name: "aal2", DefiningModule: "iana-if-type"},
+		3:   {Name: "aal5", DefiningModule: "iana-if-type"},
+		4:   {Name: "actelisMetaLOOP", DefiningModule: "iana-if-type"},
+		5:   {Name: "adsl", DefiningModule: "iana-if-type"},
+		6:   {Name: "adsl2", DefiningModule: "iana-if-type"},
+		7:   {Name: "adsl2plus", DefiningModule: "iana-if-type"},
+		8:   {Name: "aflane8023", DefiningModule: "iana-if-type"},
+		9:   {Name: "aflane8025", DefiningModule: "iana-if-type"},
+		10:  {Name: "aluELP", DefiningModule: "iana-if-type"},
+		11:  {Name: "aluEpon", DefiningModule: "iana-if-type"},
+		12:  {Name: "aluEponLogicalLink", DefiningModule: "iana-if-type"},
+		13:  {Name: "aluEponOnu", DefiningModule: "iana-if-type"},
+		14:  {Name: "aluEponPhysicalUni", DefiningModule: "iana-if-type"},
+		15:  {Name: "aluGponOnu", DefiningModule: "iana-if-type"},
+		16:  {Name: "aluGponPhysicalUni", DefiningModule: "iana-if-type"},
+		17:  {Name: "arap", DefiningModule: "iana-if-type"},
+		18:  {Name: "arcnet", DefiningModule: "iana-if-type"},
+		19:  {Name: "arcnetPlus", DefiningModule: "iana-if-type"},
+		20:  {Name: "async", DefiningModule: "iana-if-type"},
+		21:  {Name: "atm", DefiningModule: "iana-if-type"},
+		22:  {Name: "atmDxi", DefiningModule: "iana-if-type"},
+		23:  {Name: "atmFuni", DefiningModule: "iana-if-type"},
+		24:  {Name: "atmIma", DefiningModule: "iana-if-type"},
+		25:  {Name: "atmLogical", DefiningModule: "iana-if-type"},
+		26:  {Name: "atmRadio", DefiningModule: "iana-if-type"},
+		27:  {Name: "atmSubInterface", DefiningModule: "iana-if-type"},
+		28:  {Name: "atmVciEndPt", DefiningModule: "iana-if-type"},
+		29:  {Name: "atmVirtual", DefiningModule: "iana-if-type"},
+		30:  {Name: "atmbond", DefiningModule: "iana-if-type"},
+		31:  {Name: "aviciOpticalEther", DefiningModule: "iana-if-type"},
+		32:  {Name: "basicISDN", DefiningModule: "iana-if-type"},
+		33:  {Name: "bgppolicyaccounting", DefiningModule: "iana-if-type"},
+		34:  {Name: "bits", DefiningModule: "iana-if-type"},
+		35:  {Name: "bridge", DefiningModule: "iana-if-type"},
+		36:  {Name: "bsc", DefiningModule: "iana-if-type"},
+		37:  {Name: "cableDownstreamRfPort", DefiningModule: "iana-if-type"},
+		38:  {Name: "capwapDot11Bss", DefiningModule: "iana-if-type"},
+		39:  {Name: "capwapDot11Profile", DefiningModule: "iana-if-type"},
+		40:  {Name: "capwapWtpVirtualRadio", DefiningModule: "iana-if-type"},
+		41:  {Name: "cblVectaStar", DefiningModule: "iana-if-type"},
+		42:  {Name: "cctEmul", DefiningModule: "iana-if-type"},
+		43:  {Name: "ces", DefiningModule: "iana-if-type"},
+		44:  {Name: "channel", DefiningModule: "iana-if-type"},
+		45:  {Name: "ciscoISLvlan", DefiningModule: "iana-if-type"},
+		46:  {Name: "cnr", DefiningModule: "iana-if-type"},
+		47:  {Name: "coffee", DefiningModule: "iana-if-type"},
+		48:  {Name: "compositeLink", DefiningModule: "iana-if-type"},
+		49:  {Name: "dcn", DefiningModule: "iana-if-type"},
+		50:  {Name: "ddnX25", DefiningModule: "iana-if-type"},
+		51:  {Name: "digitalPowerline", DefiningModule: "iana-if-type"},
+		52:  {Name: "digitalWrapperOverheadChannel", DefiningModule: "iana-if-type"},
+		53:  {Name: "dlsw", DefiningModule: "iana-if-type"},
+		54:  {Name: "docsCableDownstream", DefiningModule: "iana-if-type"},
+		55:  {Name: "docsCableMCmtsDownstream", DefiningModule: "iana-if-type"},
+		56:  {Name: "docsCableMaclayer", DefiningModule: "iana-if-type"},
+		57:  {Name: "docsCableUpstream", DefiningModule: "iana-if-type"},
+		58:  {Name: "docsCableUpstreamChannel", DefiningModule: "iana-if-type"},
+		59:  {Name: "docsCableUpstreamRfPort", DefiningModule: "iana-if-type"},
+		60:  {Name: "ds0", DefiningModule: "iana-if-type"},
+		61:  {Name: "ds0Bundle", DefiningModule: "iana-if-type"},
+		62:  {Name: "ds1", DefiningModule: "iana-if-type"},
+		63:  {Name: "ds1FDL", DefiningModule: "iana-if-type"},
+		64:  {Name: "ds3", DefiningModule: "iana-if-type"},
+		65:  {Name: "dtm", DefiningModule: "iana-if-type"},
+		66:  {Name: "dvbAsiIn", DefiningModule: "iana-if-type"},
+		67:  {Name: "dvbAsiOut", DefiningModule: "iana-if-type"},
+		68:  {Name: "dvbRccDownstream", DefiningModule: "iana-if-type"},
+		69:  {Name: "dvbRccMacLayer", DefiningModule: "iana-if-type"},
+		70:  {Name: "dvbRccUpstream", DefiningModule: "iana-if-type"},
+		71:  {Name: "dvbRcsMacLayer", DefiningModule: "iana-if-type"},
+		72:  {Name: "dvbRcsTdma", DefiningModule: "iana-if-type"},
+		73:  {Name: "dvbTdm", DefiningModule: "iana-if-type"},
+		74:  {Name: "e1", DefiningModule: "iana-if-type"},
+		75:  {Name: "econet", DefiningModule: "iana-if-type"},
+		76:  {Name: "eon", DefiningModule: "iana-if-type"},
+		77:  {Name: "eplrs", DefiningModule: "iana-if-type"},
+		78:  {Name: "escon", DefiningModule: "iana-if-type"},
+		79:  {Name: "ethernet3Mbit", DefiningModule: "iana-if-type"},
+		80:  {Name: "ethernetCsmacd", DefiningModule: "iana-if-type"},
+		81:  {Name: "fast", DefiningModule: "iana-if-type"},
+		82:  {Name: "fastEther", DefiningModule: "iana-if-type"},
+		83:  {Name: "fastEtherFX", DefiningModule: "iana-if-type"},
+		84:  {Name: "fcipLink", DefiningModule: "iana-if-type"},
+		85:  {Name: "fddi", DefiningModule: "iana-if-type"},
+		86:  {Name: "fibreChannel", DefiningModule: "iana-if-type"},
+		87:  {Name: "frDlciEndPt", DefiningModule: "iana-if-type"},
+		88:  {Name: "frForward", DefiningModule: "iana-if-type"},
+		89:  {Name: "frameRelay", DefiningModule: "iana-if-type"},
+		90:  {Name: "frameRelayInterconnect", DefiningModule: "iana-if-type"},
+		91:  {Name: "frameRelayMPI", DefiningModule: "iana-if-type"},
+		92:  {Name: "frameRelayService", DefiningModule: "iana-if-type"},
+		93:  {Name: "frf16MfrBundle", DefiningModule: "iana-if-type"},
+		94:  {Name: "g703at2mb", DefiningModule: "iana-if-type"},
+		95:  {Name: "g703at64k", DefiningModule: "iana-if-type"},
+		96:  {Name: "g9981", DefiningModule: "iana-if-type"},
+		97:  {Name: "g9982", DefiningModule: "iana-if-type"},
+		98:  {Name: "g9983", DefiningModule: "iana-if-type"},
+		99:  {Name: "gfp", DefiningModule: "iana-if-type"},
 		100: {Name: "gigabitEthernet", DefiningModule: "iana-if-type"},
 		101: {Name: "gpon", DefiningModule: "iana-if-type"},
 		102: {Name: "gr303IDT", DefiningModule: "iana-if-type"},
@@ -4037,7 +4061,6 @@ var ΛEnum = map[string]map[int64]ygot.EnumDefinition{
 		2: {Name: "SUSPENDED"},
 	},
 }
-
 
 var (
 	// ySchema is a byte slice contain a gzip compressed representation of the
@@ -6626,90 +6649,88 @@ var (
 	}
 )
 
-
 // ΛEnumTypes is a map, keyed by a YANG schema path, of the enumerated types that
 // correspond with the leaf. The type is represented as a reflect.Type. The naming
 // of the map ensures that there are no clashes with valid YANG identifiers.
-func initΛEnumTypes(){
-  ΛEnumTypes = map[string][]reflect.Type{
-	"/interfaces/interface/aggregation/config/lag-type": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfAggregate_AggregationType)(0)),
-	},
-	"/interfaces/interface/aggregation/switched-vlan/config/interface-mode": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigVlanTypes_VlanModeType)(0)),
-	},
-	"/interfaces/interface/config/type": []reflect.Type{
-		reflect.TypeOf((E_IETFInterfaces_InterfaceType)(0)),
-	},
-	"/interfaces/interface/ethernet/config/duplex-mode": []reflect.Type{
-		reflect.TypeOf((E_Ethernet_DuplexMode)(0)),
-	},
-	"/interfaces/interface/ethernet/config/port-speed": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfEthernet_ETHERNET_SPEED)(0)),
-	},
-	"/interfaces/interface/ethernet/state/negotiated-duplex-mode": []reflect.Type{
-		reflect.TypeOf((E_Ethernet_NegotiatedDuplexMode)(0)),
-	},
-	"/interfaces/interface/ethernet/state/negotiated-port-speed": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfEthernet_ETHERNET_SPEED)(0)),
-	},
-	"/interfaces/interface/ethernet/switched-vlan/config/interface-mode": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigVlanTypes_VlanModeType)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv4/addresses/address/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv4/neighbors/neighbor/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv6/addresses/address/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv6/addresses/address/state/status": []reflect.Type{
-		reflect.TypeOf((E_Address_Status)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv6/neighbors/neighbor/state/neighbor-state": []reflect.Type{
-		reflect.TypeOf((E_Neighbor_NeighborState)(0)),
-	},
-	"/interfaces/interface/routed-vlan/ipv6/neighbors/neighbor/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
-	},
-	"/interfaces/interface/state/admin-status": []reflect.Type{
-		reflect.TypeOf((E_Interface_AdminStatus)(0)),
-	},
-	"/interfaces/interface/state/oper-status": []reflect.Type{
-		reflect.TypeOf((E_Interface_OperStatus)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv4/neighbors/neighbor/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/status": []reflect.Type{
-		reflect.TypeOf((E_Address_Status)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv6/neighbors/neighbor/state/neighbor-state": []reflect.Type{
-		reflect.TypeOf((E_Neighbor_NeighborState)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/ipv6/neighbors/neighbor/state/origin": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/state/admin-status": []reflect.Type{
-		reflect.TypeOf((E_Interface_AdminStatus)(0)),
-	},
-	"/interfaces/interface/subinterfaces/subinterface/state/oper-status": []reflect.Type{
-		reflect.TypeOf((E_Interface_OperStatus)(0)),
-	},
-	"/vlans/vlan/config/status": []reflect.Type{
-		reflect.TypeOf((E_Vlan_Status)(0)),
-	},
-	"/vlans/vlan/config/tpid": []reflect.Type{
-		reflect.TypeOf((E_OpenconfigVlanTypes_TPID_TYPES)(0)),
-	},
-  }
+func initΛEnumTypes() {
+	ΛEnumTypes = map[string][]reflect.Type{
+		"/interfaces/interface/aggregation/config/lag-type": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfAggregate_AggregationType)(0)),
+		},
+		"/interfaces/interface/aggregation/switched-vlan/config/interface-mode": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigVlanTypes_VlanModeType)(0)),
+		},
+		"/interfaces/interface/config/type": []reflect.Type{
+			reflect.TypeOf((E_IETFInterfaces_InterfaceType)(0)),
+		},
+		"/interfaces/interface/ethernet/config/duplex-mode": []reflect.Type{
+			reflect.TypeOf((E_Ethernet_DuplexMode)(0)),
+		},
+		"/interfaces/interface/ethernet/config/port-speed": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfEthernet_ETHERNET_SPEED)(0)),
+		},
+		"/interfaces/interface/ethernet/state/negotiated-duplex-mode": []reflect.Type{
+			reflect.TypeOf((E_Ethernet_NegotiatedDuplexMode)(0)),
+		},
+		"/interfaces/interface/ethernet/state/negotiated-port-speed": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfEthernet_ETHERNET_SPEED)(0)),
+		},
+		"/interfaces/interface/ethernet/switched-vlan/config/interface-mode": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigVlanTypes_VlanModeType)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv4/addresses/address/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv4/neighbors/neighbor/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv6/addresses/address/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv6/addresses/address/state/status": []reflect.Type{
+			reflect.TypeOf((E_Address_Status)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv6/neighbors/neighbor/state/neighbor-state": []reflect.Type{
+			reflect.TypeOf((E_Neighbor_NeighborState)(0)),
+		},
+		"/interfaces/interface/routed-vlan/ipv6/neighbors/neighbor/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
+		},
+		"/interfaces/interface/state/admin-status": []reflect.Type{
+			reflect.TypeOf((E_Interface_AdminStatus)(0)),
+		},
+		"/interfaces/interface/state/oper-status": []reflect.Type{
+			reflect.TypeOf((E_Interface_OperStatus)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv4/neighbors/neighbor/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_IpAddressOrigin)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/status": []reflect.Type{
+			reflect.TypeOf((E_Address_Status)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv6/neighbors/neighbor/state/neighbor-state": []reflect.Type{
+			reflect.TypeOf((E_Neighbor_NeighborState)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/ipv6/neighbors/neighbor/state/origin": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigIfIp_NeighborOrigin)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/state/admin-status": []reflect.Type{
+			reflect.TypeOf((E_Interface_AdminStatus)(0)),
+		},
+		"/interfaces/interface/subinterfaces/subinterface/state/oper-status": []reflect.Type{
+			reflect.TypeOf((E_Interface_OperStatus)(0)),
+		},
+		"/vlans/vlan/config/status": []reflect.Type{
+			reflect.TypeOf((E_Vlan_Status)(0)),
+		},
+		"/vlans/vlan/config/tpid": []reflect.Type{
+			reflect.TypeOf((E_OpenconfigVlanTypes_TPID_TYPES)(0)),
+		},
+	}
 }
-
