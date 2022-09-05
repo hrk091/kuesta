@@ -61,7 +61,7 @@ var (
 	aggregatorUrl          string
 )
 
-func init() {
+func SetupEnv() {
 	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
 	subscriberImageVersion = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE_VERSION")
 	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
