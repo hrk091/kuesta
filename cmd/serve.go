@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	FlagServeAddr = "serve-addr"
+	FlagServeAddr    = "serve-addr"
+	FlagSyncInterval = "sync-interval"
 )
 
 func newServeCmd() *cobra.Command {
@@ -42,6 +43,7 @@ func newServeCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringP(FlagServeAddr, "a", ":9339", "Bind address of gNMI northbound API.")
+	cmd.Flags().IntP(FlagSyncInterval, "", 10, "Interval to exec git-pull from status repo.")
 	mustBindToViper(cmd)
 
 	return cmd
@@ -53,8 +55,9 @@ func newServeCfg(cmd *cobra.Command, args []string) (*nwctl.ServeCfg, error) {
 		return nil, err
 	}
 	cfg := &nwctl.ServeCfg{
-		RootCfg: *rootCfg,
-		Addr:    viper.GetString(FlagServeAddr),
+		RootCfg:    *rootCfg,
+		Addr:       viper.GetString(FlagServeAddr),
+		SyncPeriod: viper.GetInt(FlagSyncInterval),
 	}
 	return cfg, cfg.Validate()
 }

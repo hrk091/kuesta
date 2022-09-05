@@ -18,6 +18,9 @@ package nwctl_test
 
 import (
 	"context"
+	extgogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/hrk091/nwctl/pkg/gogit"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -27,6 +30,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestServeCfg_Validate(t *testing.T) {
@@ -71,6 +75,34 @@ func TestServeCfg_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunSyncLoop(t *testing.T) {
+	repo, _, dirBare := setupGitRepoWithRemote(t, "origin")
+	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+		URL:           dirBare,
+		RemoteName:    "origin",
+		ReferenceName: plumbing.NewBranchReferenceName("main"),
+	})
+
+	wantHash, err := commit(repo, time.Now())
+	exitOnErr(t, err)
+	exitOnErr(t, push(repo, "main", "origin"))
+
+	git, err := gogit.NewGit(&gogit.GitOptions{
+		Path: dirPuller,
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	nwctl.RunSyncLoop(ctx, git, 100*time.Millisecond)
+
+	assert.Eventually(t, func() bool {
+		ref, err := repoPuller.Head()
+		if err != nil {
+			return false
+		}
+		return wantHash.String() == ref.Hash().String()
+	}, time.Second, 100*time.Millisecond)
 }
 
 func TestNorthboundServerImpl_Capabilities(t *testing.T) {

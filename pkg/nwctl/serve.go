@@ -36,12 +36,14 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 type ServeCfg struct {
 	RootCfg
 
-	Addr string `validate:"required"`
+	Addr       string `validate:"required"`
+	SyncPeriod int
 }
 
 type PathType string
@@ -64,6 +66,9 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("serve called")
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// TODO credential
 	//opts := credentials.ServerCredentials()
 	g := grpc.NewServer()
@@ -73,6 +78,8 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	}
 	pb.RegisterGNMIServer(g, s)
 	reflection.Register(g)
+
+	RunSyncLoop(ctx, s.sGit, time.Duration(cfg.SyncPeriod)*time.Second)
 
 	l.Infow("starting to listen", "address", cfg.Addr)
 	listen, err := net.Listen("tcp", cfg.Addr)
@@ -84,6 +91,17 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 		return fmt.Errorf("serve: %w", err)
 	}
 	return nil
+}
+
+func RunSyncLoop(ctx context.Context, sGit *gogit.Git, dur time.Duration) {
+	common.SetInterval(ctx, func() {
+		if _, err := sGit.Checkout(); err != nil {
+			common.Error(ctx, err, "git checkout")
+		}
+		if err := sGit.Pull(); err != nil {
+			common.Error(ctx, err, "git pull")
+		}
+	}, dur, "sync from status repo")
 }
 
 type NorthboundServer struct {
