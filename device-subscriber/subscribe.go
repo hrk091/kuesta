@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/device-subscriber/pkg/model"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	gclient "github.com/openconfig/gnmi/client"
@@ -33,6 +34,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"time"
 )
@@ -53,7 +55,7 @@ func Run(cfg Config) error {
 		return fmt.Errorf("create gNMI client: %w", errors.WithStack(err))
 	}
 
-	fn := func(noti gclient.Notification) error {
+	fn := func() error {
 		return Sync(ctx, cfg, c.(*gnmiclient.Client))
 	}
 	if err := Subscribe(ctx, c, fn); err != nil {
@@ -62,7 +64,7 @@ func Run(cfg Config) error {
 	return nil
 }
 
-func Subscribe(ctx context.Context, c gclient.Impl, fn func(noti gclient.Notification) error) error {
+func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 	l := logger.FromContext(ctx)
 
 	query := gclient.Query{
@@ -71,13 +73,17 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func(noti gclient.Notific
 			if err, ok := noti.(error); ok {
 				return fmt.Errorf("error received: %w", err)
 			}
-			return fn(noti)
+			// NOTE Run something if needed
+			return nil
 		},
 	}
 
+	l.Infow("starting subscribe...")
 	if err := c.Subscribe(ctx, query); err != nil {
 		return fmt.Errorf("open subscribe channel: %w", errors.WithStack(err))
 	}
+	l.Infow("started subscribe")
+
 	defer func() {
 		if err := c.Close(); err != nil {
 			l.Errorf("close gNMI subscription: %w", err)
@@ -85,12 +91,18 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func(noti gclient.Notific
 	}()
 
 	for {
-		err := c.Recv()
-		if err == io.EOF {
+		recvErr := c.Recv()
+		l.Infow("recv hooked")
+		if err := fn(); err != nil {
+			l.Errorf("handle notification: %v", err)
+			common.ShowStackTrace(os.Stderr, err)
+		}
+
+		if recvErr == io.EOF {
 			l.Infow("EOF")
 			return nil
-		} else if err != nil {
-			return fmt.Errorf("error received on gNMI subscribe channel: %w", err)
+		} else if recvErr != nil {
+			return fmt.Errorf("error received on gNMI subscribe channel: %w", recvErr)
 		}
 	}
 }

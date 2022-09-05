@@ -67,7 +67,7 @@ func TestSubscribe(t *testing.T) {
 	exitOnErr(t, err)
 
 	count := 0
-	err = Subscribe(ctx, client, func(noti gclient.Notification) error {
+	err = Subscribe(ctx, client, func() error {
 		count++
 		return nil
 	})
