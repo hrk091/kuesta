@@ -24,10 +24,14 @@ spec:
               value: "true"
             - name: NWCTL_VERBOSE
               value: "2"
-            - name: NWCTL_ROOTPATH
-              value: /data/repo
-            - name: NWCTL_GIT_REPO_URL
-              value: https://path/to/repo
+            - name: NWCTL_CONFIG_ROOT_PATH
+              value: /data/repo_config
+            - name: NWCTL_CONFIG_REPO_URL
+              value: https://path/to/repo-config
+            - name: NWCTL_STATUS_ROOT_PATH
+              value: /data/repo_status
+            - name: NWCTL_STATUS_REPO_URL
+              value: https://path/to/repo-status
             - name: NWCTL_GIT_TOKEN
               valueFrom:
                 secretKeyRef:

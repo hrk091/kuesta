@@ -104,6 +104,8 @@ func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 		Devel:          viper.GetBool(FlagDevel),
 		ConfigRootPath: viper.GetString(FlagConfigRootPath),
 		ConfigRepoUrl:  viper.GetString(FlagConfigRepoUrl),
+		StatusRootPath: viper.GetString(FlagStatusRootPath),
+		StatusRepoUrl:  viper.GetString(FlagStatusRepoUrl),
 		GitTrunk:       viper.GetString(FlagGitTrunk),
 		GitToken:       viper.GetString(FlagGitToken),
 		GitRemote:      viper.GetString(FlagGitRemote),
