@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: device-operator-controller-manager
+  namespace: device-operator-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          env:
+            - name: NWCTL_AGGREGATOR_URL
+              value: http://nwctl-aggregator.nwctl-system:8000
+            - name: NWCTL_SUBSCRIBER_IMAGE
+              value: nwctl-subscriber

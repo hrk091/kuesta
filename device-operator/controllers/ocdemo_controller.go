@@ -56,12 +56,14 @@ import (
 )
 
 var (
-	subscriberImage string
-	aggregatorUrl   string
+	subscriberImage        string
+	subscriberImageVersion string
+	aggregatorUrl          string
 )
 
 func init() {
 	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
+	subscriberImageVersion = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE_VERSION")
 	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
 }
 
@@ -299,7 +301,7 @@ func NewSubscribePod(o *deviceoperator.OcDemo) *v1.Pod {
 			Containers: []v1.Container{
 				{
 					Name:    "nwctl-subscriber",
-					Image:   subscriberImage,
+					Image:   subscriberImage + ":" + subscriberImageVersion,
 					Command: []string{"/bin/subscriber"},
 					Env: []v1.EnvVar{
 						{Name: "NWCTL_DEVEL", Value: "true"},
