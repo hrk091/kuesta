@@ -79,6 +79,7 @@ type OcDemoReconciler struct {
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts,verbs=get;list;watch
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=pod,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -97,6 +98,9 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return ctrl.Result{}, fmt.Errorf("get subscriber subscriberPod: %w", err)
+		}
+		if err = ctrl.SetControllerReference(&device, subscriberPod, r.Scheme); err != nil {
+			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
 		}
 		if err = r.Create(ctx, subscriberPod); err != nil {
 			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
