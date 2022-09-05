@@ -32,6 +32,9 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/prototext"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"os"
@@ -51,6 +54,16 @@ import (
 	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
 	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 )
+
+var (
+	subscriberImage string
+	aggregatorUrl   string
+)
+
+func init() {
+	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
+	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
+}
 
 // OcDemoReconciler reconciles a OcDemo object
 type OcDemoReconciler struct {
@@ -75,6 +88,17 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err := r.Get(ctx, req.NamespacedName, &device); err != nil {
 		r.Error(ctx, err, "get DeviceOperator")
 		return ctrl.Result{}, errors.WithStack(client.IgnoreNotFound(err))
+	}
+
+	subscriberPod := NewSubscribePod(&device)
+	var p v1.Pod
+	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return ctrl.Result{}, fmt.Errorf("get subscriber subscriberPod: %w", err)
+		}
+		if err = r.Create(ctx, subscriberPod); err != nil {
+			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
+		}
 	}
 
 	var dr provisioner.DeviceRollout
@@ -262,3 +286,60 @@ func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Objec
 	}
 	return requests
 }
+
+func NewSubscribePod(o *deviceoperator.OcDemo) *v1.Pod {
+	allowPrivilegeEscalation := false
+
+	return &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("subscriber-%s", o.Name),
+			Namespace: o.Namespace,
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:    "nwctl-subscriber",
+					Image:   subscriberImage,
+					Command: []string{"/bin/subscriber"},
+					Env: []v1.EnvVar{
+						{Name: "NWCTL_DEVEL", Value: "true"},
+						{Name: "NWCTL_VERBOSE", Value: "2"},
+						{Name: "NWCTL_ADDR", Value: fmt.Sprintf("%s:%d", o.Spec.Address, o.Spec.Port)},
+						{Name: "NWCTL_DEVICE", Value: o.Name},
+						{Name: "NWCTL_AGGREGATOR_URL", Value: aggregatorUrl},
+					},
+					SecurityContext: &v1.SecurityContext{
+						AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+					},
+				},
+			},
+		},
+	}
+}
+
+/*
+apiVersion: v1
+kind: Pod
+metadata:
+  name: subscriber-oc01
+spec:
+  containers:
+    - name: nwctl-subscriber
+      image: asia.gcr.io/transportsdn/nwctl-subscriber:08513c69cccfce94056f07a0f150c668d9212e5b
+      command:
+        - /bin/subscriber
+      env:
+        - name: NWCTL_DEVEL
+          value: "true"
+        - name: NWCTL_VERBOSE
+          value: "2"
+        - name: NWCTL_ADDR
+          value: gnmi-fake-oc01.okui-nwctl-test:9339
+        - name: NWCTL_DEVICE
+          value: oc01
+        - name: NWCTL_AGGREGATOR_URL
+          value: http://nwctl-aggregator.nwctl-system:8000
+      securityContext:
+        allowPrivilegeEscalation: false
+
+*/
