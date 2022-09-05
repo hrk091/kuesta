@@ -32,7 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/prototext"
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
+	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -79,7 +79,7 @@ type OcDemoReconciler struct {
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts,verbs=get;list;watch
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=pod,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -94,7 +94,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	subscriberPod := NewSubscribePod(&device)
-	var p v1.Pod
+	var p core.Pod
 	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return ctrl.Result{}, fmt.Errorf("get subscriber subscriberPod: %w", err)
@@ -293,28 +293,28 @@ func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Objec
 	return requests
 }
 
-func NewSubscribePod(o *deviceoperator.OcDemo) *v1.Pod {
+func NewSubscribePod(o *deviceoperator.OcDemo) *core.Pod {
 	allowPrivilegeEscalation := false
 
-	return &v1.Pod{
+	return &core.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("subscriber-%s", o.Name),
 			Namespace: o.Namespace,
 		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
+		Spec: core.PodSpec{
+			Containers: []core.Container{
 				{
 					Name:    "nwctl-subscriber",
 					Image:   subscriberImage + ":" + subscriberImageVersion,
 					Command: []string{"/bin/subscriber"},
-					Env: []v1.EnvVar{
+					Env: []core.EnvVar{
 						{Name: "NWCTL_DEVEL", Value: "true"},
 						{Name: "NWCTL_VERBOSE", Value: "2"},
 						{Name: "NWCTL_ADDR", Value: fmt.Sprintf("%s:%d", o.Spec.Address, o.Spec.Port)},
 						{Name: "NWCTL_DEVICE", Value: o.Name},
 						{Name: "NWCTL_AGGREGATOR_URL", Value: aggregatorUrl},
 					},
-					SecurityContext: &v1.SecurityContext{
+					SecurityContext: &core.SecurityContext{
 						AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 					},
 				},
@@ -322,30 +322,3 @@ func NewSubscribePod(o *deviceoperator.OcDemo) *v1.Pod {
 		},
 	}
 }
-
-/*
-apiVersion: v1
-kind: Pod
-metadata:
-  name: subscriber-oc01
-spec:
-  containers:
-    - name: nwctl-subscriber
-      image: asia.gcr.io/transportsdn/nwctl-subscriber:08513c69cccfce94056f07a0f150c668d9212e5b
-      command:
-        - /bin/subscriber
-      env:
-        - name: NWCTL_DEVEL
-          value: "true"
-        - name: NWCTL_VERBOSE
-          value: "2"
-        - name: NWCTL_ADDR
-          value: gnmi-fake-oc01.okui-nwctl-test:9339
-        - name: NWCTL_DEVICE
-          value: oc01
-        - name: NWCTL_AGGREGATOR_URL
-          value: http://nwctl-aggregator.nwctl-system:8000
-      securityContext:
-        allowPrivilegeEscalation: false
-
-*/

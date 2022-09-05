@@ -12,4 +12,4 @@ spec:
             - name: NWCTL_AGGREGATOR_URL
               value: http://nwctl-aggregator.nwctl-system:8000
             - name: NWCTL_SUBSCRIBER_IMAGE
-              value: nwctl-subscriber
+              value: device-subscriber
