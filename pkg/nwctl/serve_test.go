@@ -317,6 +317,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
 					ConfigRootPath: dir,
+					StatusRootPath: dir,
 				},
 			})
 			got, err := s.Get(context.Background(), tt.prefix, tt.path)

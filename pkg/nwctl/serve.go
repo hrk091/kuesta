@@ -91,20 +91,23 @@ type NorthboundServer struct {
 
 	mu   sync.RWMutex // mu is the RW lock to protect the access to config
 	cfg  *ServeCfg
-	git  *gogit.Git
+	cGit *gogit.Git
+	sGit *gogit.Git
 	impl GnmiRequestHandler
 }
 
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
 func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
-	git, err := gogit.NewGit(cfg.ConfigGitOptions().ShouldCloneIfNotExist())
+	cGit, err := gogit.NewGit(cfg.ConfigGitOptions().ShouldCloneIfNotExist())
+	sGit, err := gogit.NewGit(cfg.StatusGitOptions().ShouldCloneIfNotExist())
 	if err != nil {
 		return nil, err
 	}
 	s := &NorthboundServer{
 		cfg:  cfg,
 		mu:   sync.RWMutex{},
-		git:  git,
+		cGit: cGit,
+		sGit: sGit,
 		impl: NewNorthboundServerImpl(cfg),
 	}
 	return s, nil
@@ -165,7 +168,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, status.Error(codes.Unavailable, "locked")
 	}
 	defer func() {
-		if err := s.git.Reset(gogit.ResetOptsHard()); err != nil {
+		if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
 			s.Error(l, err, "git reset")
 		}
 		s.mu.Unlock()
@@ -173,7 +176,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 
 	// TODO run git merge-devices before set
 	// TODO block when git worktree is dirty
-	w, err := s.git.Checkout()
+	w, err := s.cGit.Checkout()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to checkout to %s", s.cfg.GitTrunk)
 	}
