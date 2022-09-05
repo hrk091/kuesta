@@ -1,7 +1,7 @@
 domain: hrk091.dev
 layout:
 - go.kubebuilder.io/v3
-projectName: driver-operator
+projectName: device-operator
 repo: github.com/hrk091/nwctl/device-operator
 resources:
 - api:
