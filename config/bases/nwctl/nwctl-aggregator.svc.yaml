@@ -7,7 +7,7 @@ spec:
   selector:
     app: nwctl-aggregator
   ports:
-    - name: grpc
-      port: 9339
-      targetPort: 9339
+    - name: http
+      port: 8000
+      targetPort: 8000
       protocol: TCP
