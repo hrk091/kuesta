@@ -70,8 +70,8 @@ Devices:
 		repo, dir := setup(t)
 		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: dir,
-				GitTrunk: "main",
+				ConfigRootPath: dir,
+				GitTrunk:       "main",
 			},
 			PushToMain: true,
 		})
@@ -92,8 +92,8 @@ Devices:
 		repo, dir := setup(t)
 		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: dir,
-				GitTrunk: "main",
+				ConfigRootPath: dir,
+				GitTrunk:       "main",
 			},
 			PushToMain: false,
 		})

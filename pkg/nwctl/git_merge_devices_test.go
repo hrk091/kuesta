@@ -31,7 +31,7 @@ func TestGitMergeDevicesCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.GitMergeDevicesCfg)) *nwctl.GitMergeDevicesCfg {
 		cfg := &nwctl.GitMergeDevicesCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				ConfigRootPath: "./",
 			},
 		}
 		t(cfg)
@@ -83,8 +83,8 @@ func TestRunGitMergeDevicesCfg(t *testing.T) {
 
 		err = nwctl.RunGitMergeDevicesCfg(context.Background(), &nwctl.GitMergeDevicesCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  dirPuller,
-				GitRemote: testRemote,
+				ConfigRootPath: dirPuller,
+				GitRemote:      testRemote,
 			},
 		})
 		exitOnErr(t, err)
@@ -107,8 +107,8 @@ func TestRunGitMergeDevicesCfg(t *testing.T) {
 
 		err := nwctl.RunGitMergeDevicesCfg(context.Background(), &nwctl.GitMergeDevicesCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  dirPuller,
-				GitRemote: testRemote,
+				ConfigRootPath: dirPuller,
+				GitRemote:      testRemote,
 			},
 		})
 		assert.Nil(t, err)

@@ -31,7 +31,7 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.ServiceCompileCfg)) *nwctl.ServiceCompileCfg {
 		cfg := &nwctl.ServiceCompileCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				ConfigRootPath: "./",
 			},
 			Service: "foo",
 			Keys:    []string{"one", "two"},
@@ -103,7 +103,7 @@ func TestRunServiceCompile(t *testing.T) {
 }
 `)
 	err := nwctl.RunServiceCompile(context.Background(), &nwctl.ServiceCompileCfg{
-		RootCfg: nwctl.RootCfg{RootPath: filepath.Join("./testdata")},
+		RootCfg: nwctl.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})

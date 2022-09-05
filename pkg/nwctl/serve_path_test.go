@@ -198,7 +198,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			}
 			c := nwctl.NewGnmiPathConverter(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
-					RootPath: dir,
+					ConfigRootPath: dir,
 				},
 			})
 			got, err := c.Convert(tt.prefix, tt.path)

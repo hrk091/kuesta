@@ -42,8 +42,8 @@ func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	l.Debug("device composite called")
 
 	cctx := cuecontext.New()
-	sp := ServicePath{RootDir: cfg.RootPath}
-	dp := DevicePath{RootDir: cfg.RootPath, Device: cfg.Device}
+	sp := ServicePath{RootDir: cfg.ConfigRootPath}
+	dp := DevicePath{RootDir: cfg.ConfigRootPath, Device: cfg.Device}
 
 	files, err := CollectPartialDeviceConfig(sp.ServiceDirPath(IncludeRoot), cfg.Device)
 	if err != nil {

@@ -40,7 +40,7 @@ func RunGitMergeDevicesCfg(ctx context.Context, cfg *GitMergeDevicesCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("git merge-devices called")
 
-	git, err := gogit.NewGit(cfg.GitOptions())
+	git, err := gogit.NewGit(cfg.ConfigGitOptions())
 	if err != nil {
 		return fmt.Errorf("init git: %w", err)
 	}

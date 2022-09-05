@@ -226,6 +226,16 @@ func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName strin
 	return branches
 }
 
+func getRemoteBranch(t *testing.T, repo *extgogit.Repository, remoteName, branchName string) *plumbing.Reference {
+	branches := getRemoteBranches(t, repo, remoteName)
+	for _, ref := range branches {
+		if ref.Name().Short() == branchName {
+			return ref
+		}
+	}
+	return nil
+}
+
 func hasSyncBranch(t *testing.T, repo *extgogit.Repository, remoteName string) bool {
 	exists := false
 	for _, b := range getRemoteBranches(t, repo, remoteName) {

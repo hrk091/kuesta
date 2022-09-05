@@ -26,9 +26,9 @@ func TestRootCfg_Validate(t *testing.T) {
 
 	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
 		cfg := &nwctl.RootCfg{
-			Verbose:  0,
-			Devel:    false,
-			RootPath: "./",
+			Verbose:        0,
+			Devel:          false,
+			ConfigRootPath: "./",
 		}
 		t(cfg)
 		return cfg
@@ -48,13 +48,6 @@ func TestRootCfg_Validate(t *testing.T) {
 			"bad: Verbose is over range",
 			func(cfg *nwctl.RootCfg) {
 				cfg.Verbose = 4
-			},
-			true,
-		},
-		{
-			"bad: RootPath is empty",
-			func(cfg *nwctl.RootCfg) {
-				cfg.RootPath = ""
 			},
 			true,
 		},

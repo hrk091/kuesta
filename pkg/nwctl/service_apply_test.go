@@ -31,7 +31,7 @@ func TestServiceApplyCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.ServiceApplyCfg)) *nwctl.ServiceApplyCfg {
 		cfg := &nwctl.ServiceApplyCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				ConfigRootPath: "./",
 			},
 		}
 		t(cfg)

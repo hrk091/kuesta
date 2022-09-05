@@ -47,7 +47,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	out := WriterFromContext(ctx)
 	l.Debug("git commit called")
 
-	git, err := gogit.NewGit(cfg.GitOptions())
+	git, err := gogit.NewGit(cfg.ConfigGitOptions())
 	if err != nil {
 		return fmt.Errorf("setup git: %w", err)
 	}

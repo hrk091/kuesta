@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -110,7 +109,7 @@ func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 	}
 
 	s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
-		RootCfg: nwctl.RootCfg{RootPath: dir},
+		RootCfg: nwctl.RootCfg{StatusRootPath: dir},
 	})
 	err := s.SaveConfig(context.Background(), given)
 	assert.Nil(t, err)
@@ -122,100 +121,27 @@ func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 
 func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 	testRemote := "test-remote"
-	trunkBranch := "main"
 
-	t.Run("ok: new branch", func(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
+		oldRef, _ := repo.Head()
+		assert.Greater(t, len(getStatus(t, repo)), 0)
 
 		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath:  dir,
-				GitRemote: testRemote,
+				StatusRootPath: dir,
+				GitRemote:      testRemote,
 			},
 		})
-		err := s.GitPushSyncBranch(context.Background())
-		exitOnErr(t, err)
+		err := s.GitPushDeviceConfig(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, len(getStatus(t, repo)), 0)
 
-		count := 0
-		for _, b := range getRemoteBranches(t, repo, testRemote) {
-			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
-				count++
-			}
-		}
-		assert.Equal(t, 1, count)
+		localRef, _ := repo.Head()
+		remoteRef := getRemoteBranch(t, repo, testRemote, "main")
+		assert.NotEqual(t, localRef.Hash().String(), oldRef.Hash().String())
+		assert.Equal(t, localRef.Hash().String(), remoteRef.Hash().String())
 	})
-
-	t.Run("ok: existing branch", func(t *testing.T) {
-		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
-
-		syncBranch := "SYNC-1662097098"
-		exitOnErr(t, createBranch(repo, syncBranch))
-		exitOnErr(t, push(repo, syncBranch, testRemote))
-		exitOnErr(t, checkout(repo, trunkBranch))
-
-		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
-			RootCfg: nwctl.RootCfg{
-				RootPath:  dir,
-				GitRemote: testRemote,
-				GitTrunk:  trunkBranch,
-			},
-		})
-		err := s.GitPushSyncBranch(context.Background())
-		exitOnErr(t, err)
-
-		count := 0
-		for _, b := range getRemoteBranches(t, repo, testRemote) {
-			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
-				count++
-				assert.Equal(t, syncBranch, b.Name().Short())
-			}
-		}
-		assert.Equal(t, 1, count)
-	})
-}
-
-func TestLatestSyncBranch(t *testing.T) {
-	syncBrOld := "SYNC-1662097098"
-	syncBrNew := "SYNC-1700000000"
-	dummyBr := "DUMMY-123"
-
-	tests := []struct {
-		name  string
-		given []*plumbing.Reference
-		want  string
-	}{
-		{
-			"ok: select one from multi",
-			[]*plumbing.Reference{
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrOld).String(), "test"),
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrNew).String(), "test"),
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
-			},
-			"SYNC-1700000000",
-		},
-		{
-			"ok: single",
-			[]*plumbing.Reference{
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(syncBrNew).String(), "test"),
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
-			},
-			"SYNC-1700000000",
-		},
-		{
-			"ok: not found",
-			[]*plumbing.Reference{
-				plumbing.NewReferenceFromStrings(plumbing.NewBranchReferenceName(dummyBr).String(), "test"),
-			},
-			"",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := nwctl.LatestSyncBranch(tt.given)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-
 }
 
 func TestDeviceAggregateServer_Run(t *testing.T) {
@@ -227,20 +153,19 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 		Config: &config,
 	}
 
-	buf, err := json.Marshal(req)
-	exitOnErr(t, err)
-	request := httptest.NewRequest(http.MethodPost, "/commit", bytes.NewBuffer(buf))
-	response := httptest.NewRecorder()
-
 	s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
 		RootCfg: nwctl.RootCfg{
-			RootPath:  dir,
-			GitRemote: testRemote,
+			StatusRootPath: dir,
+			GitRemote:      testRemote,
 		},
 	})
 	nwctl.UpdateCheckDuration = 100 * time.Millisecond
 	s.Run(context.Background())
 
+	buf, err := json.Marshal(req)
+	exitOnErr(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/commit", bytes.NewBuffer(buf))
+	response := httptest.NewRecorder()
 	s.HandleFunc(response, request)
 	res := response.Result()
 	assert.Equal(t, 200, res.StatusCode)
@@ -252,14 +177,12 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	}, time.Second, 100*time.Millisecond)
 	assert.Equal(t, []byte(config), got)
 
+	assert.Greater(t, len(getStatus(t, repo)), 0)
 	assert.Eventually(t, func() bool {
-		exists := false
-		for _, b := range getRemoteBranches(t, repo, testRemote) {
-			if strings.HasPrefix(b.Name().Short(), "SYNC-") {
-				exists = true
-			}
-		}
-		return exists
-	}, time.Second, time.Millisecond)
+		localRef, _ := repo.Head()
+		remoteRef := getRemoteBranch(t, repo, testRemote, "main")
+		return localRef.Hash().String() == remoteRef.Hash().String()
+	}, time.Second, 100*time.Millisecond)
 
+	assert.Equal(t, len(getStatus(t, repo)), 0)
 }

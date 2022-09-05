@@ -109,7 +109,7 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 	if !ok {
 		return ServicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyServiceKind))
 	}
-	p := ServicePath{RootDir: c.cfg.RootPath, Service: svcKind}
+	p := ServicePath{RootDir: c.cfg.ConfigRootPath, Service: svcKind}
 
 	meta, ok := c.meta[svcKind]
 	if !ok {
@@ -144,7 +144,7 @@ func (c *GnmiPathConverter) convertDevice(elem []*gnmi.PathElem) (DevicePathReq,
 		return DevicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyDeviceName))
 	}
 
-	p := DevicePath{RootDir: c.cfg.RootPath, Device: deviceName}
+	p := DevicePath{RootDir: c.cfg.ConfigRootPath, Device: deviceName}
 	return DevicePathReq{path: &p, device: deviceName}, nil
 }
 

@@ -22,15 +22,17 @@ import (
 )
 
 type RootCfg struct {
-	Verbose    uint8 `validate:"min=0,max=3"`
-	Devel      bool
-	RootPath   string `validate:"required"`
-	GitRepoUrl string
-	GitTrunk   string
-	GitRemote  string
-	GitToken   string
-	GitUser    string
-	GitEmail   string
+	Verbose        uint8 `validate:"min=0,max=3"`
+	Devel          bool
+	ConfigRootPath string
+	StatusRootPath string
+	ConfigRepoUrl  string
+	StatusRepoUrl  string
+	GitTrunk       string
+	GitRemote      string
+	GitToken       string
+	GitUser        string
+	GitEmail       string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -38,10 +40,22 @@ func (c *RootCfg) Validate() error {
 	return common.Validate(c)
 }
 
-func (c *RootCfg) GitOptions() *gogit.GitOptions {
+func (c *RootCfg) ConfigGitOptions() *gogit.GitOptions {
 	return &gogit.GitOptions{
-		RepoUrl:     c.GitRepoUrl,
-		Path:        c.RootPath,
+		RepoUrl:     c.ConfigRepoUrl,
+		Path:        c.ConfigRootPath,
+		TrunkBranch: c.GitTrunk,
+		RemoteName:  c.GitRemote,
+		Token:       c.GitToken,
+		User:        c.GitUser,
+		Email:       c.GitEmail,
+	}
+}
+
+func (c *RootCfg) StatusGitOptions() *gogit.GitOptions {
+	return &gogit.GitOptions{
+		RepoUrl:     c.StatusRepoUrl,
+		Path:        c.StatusRootPath,
 		TrunkBranch: c.GitTrunk,
 		RemoteName:  c.GitRemote,
 		Token:       c.GitToken,

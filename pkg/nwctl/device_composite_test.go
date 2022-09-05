@@ -31,7 +31,7 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.DeviceCompositeCfg)) *nwctl.DeviceCompositeCfg {
 		cfg := &nwctl.DeviceCompositeCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				ConfigRootPath: "./",
 			},
 			Device: "device1",
 		}
@@ -98,7 +98,7 @@ func TestRunDeviceComposite(t *testing.T) {
 }
 `)
 	err := nwctl.RunDeviceComposite(context.Background(), &nwctl.DeviceCompositeCfg{
-		RootCfg: nwctl.RootCfg{RootPath: filepath.Join("./testdata")},
+		RootCfg: nwctl.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
 		Device:  "oc01",
 	})
 	exitOnErr(t, err)

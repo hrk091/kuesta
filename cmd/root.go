@@ -42,17 +42,19 @@ func Execute() {
 }
 
 const (
-	FlagConfig     = "config"
-	FlagDevel      = "devel"
-	FlagRootPath   = "rootpath"
-	FlagVerbose    = "verbose"
-	FlagGitTrunk   = "git-trunk"
-	FlagGitRepoUrl = "git-repo-url"
-	FlagGitRemote  = "git-remote-name"
-	FlagGitToken   = "git-token"
-	FlagGitUser    = "git-user"
-	FlagGitEmail   = "git-email"
-	FlagPushToMain = "push-to-main"
+	FlagConfig         = "config"
+	FlagDevel          = "devel"
+	FlagVerbose        = "verbose"
+	FlagConfigRootPath = "config-root-path"
+	FlagStatusRootPath = "status-root-path"
+	FlagConfigRepoUrl  = "config-repo-url"
+	FlagStatusRepoUrl  = "status-repo-url"
+	FlagGitTrunk       = "git-trunk"
+	FlagGitRemote      = "git-remote-name"
+	FlagGitToken       = "git-token"
+	FlagGitUser        = "git-user"
+	FlagGitEmail       = "git-email"
+	FlagPushToMain     = "push-to-main"
 )
 
 // NewRootCmd creates command root.
@@ -69,8 +71,10 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
-	cmd.PersistentFlags().StringP(FlagRootPath, "p", "", "path to the repository root")
-	cmd.PersistentFlags().StringP(FlagGitRepoUrl, "r", "", "git repository url")
+	cmd.PersistentFlags().StringP(FlagConfigRootPath, "p", "", "path to the config repository root")
+	cmd.PersistentFlags().StringP(FlagStatusRootPath, "", "", "path to the status repository root")
+	cmd.PersistentFlags().StringP(FlagConfigRepoUrl, "r", "", "git config repository url")
+	cmd.PersistentFlags().StringP(FlagStatusRepoUrl, "", "", "git status repository url")
 	cmd.PersistentFlags().StringP(FlagGitTrunk, "", gogit.DefaultTrunkBranch, "git trunk branch")
 	cmd.PersistentFlags().StringP(FlagGitRemote, "", gogit.DefaultRemoteName, "git remote name to be used for gitops")
 	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
@@ -96,15 +100,15 @@ func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
 	}
 
 	cfg := &nwctl.RootCfg{
-		Verbose:    cast.ToUint8(viper.GetUint(FlagVerbose)),
-		Devel:      viper.GetBool(FlagDevel),
-		RootPath:   viper.GetString(FlagRootPath),
-		GitRepoUrl: viper.GetString(FlagGitRepoUrl),
-		GitTrunk:   viper.GetString(FlagGitTrunk),
-		GitToken:   viper.GetString(FlagGitToken),
-		GitRemote:  viper.GetString(FlagGitRemote),
-		GitUser:    gitUser,
-		GitEmail:   gitEmail,
+		Verbose:        cast.ToUint8(viper.GetUint(FlagVerbose)),
+		Devel:          viper.GetBool(FlagDevel),
+		ConfigRootPath: viper.GetString(FlagConfigRootPath),
+		ConfigRepoUrl:  viper.GetString(FlagConfigRepoUrl),
+		GitTrunk:       viper.GetString(FlagGitTrunk),
+		GitToken:       viper.GetString(FlagGitToken),
+		GitRemote:      viper.GetString(FlagGitRemote),
+		GitUser:        gitUser,
+		GitEmail:       gitEmail,
 	}
 	return cfg, cfg.Validate()
 }

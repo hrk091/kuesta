@@ -29,11 +29,11 @@ func TestNewRootCmd(t *testing.T) {
 	exitOnErr(t, os.Setenv("NWCTL_GIT_TOKEN", dummyToken))
 
 	dummyRootpath := "dummy-rootpath"
-	exitOnErr(t, os.Setenv("NWCTL_ROOTPATH", dummyRootpath))
+	exitOnErr(t, os.Setenv("NWCTL_CONFIG_ROOT_PATH", dummyRootpath))
 
 	_ = cmd.NewRootCmd()
 	assert.Equal(t, dummyToken, viper.GetString(cmd.FlagGitToken))
-	assert.Equal(t, dummyRootpath, viper.GetString(cmd.FlagRootPath))
+	assert.Equal(t, dummyRootpath, viper.GetString(cmd.FlagConfigRootPath))
 }
 
 func exitOnErr(t *testing.T, err error) {

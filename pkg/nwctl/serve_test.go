@@ -34,7 +34,7 @@ func TestServeCfg_Validate(t *testing.T) {
 	newValidStruct := func(t func(cfg *nwctl.ServeCfg)) *nwctl.ServeCfg {
 		cfg := &nwctl.ServeCfg{
 			RootCfg: nwctl.RootCfg{
-				RootPath: "./",
+				ConfigRootPath: "./",
 			},
 			Addr: ":9339",
 		}
@@ -86,7 +86,7 @@ func TestNorthboundServerImpl_Capabilities(t *testing.T) {
 
 	s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 		RootCfg: nwctl.RootCfg{
-			RootPath: dir,
+			ConfigRootPath: dir,
 		},
 	})
 	got, err := s.Capabilities(context.Background(), &pb.CapabilityRequest{})
@@ -316,7 +316,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			}
 			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
-					RootPath: dir,
+					ConfigRootPath: dir,
 				},
 			})
 			got, err := s.Get(context.Background(), tt.prefix, tt.path)
@@ -402,7 +402,7 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 			tt.setup(dir)
 			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
-					RootPath: dir,
+					ConfigRootPath: dir,
 				},
 			})
 
@@ -538,7 +538,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			tt.setup(dir)
 			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
 				RootCfg: nwctl.RootCfg{
-					RootPath: dir,
+					ConfigRootPath: dir,
 				},
 			})
 

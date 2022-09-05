@@ -97,7 +97,7 @@ type NorthboundServer struct {
 
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
 func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
-	git, err := gogit.NewGit(cfg.GitOptions().ShouldCloneIfNotExist())
+	git, err := gogit.NewGit(cfg.ConfigGitOptions().ShouldCloneIfNotExist())
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		results = append(results, res)
 	}
 
-	sp := ServicePath{RootDir: s.cfg.RootPath}
+	sp := ServicePath{RootDir: s.cfg.ConfigRootPath}
 	if _, err := w.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
 		s.Error(l, err, "git add")
 		return nil, status.Errorf(codes.Internal, "failed to git-add")
@@ -272,7 +272,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 		s.Error(l, err, "get gnmi service version")
 		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
 	}
-	p := ServicePath{RootDir: s.cfg.RootPath}
+	p := ServicePath{RootDir: s.cfg.ConfigRootPath}
 	mlist, err := p.ReadServiceMetaAll()
 	if err != nil {
 		s.Error(l, err, "get gnmi service version")

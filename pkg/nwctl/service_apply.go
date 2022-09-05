@@ -42,7 +42,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	l := logger.FromContext(ctx)
 	l.Debug("service apply called")
 
-	git, err := gogit.NewGit(cfg.GitOptions())
+	git, err := gogit.NewGit(cfg.ConfigGitOptions())
 	if err != nil {
 		return fmt.Errorf("init git: %w", err)
 	}
@@ -60,7 +60,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		return fmt.Errorf("check git status: %w", err)
 	}
 
-	scPlan := NewServiceCompilePlan(stmap, cfg.RootPath)
+	scPlan := NewServiceCompilePlan(stmap, cfg.ConfigRootPath)
 	if scPlan.IsEmpty() {
 		fmt.Printf("No services updated.\n")
 		return nil
@@ -92,7 +92,7 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	if err != nil {
 		return fmt.Errorf("git status %w", err)
 	}
-	dcPlan := NewDeviceCompositePlan(stmap, cfg.RootPath)
+	dcPlan := NewDeviceCompositePlan(stmap, cfg.ConfigRootPath)
 	if dcPlan.IsEmpty() {
 		fmt.Printf("No devices updated.\n")
 		return nil
