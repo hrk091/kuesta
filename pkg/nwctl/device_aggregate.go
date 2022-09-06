@@ -129,7 +129,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					s.Error(l, err, "save actual device config")
+					logger.Error(ctx, err, "save actual device config")
 				}
 			case <-ctx.Done():
 				return
@@ -140,22 +140,11 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 }
 
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
-	l := logger.FromContext(ctx)
-
-	go func() {
-		for {
-			select {
-			case <-time.After(UpdateCheckDuration):
-				l.Info("Checking git status...")
-				if err := s.GitPushDeviceConfig(ctx); err != nil {
-					s.Error(l, err, "push sync branch")
-				}
-			case <-ctx.Done():
-				return
-			}
+	common.SetInterval(ctx, func() {
+		if err := s.GitPushDeviceConfig(ctx); err != nil {
+			logger.Error(ctx, err, "push sync branch")
 		}
-	}()
-	l.Info("Start committer loop")
+	}, UpdateCheckDuration)
 }
 
 // SaveConfig writes device config contained in supplied SaveConfigRequest.
