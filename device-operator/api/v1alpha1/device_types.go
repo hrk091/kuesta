@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package device
+package v1alpha1
 
 import (
 	gnmiclient "github.com/openconfig/gnmi/client"

@@ -17,7 +17,6 @@
 package v1alpha1
 
 import (
-	"github.com/hrk091/nwctl/pkg/device"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,12 +26,12 @@ const (
 
 // OcDemoSpec defines the desired state of OcDemo
 type OcDemoSpec struct {
-	device.DeviceSpec `json:",inline"`
+	DeviceSpec `json:",inline"`
 }
 
 // OcDemoStatus defines the observed state of OcDemo
 type OcDemoStatus struct {
-	device.DeviceStatus `json:",inline"`
+	DeviceStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true
