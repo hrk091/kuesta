@@ -172,21 +172,24 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.Error(ctx, err, "read device config")
 		return ctrl.Result{}, err
 	}
-	newObj, err := decodeCueBuf(cctx, newBuf)
-	if err != nil {
-		r.Error(ctx, err, "load device config")
+	if device.Status.LastApplied == nil {
+		old := device.DeepCopy()
+		device.Status.LastApplied = newBuf
+		if err := r.Status().Patch(ctx, &device, client.MergeFrom(old)); err != nil {
+			r.Error(ctx, err, "patch DeviceRollout")
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
 		return ctrl.Result{}, err
 	}
 
-	// TODO change to out-of-sync
-	curBuf, err := dp.ReadActualDeviceConfigFile()
+	newObj, err := decodeCueBuf(cctx, newBuf)
 	if err != nil {
-		r.Error(ctx, err, "read actual device config")
+		r.Error(ctx, err, "load new device config")
 		return ctrl.Result{}, err
 	}
-	curObj, err := decodeCueBuf(cctx, curBuf)
+	curObj, err := decodeCueBuf(cctx, device.Status.LastApplied)
 	if err != nil {
-		r.Error(ctx, err, "load actual device config")
+		r.Error(ctx, err, "load current device config")
 		return ctrl.Result{}, err
 	}
 
@@ -216,8 +219,11 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, err
 	}
 
-	resp, err := c.(*gnmiclient.Client).Set(ctx, &sr)
-	if err != nil {
+	resp, gnmiSetErr := c.(*gnmiclient.Client).Set(ctx, &sr)
+
+	oldDevice := device.DeepCopy()
+	oldDr := dr.DeepCopy()
+	if gnmiSetErr != nil {
 		// TODO handle connection error
 		r.Error(ctx, err, "apply Set")
 		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusFailed)
@@ -225,16 +231,17 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		l.Info(fmt.Sprintf("succeeded SetRequest: response=%s", prototext.Format(resp)))
 		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusCompleted)
 		device.Status.Checksum = next.Checksum
+		device.Status.LastApplied = newBuf
 	}
 
-	// TODO use patch to avoid optimistic locking
-	if err := r.Status().Update(ctx, &dr); err != nil {
+	if err := r.Status().Patch(ctx, &device, client.MergeFrom(oldDevice)); err != nil {
+		r.Error(ctx, err, "patch Device")
+		return ctrl.Result{}, err
+	}
+	if err := r.Status().Patch(ctx, &dr, client.MergeFrom(oldDr)); err != nil {
 		r.Error(ctx, err, "update DeviceRollout")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, err
 	}
-
-	// TODO get latest config and calc checksum
-	// TODO change status Synced if both actual config checksum and given checksum are the same
 
 	return ctrl.Result{}, nil
 }

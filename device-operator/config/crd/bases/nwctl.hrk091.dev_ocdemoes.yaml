@@ -57,8 +57,14 @@ spec:
                 description: Checksum is a hash to uniquely identify the entire device
                   config.
                 type: string
+              lastApplied:
+                description: LastApplied is the device config applied at the previous
+                  transaction.
+                format: byte
+                type: string
             required:
             - checksum
+            - lastApplied
             type: object
         type: object
     served: true

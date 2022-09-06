@@ -131,9 +131,6 @@ const (
 	// DeviceStatusRunning indicates that a transaction is in progress.
 	DeviceStatusRunning DeviceStatus = "Running"
 
-	// DeviceStatusSynced indicates provision is completed and config/actual-config are synced.
-	DeviceStatusSynced DeviceStatus = "Synced"
-
 	// DeviceStatusCompleted indicates provision is completed.
 	DeviceStatusCompleted DeviceStatus = "Completed"
 
@@ -165,7 +162,7 @@ func (s *DeviceRolloutStatus) IsTxCompleted() bool {
 			continue
 		}
 		// TODO remove device completed from transaction completion condition
-		if v != DeviceStatusSynced && v != DeviceStatusCompleted {
+		if v != DeviceStatusCompleted {
 			return false
 		}
 	}

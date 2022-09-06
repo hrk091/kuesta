@@ -34,6 +34,9 @@ type DeviceStatus struct {
 
 	// Checksum is a hash to uniquely identify the entire device config.
 	Checksum string `json:"checksum"`
+
+	// LastApplied is the device config applied at the previous transaction.
+	LastApplied []byte `json:"lastApplied"`
 }
 
 // ConnectionInfo defines the parameters to connect target device.

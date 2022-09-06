@@ -106,9 +106,9 @@ func TestDeviceRolloutStatus_DeviceStatus(t *testing.T) {
 			"all completed",
 			apiv1alpha1.DeviceRolloutStatus{
 				DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
-					"completed": apiv1alpha1.DeviceStatusCompleted,
-					"synced":    apiv1alpha1.DeviceStatusSynced,
-					"purged":    apiv1alpha1.DeviceStatusPurged,
+					"completed":  apiv1alpha1.DeviceStatusCompleted,
+					"completed2": apiv1alpha1.DeviceStatusCompleted,
+					"purged":     apiv1alpha1.DeviceStatusPurged,
 				},
 			},
 			true,
@@ -210,7 +210,7 @@ func TestDeviceRolloutStatus_StartTx(t *testing.T) {
 				},
 				DeviceStatusMap: map[string]apiv1alpha1.DeviceStatus{
 					"gone":  apiv1alpha1.DeviceStatusCompleted,
-					"curr1": apiv1alpha1.DeviceStatusSynced,
+					"curr1": apiv1alpha1.DeviceStatusCompleted,
 					"curr2": apiv1alpha1.DeviceStatusFailed,
 				},
 			},
