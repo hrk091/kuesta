@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"context"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,7 +64,7 @@ func (r *DeviceRolloutReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (r *DeviceRolloutReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := common.GetStackTrace(err); st != "" {
+	if st := logger.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

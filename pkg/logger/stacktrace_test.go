@@ -14,11 +14,11 @@
  limitations under the License.
 */
 
-package common_test
+package logger_test
 
 import (
 	"bytes"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -32,7 +32,7 @@ func TestShowStackTrace(t *testing.T) {
 		err3 := errors.Wrap(err2, "baz")
 
 		buf := &bytes.Buffer{}
-		common.ShowStackTrace(buf, err3)
+		logger.ShowStackTrace(buf, err3)
 
 		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
 		assert.Equal(t, 1, len(found))
@@ -42,7 +42,7 @@ func TestShowStackTrace(t *testing.T) {
 		err := errors.New("foo")
 
 		buf := &bytes.Buffer{}
-		common.ShowStackTrace(buf, err)
+		logger.ShowStackTrace(buf, err)
 
 		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
 		assert.Equal(t, 1, len(found))
@@ -50,7 +50,7 @@ func TestShowStackTrace(t *testing.T) {
 
 	t.Run("nil", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		common.ShowStackTrace(buf, nil)
+		logger.ShowStackTrace(buf, nil)
 		t.Log(buf)
 
 		assert.Equal(t, 0, len(buf.Bytes()))

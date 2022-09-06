@@ -24,6 +24,7 @@ import (
 	"github.com/hrk091/nwctl/device-operator/pkg/model"
 	"github.com/hrk091/nwctl/pkg/artifact"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
@@ -240,7 +241,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := common.GetStackTrace(err); st != "" {
+	if st := logger.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/device-subscriber/pkg/model"
-	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	gclient "github.com/openconfig/gnmi/client"
@@ -34,7 +33,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"time"
 )
@@ -94,8 +92,7 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 		recvErr := c.Recv()
 		l.Infow("recv hooked")
 		if err := fn(); err != nil {
-			l.Errorf("handle notification: %v", err)
-			common.ShowStackTrace(os.Stderr, err)
+			logger.Error(ctx, err, "handle notification")
 		}
 
 		if recvErr == io.EOF {

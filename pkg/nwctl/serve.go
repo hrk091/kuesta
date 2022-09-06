@@ -96,10 +96,10 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 func RunSyncLoop(ctx context.Context, sGit *gogit.Git, dur time.Duration) {
 	common.SetInterval(ctx, func() {
 		if _, err := sGit.Checkout(); err != nil {
-			common.Error(ctx, err, "git checkout")
+			logger.Error(ctx, err, "git checkout")
 		}
 		if err := sGit.Pull(); err != nil {
-			common.Error(ctx, err, "git pull")
+			logger.Error(ctx, err, "git pull")
 		}
 	}, dur, "sync from status repo")
 }
@@ -134,7 +134,7 @@ func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := common.GetStackTrace(err); st != "" {
+	if st := logger.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
@@ -278,7 +278,7 @@ func NewNorthboundServerImpl(cfg *ServeCfg) *NorthboundServerImpl {
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := common.GetStackTrace(err); st != "" {
+	if st := logger.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)

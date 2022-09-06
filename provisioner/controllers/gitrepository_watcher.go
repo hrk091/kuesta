@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/artifact"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"io/ioutil"
@@ -115,7 +115,7 @@ func (r *GitRepositoryWatcher) Error(ctx context.Context, err error, msg string,
 		return
 	}
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := common.GetStackTrace(err); st != "" {
+	if st := logger.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

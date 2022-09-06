@@ -17,14 +17,14 @@
 package main
 
 import (
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"os"
 )
 
 func main() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		common.ShowStackTrace(os.Stderr, err)
+		logger.ShowStackTrace(os.Stderr, err)
 		os.Exit(1)
 	}
 }

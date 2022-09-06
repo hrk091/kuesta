@@ -17,11 +17,8 @@
 package common
 
 import (
-	"context"
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/logger"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 	"strings"
 )
 
@@ -31,12 +28,4 @@ func JoinErr(msg string, err error) error {
 		msgs = append(msgs, err.Error())
 	}
 	return fmt.Errorf("%s", strings.Join(msgs, "\n "))
-}
-
-func Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
-	l := logger.FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
-	if st := GetStackTrace(err); st != "" {
-		l = l.With("stacktrace", st)
-	}
-	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
 }

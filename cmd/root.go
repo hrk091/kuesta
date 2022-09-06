@@ -18,8 +18,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/gogit"
+	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ var cfgFile string
 func Execute() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		common.ShowStackTrace(os.Stderr, err)
+		logger.ShowStackTrace(os.Stderr, err)
 		// NOTE add show cmd.UsageString() for the specific error if needed
 		os.Exit(1)
 	}
