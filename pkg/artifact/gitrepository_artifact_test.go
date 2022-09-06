@@ -129,3 +129,31 @@ func TestFetchArtifact(t *testing.T) {
 	})
 
 }
+
+func TestReplaceRevision(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		revision string
+		want     string
+	}{
+		{
+			"ok: local",
+			"http://source-controller.flux-system.svc.cluster.local./gitrepository/namespace/name/latest.tar.gz",
+			"abc123",
+			"http://source-controller.flux-system.svc.cluster.local./gitrepository/namespace/name/abc123.tar.gz",
+		},
+		{
+			"ok: https",
+			"https://source-controller.flux-system.svc.cluster.local./gitrepository/namespace/name/93e99aa7.tar.gz",
+			"abc123",
+			"https://source-controller.flux-system.svc.cluster.local./gitrepository/namespace/name/abc123.tar.gz",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			replaced := artifact.ReplaceRevision(tt.url, tt.revision)
+			assert.Equal(t, tt.want, replaced)
+		})
+	}
+}

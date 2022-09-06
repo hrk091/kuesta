@@ -37,6 +37,10 @@ spec:
             properties:
               address:
                 type: string
+              baseRevision:
+                description: BaseRevision is the git revision to assume that the device
+                  config of the specified version has been already provisioned.
+                type: string
               password:
                 type: string
               port:
@@ -48,11 +52,16 @@ spec:
               username:
                 type: string
             required:
+            - baseRevision
             - rolloutRef
             type: object
           status:
             description: OcDemoStatus defines the observed state of OcDemo
             properties:
+              baseRevision:
+                description: BaseRevision is the git revision to assume that the device
+                  config of the specified version has been already provisioned.
+                type: string
               checksum:
                 description: Checksum is a hash to uniquely identify the entire device
                   config.
@@ -63,6 +72,7 @@ spec:
                 format: byte
                 type: string
             required:
+            - baseRevision
             - checksum
             - lastApplied
             type: object

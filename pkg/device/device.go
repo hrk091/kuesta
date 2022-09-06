@@ -26,6 +26,9 @@ type DeviceSpec struct {
 	// RolloutRef is the name of DeviceRollout to which this device belongs.
 	RolloutRef string `json:"rolloutRef"`
 
+	// BaseRevision is the git revision to assume that the device config of the specified version has been already provisioned.
+	BaseRevision string `json:"baseRevision"`
+
 	ConnectionInfo `json:",inline"`
 }
 
@@ -37,6 +40,9 @@ type DeviceStatus struct {
 
 	// LastApplied is the device config applied at the previous transaction.
 	LastApplied []byte `json:"lastApplied"`
+
+	// BaseRevision is the git revision to assume that the device config of the specified version has been already provisioned.
+	BaseRevision string `json:"baseRevision"`
 }
 
 // ConnectionInfo defines the parameters to connect target device.

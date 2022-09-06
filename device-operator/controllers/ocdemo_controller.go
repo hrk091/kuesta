@@ -94,6 +94,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, errors.WithStack(client.IgnoreNotFound(err))
 	}
 
+	// setup subscriber pod
 	subscriberPod := NewSubscribePod(&device)
 	var p core.Pod
 	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
@@ -106,6 +107,19 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		if err = r.Create(ctx, subscriberPod); err != nil {
 			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
 		}
+	}
+
+	// force set checksum and lastApplied config when baseRevision updated
+	if device.Spec.BaseRevision != device.Status.BaseRevision {
+		if err := r.forceSet(ctx, &device); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if device.Status.LastApplied == nil {
+		l.Info("reconcile stopped: lastApplied config is not set. you must initialize lastApplied config to update device config automatically")
+		return ctrl.Result{}, nil
 	}
 
 	var dr provisioner.DeviceRollout
@@ -172,16 +186,6 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.Error(ctx, err, "read device config")
 		return ctrl.Result{}, err
 	}
-	if device.Status.LastApplied == nil {
-		old := device.DeepCopy()
-		device.Status.LastApplied = newBuf
-		if err := r.Status().Patch(ctx, &device, client.MergeFrom(old)); err != nil {
-			r.Error(ctx, err, "patch DeviceRollout")
-			return ctrl.Result{}, client.IgnoreNotFound(err)
-		}
-		return ctrl.Result{}, err
-	}
-
 	newObj, err := decodeCueBuf(cctx, newBuf)
 	if err != nil {
 		r.Error(ctx, err, "load new device config")
@@ -252,6 +256,62 @@ func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)
+}
+
+func (r *OcDemoReconciler) forceSet(ctx context.Context, device *deviceoperator.OcDemo) error {
+
+	var dr provisioner.DeviceRollout
+	if err := r.Get(ctx, types.NamespacedName{
+		Namespace: device.Namespace,
+		Name:      device.Spec.RolloutRef,
+	}, &dr); err != nil {
+		r.Error(ctx, err, "get DeviceRollout")
+		return client.IgnoreNotFound(err)
+	}
+
+	var gr fluxcd.GitRepository
+	if err := r.Get(ctx, types.NamespacedName{
+		Namespace: dr.Namespace,
+		Name:      dr.Name,
+	}, &gr); err != nil {
+		r.Error(ctx, err, "get GitRepository")
+		return client.IgnoreNotFound(err)
+	}
+
+	tmpDir, err := ioutil.TempDir("", gr.Name)
+	if err != nil {
+		r.Error(ctx, err, "create temp dir")
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if _, err = artifact.FetchArtifactAt(ctx, gr, tmpDir, device.Spec.BaseRevision); err != nil {
+		r.Error(ctx, err, "fetch artifact")
+		return err
+	}
+
+	dp := nwctl.DevicePath{RootDir: tmpDir, Device: device.Name}
+	checksum, err := dp.CheckSum()
+	if err != nil {
+		r.Error(ctx, err, "calc checksum")
+		return err
+	}
+
+	buf, err := dp.ReadDeviceConfigFile()
+	if err != nil {
+		r.Error(ctx, err, "read device config")
+		return err
+	}
+
+	old := device.DeepCopy()
+	device.Status.LastApplied = buf
+	device.Status.Checksum = checksum
+	device.Status.BaseRevision = device.Spec.BaseRevision
+	if err := r.Status().Patch(ctx, device, client.MergeFrom(old)); err != nil {
+		r.Error(ctx, err, "patch DeviceRollout")
+		return client.IgnoreNotFound(err)
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

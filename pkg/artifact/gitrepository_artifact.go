@@ -27,6 +27,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -82,6 +84,53 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 	}
 
 	return summary, nil
+}
+
+func FetchArtifactAt(ctx context.Context, repository sourcev1.GitRepository, dir, revision string) (string, error) {
+	if repository.Status.Artifact == nil {
+		return "", fmt.Errorf("respository %s does not contain an artifact", repository.Name)
+	}
+
+	url := repository.Status.Artifact.URL
+	if hostname := os.Getenv(EnvSourceHost); hostname != "" {
+		url = fmt.Sprintf("http://%s/gitrepository/%s/%s/latest.tar.gz", hostname, repository.Namespace, repository.Name)
+	}
+	url = ReplaceRevision(url, revision)
+
+	if url == "" {
+		return "", fmt.Errorf("no url given")
+	}
+
+	// download the tarball
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", errors.WithStack(fmt.Errorf("create HTTP request: %w", err))
+	}
+
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return "", errors.WithStack(fmt.Errorf("download artifact from %s: %w", url, err))
+	}
+	defer resp.Body.Close()
+
+	// check response
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.WithStack(fmt.Errorf("download artifact, status: %s", resp.Status))
+	}
+
+	// extract
+	summary, err := untar.Untar(resp.Body, dir)
+	if err != nil {
+		return "", errors.WithStack(fmt.Errorf("untar artifact: %w", err))
+	}
+
+	return summary, nil
+}
+
+func ReplaceRevision(url, revision string) string {
+	re := regexp.MustCompile(`/(\w+).tar.gz$`)
+	exRev := re.FindStringSubmatch(url)
+	return strings.ReplaceAll(url, exRev[1], revision)
 }
 
 func verifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Reader) error {
