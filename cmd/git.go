@@ -26,6 +26,5 @@ func newGitCmd() *cobra.Command {
 		Short: "Execute Git operations",
 	}
 	cmd.AddCommand(newGitCommitCmd())
-	cmd.AddCommand(newGitMergeDevicesCmd())
 	return cmd
 }
