@@ -163,7 +163,6 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			func(dir string) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -191,9 +190,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -259,7 +256,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), deviceConfig))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -334,7 +331,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), invalidDeviceConfig))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
 			},
 			nil,
 			codes.Internal,

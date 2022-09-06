@@ -329,7 +329,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 	case ServicePathReq:
 		buf, err = r.Path().ReadServiceInput()
 	case DevicePathReq:
-		buf, err = r.Path().ReadDeviceConfigFile()
+		buf, err = r.Path().ReadActualDeviceConfigFile()
 	}
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
