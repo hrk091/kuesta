@@ -142,6 +142,12 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	if next.Checksum == device.Status.Checksum {
 		l.Info(fmt.Sprintf("already provisioned: revision=%s", next.GitRevision))
+		oldDr := dr.DeepCopy()
+		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusCompleted)
+		if err := r.Status().Patch(ctx, &dr, client.MergeFrom(oldDr)); err != nil {
+			r.Error(ctx, err, "update DeviceRollout")
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 	l.Info(fmt.Sprintf("next: revision=%s", next.GitRevision))
