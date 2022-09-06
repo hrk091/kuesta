@@ -52,7 +52,6 @@ spec:
               username:
                 type: string
             required:
-            - baseRevision
             - rolloutRef
             type: object
           status:
@@ -71,10 +70,6 @@ spec:
                   transaction.
                 format: byte
                 type: string
-            required:
-            - baseRevision
-            - checksum
-            - lastApplied
             type: object
         type: object
     served: true

@@ -27,7 +27,7 @@ type DeviceSpec struct {
 	RolloutRef string `json:"rolloutRef"`
 
 	// BaseRevision is the git revision to assume that the device config of the specified version has been already provisioned.
-	BaseRevision string `json:"baseRevision"`
+	BaseRevision string `json:"baseRevision,omitempty"`
 
 	ConnectionInfo `json:",inline"`
 }
@@ -36,13 +36,13 @@ type DeviceSpec struct {
 type DeviceStatus struct {
 
 	// Checksum is a hash to uniquely identify the entire device config.
-	Checksum string `json:"checksum"`
+	Checksum string `json:"checksum,omitempty"`
 
 	// LastApplied is the device config applied at the previous transaction.
-	LastApplied []byte `json:"lastApplied"`
+	LastApplied []byte `json:"lastApplied,omitempty"`
 
 	// BaseRevision is the git revision to assume that the device config of the specified version has been already provisioned.
-	BaseRevision string `json:"baseRevision"`
+	BaseRevision string `json:"baseRevision,omitempty"`
 }
 
 // ConnectionInfo defines the parameters to connect target device.
