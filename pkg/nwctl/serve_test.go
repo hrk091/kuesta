@@ -525,7 +525,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.Path{
 				Elem: []*pb.PathElem{
 					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
 				},
 			},
 			&pb.TypedValue{
@@ -543,7 +543,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.Path{
 				Elem: []*pb.PathElem{
 					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
 				},
 			},
 			&pb.TypedValue{
@@ -561,7 +561,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.Path{
 				Elem: []*pb.PathElem{
 					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
 				},
 			},
 			&pb.TypedValue{
@@ -589,10 +589,159 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantErr, status.Code(err))
 			} else {
-				t.Log(err)
 				assert.Nil(t, err)
 				want := &pb.UpdateResult{
 					Op:   pb.UpdateResult_REPLACE,
+					Path: tt.path,
+				}
+				assert.Equal(t, want.String(), got.String())
+
+				buf, err := os.ReadFile(filepath.Join(dir, tt.inputPath))
+				assert.Nil(t, err)
+				t.Log(string(buf))
+				assert.Equal(t, tt.wantVal, buf)
+			}
+		})
+	}
+}
+
+func TestNorthboundServerImpl_Update(t *testing.T) {
+	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
+	serviceTransform := []byte(`#Input: {bar: string, baz: int, intVal: int, floatVal: float, strVal: string}`)
+	serviceInputToBeUpdated := []byte(`{intVal: 1, floatVal: 1.1, strVal: "blabla"}`)
+	requestJson := []byte(`{"bar": "dummy", "baz": 100, "intVal": 2, "floatVal": 2.1, "notDefined": "test"}`)
+	invalidJson := []byte(`{"intVal": 2`)
+
+	tests := []struct {
+		name      string
+		path      *pb.Path
+		val       *pb.TypedValue
+		setup     func(dir string)
+		inputPath string
+		wantVal   []byte
+		wantErr   codes.Code
+	}{
+		{
+			"ok: update existing",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+			},
+			filepath.Join("services", "foo", "one", "2", "input.cue"),
+			[]byte(`{
+	bar:        "one"
+	baz:        2
+	floatVal:   2.1
+	intVal:     2
+	notDefined: "test"
+	strVal:     "blabla"
+}`),
+			codes.OK,
+		},
+		{
+			"err: not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+			},
+			filepath.Join("services", "foo", "one", "2", "input.cue"),
+			nil,
+			codes.NotFound,
+		},
+		{
+			"err: metadata not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.InvalidArgument,
+		},
+		{
+			"err: transform.cue not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.Internal,
+		},
+		{
+			"err: invalid json input",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: invalidJson},
+			},
+			func(dir string) {},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.InvalidArgument,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			tt.setup(dir)
+			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
+				RootCfg: nwctl.RootCfg{
+					ConfigRootPath: dir,
+				},
+			})
+
+			got, err := s.Update(context.Background(), nil, tt.path, tt.val)
+			if tt.wantErr != codes.OK {
+				t.Log(err)
+				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr, status.Code(err))
+			} else {
+				assert.Nil(t, err)
+				want := &pb.UpdateResult{
+					Op:   pb.UpdateResult_UPDATE,
 					Path: tt.path,
 				}
 				assert.Equal(t, want.String(), got.String())
