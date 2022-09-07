@@ -455,26 +455,26 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 
 func TestNorthboundServerImpl_Replace(t *testing.T) {
 	serviceMeta := []byte(`{"keys": ["bar", "baz"]}`)
-	serviceInput := []byte(`{port: 1, mtu: 9000}`)
-	requestJson := []byte(`{"port": 2, "desc": "test"}`)
-	invalidJson := []byte(`{"port": 2`)
+	serviceTransform := []byte(`#Input: {bar: string, baz: int, intVal: int, floatVal: float, strVal: string}`)
+	serviceInputToBeUpdated := []byte(`{intVal: 1, floatVal: 1.1, strVal: "blabla"}`)
+	requestJson := []byte(`{"bar": "dummy", "baz": 100, "intVal": 2, "floatVal": 2.1, "notDefined": "test"}`)
+	invalidJson := []byte(`{"intVal": 2`)
 
 	tests := []struct {
-		name        string
-		path        *pb.Path
-		val         *pb.TypedValue
-		setup       func(dir string)
-		want        *pb.UpdateResult
-		pathUpdated string
-		valUpdated  []byte
-		wantErr     codes.Code
+		name      string
+		path      *pb.Path
+		val       *pb.TypedValue
+		setup     func(dir string)
+		inputPath string
+		wantVal   []byte
+		wantErr   codes.Code
 	}{
 		{
 			"ok: replace existing",
 			&pb.Path{
 				Elem: []*pb.PathElem{
 					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
 				},
 			},
 			&pb.TypedValue{
@@ -482,17 +482,16 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			},
 			func(dir string) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
-			&pb.UpdateResult{
-				Op: pb.UpdateResult_REPLACE,
-			},
-			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
-	bar:  "one"
-	baz:  "two"
-	desc: "test"
-	port: 2
+	bar:        "one"
+	baz:        2
+	floatVal:   2.1
+	intVal:     2
+	notDefined: "test"
 }`),
 			codes.OK,
 		},
@@ -501,7 +500,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.Path{
 				Elem: []*pb.PathElem{
 					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
 				},
 			},
 			&pb.TypedValue{
@@ -509,16 +508,15 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			},
 			func(dir string) {
 				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
-			&pb.UpdateResult{
-				Op: pb.UpdateResult_REPLACE,
-			},
-			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
-	bar:  "one"
-	baz:  "two"
-	desc: "test"
-	port: 2
+	bar:        "one"
+	baz:        2
+	floatVal:   2.1
+	intVal:     2
+	notDefined: "test"
 }`),
 			codes.OK,
 		},
@@ -533,13 +531,30 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.TypedValue{
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
-			func(dir string) {},
-			&pb.UpdateResult{
-				Op: pb.UpdateResult_REPLACE,
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
 			codes.InvalidArgument,
+		},
+		{
+			"err: transform.cue not exist",
+			&pb.Path{
+				Elem: []*pb.PathElem{
+					{Name: "services"},
+					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
+				},
+			},
+			&pb.TypedValue{
+				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
+			},
+			func(dir string) {
+				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+			},
+			filepath.Join("services", "foo", "one", "two", "input.cue"),
+			nil,
+			codes.Internal,
 		},
 		{
 			"err: invalid json input",
@@ -553,9 +568,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: invalidJson},
 			},
 			func(dir string) {},
-			&pb.UpdateResult{
-				Op: pb.UpdateResult_REPLACE,
-			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
 			codes.InvalidArgument,
@@ -579,12 +591,16 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			} else {
 				t.Log(err)
 				assert.Nil(t, err)
-				tt.want.Path = tt.path
-				assert.Equal(t, tt.want.String(), got.String())
+				want := &pb.UpdateResult{
+					Op:   pb.UpdateResult_REPLACE,
+					Path: tt.path,
+				}
+				assert.Equal(t, want.String(), got.String())
 
-				buf, err := os.ReadFile(filepath.Join(dir, tt.pathUpdated))
+				buf, err := os.ReadFile(filepath.Join(dir, tt.inputPath))
 				assert.Nil(t, err)
-				assert.Equal(t, tt.valUpdated, buf)
+				t.Log(string(buf))
+				assert.Equal(t, tt.wantVal, buf)
 			}
 		})
 	}

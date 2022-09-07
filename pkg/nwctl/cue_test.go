@@ -290,7 +290,7 @@ func TestFormatCue(t *testing.T) {
 	assert.True(t, want.Equals(cctx.CompileBytes(got)))
 }
 
-func TestNewAstValue(t *testing.T) {
+func TestNewAstExpr(t *testing.T) {
 	given := map[string]any{
 		"int":    1,
 		"float":  1.1,
@@ -332,5 +332,89 @@ func TestNewAstValue(t *testing.T) {
 	for _, tt := range tests {
 		got := v.LookupPath(cue.ParsePath(tt.path))
 		assert.Equal(t, fmt.Sprint(tt.want), fmt.Sprint(got))
+	}
+}
+
+func TestCueKindOf(t *testing.T) {
+	given := []byte(`#Input: {
+	device: string
+	port:   uint16
+	noShut: bool
+	desc:   string | *""
+	mtu:    uint16 | *9000
+}
+`)
+	cctx := cuecontext.New()
+	val, err := nwctl.NewValueFromBuf(cctx, given)
+	exitOnErr(t, err)
+
+	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, ""))
+	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, "#Input"))
+	assert.Equal(t, cue.StringKind, nwctl.CueKindOf(val, "#Input.device"))
+	assert.Equal(t, cue.IntKind, nwctl.CueKindOf(val, "#Input.port"))
+}
+
+func TestStringConverter(t *testing.T) {
+	tests := []struct {
+		name    string
+		kind    cue.Kind
+		val     string
+		want    any
+		wantErr bool
+	}{
+		{
+			"ok: string",
+			cue.StringKind,
+			"foo",
+			"foo",
+			false,
+		},
+		{
+			"ok: int",
+			cue.IntKind,
+			"2",
+			2,
+			false,
+		},
+		{
+			"ok: float",
+			cue.FloatKind,
+			"1.0",
+			1.0,
+			false,
+		},
+		{
+			"ok: float",
+			cue.FloatKind,
+			"1.1",
+			1.1,
+			false,
+		},
+		{
+			"err: struct",
+			cue.StructKind,
+			`{"foo": "bar"}`,
+			`{"foo": "bar"}`,
+			true,
+		},
+		{
+			"err: list",
+			cue.ListKind,
+			`["foo", "bar"]`,
+			`["foo", "bar"]`,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			convert, err := nwctl.NewStrConvFunc(tt.kind)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+			got, _ := convert(tt.val)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

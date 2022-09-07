@@ -20,6 +20,7 @@ import (
 	"context"
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"cuelang.org/go/cue/load"
 	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
@@ -408,17 +409,27 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	l.Debugw("replace")
 
 	cctx := cuecontext.New()
+	sp := r.Path()
 
+	// new input
 	input := map[string]any{}
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
 	}
-	// TODO fix type conversion
-	for k, v := range r.Keys() {
-		input[k] = v
+
+	// path keys
+	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
+	if err != nil {
+		s.Error(l, err, "load transform file")
+		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
+	}
+	convertedKeys, err := ConvertInputKeys(transformVal, r.Keys())
+	if err != nil {
+		s.Error(l, err, "convert types of path keys")
+		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
 	}
 
-	expr := NewAstExpr(input)
+	expr := NewAstExpr(common.MergeMap(input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "encode to cue value: %v", inputVal.Err())
@@ -428,7 +439,6 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
 	}
-	sp := r.Path()
 	if err := sp.WriteServiceInputFile(b); err != nil {
 		s.Error(l, err, "write service input")
 		return nil, status.Errorf(codes.Internal, "failed to write service input: %s", req.String())
@@ -458,14 +468,14 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	cctx := cuecontext.New()
 	sp := r.Path()
 
-	// load current input
+	// current input
 	buf, err := sp.ReadServiceInput()
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, status.Errorf(codes.NotFound, "not found: %s", req.String())
 		} else {
 			s.Error(l, err, "open file")
-			return nil, status.Errorf(codes.Internal, err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
 	}
 	curInputVal := cctx.CompileBytes(buf)
@@ -475,18 +485,25 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.Internal, "decode current input")
 	}
 
-	// merge current and new inputs
+	// new input
 	input := map[string]any{}
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
 	}
-	input = common.MergeMap(curInput, input)
-	// TODO set primary keys
-	//for k, v := range r.Keys() {
-	//	input[k] = v
-	//}
 
-	expr := NewAstExpr(input)
+	// path keys
+	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
+	if err != nil {
+		s.Error(l, err, "load transform file")
+		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
+	}
+	convertedKeys, err := ConvertInputKeys(transformVal, r.Keys())
+	if err != nil {
+		s.Error(l, err, "convert types of path keys")
+		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
+	}
+
+	expr := NewAstExpr(common.MergeMap(curInput, input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())

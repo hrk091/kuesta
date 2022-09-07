@@ -30,11 +30,12 @@ import (
 )
 
 var (
-	CueSrcStrTemplate = "#Template"
-	CuePathInput      = "input"
-	CuePathOutput     = "output"
-	CuePathDevice     = "devices"
-	CuePathConfig     = "config"
+	cueTypeStrInput    = "#Input"
+	cueTypeStrTemplate = "#Template"
+	cuePathInput       = "input"
+	cuePathOutput      = "output"
+	cuePathDevice      = "devices"
+	cuePathConfig      = "config"
 )
 
 // NewValueFromBuf creates cue.Value from given []byte.
@@ -47,7 +48,8 @@ func NewValueFromBuf(cctx *cue.Context, buf []byte) (cue.Value, error) {
 }
 
 // NewValueFromJson creates cue.Value from the given JSON []byte.
-// deprecated: cuejson.Extract causes decoding to wrong type. Use json.UnMarshal and NewAstExpr instead.
+//
+// Deprecated: cuejson.Extract causes decoding to wrong type. Use json.UnMarshal to map[string]any and NewAstExpr instead.
 func NewValueFromJson(cctx *cue.Context, buf []byte) (cue.Value, error) {
 	expr, err := cuejson.Extract("from json", buf)
 	if err != nil {
@@ -84,24 +86,24 @@ func NewValueWithInstance(cctx *cue.Context, entrypoints []string, loadcfg *load
 // ApplyTransform performs cue evaluation using given input and transform file.
 // It returns cue.Iterator which iterates items including device name label and device config cue.Value.
 func ApplyTransform(cctx *cue.Context, in cue.Value, transform cue.Value) (*cue.Iterator, error) {
-	template := cctx.CompileString(CueSrcStrTemplate, cue.Scope(transform))
+	template := cctx.CompileString(cueTypeStrTemplate, cue.Scope(transform))
 	if template.Err() != nil {
 		return nil, errors.WithStack(template.Err())
 	}
-	filled := template.FillPath(cue.ParsePath(CuePathInput), in)
+	filled := template.FillPath(cue.ParsePath(cuePathInput), in)
 	if filled.Err() != nil {
 		return nil, errors.WithStack(filled.Err())
 	}
-	filledIn := filled.LookupPath(cue.ParsePath(CuePathOutput))
+	filledIn := filled.LookupPath(cue.ParsePath(cuePathOutput))
 	if err := filledIn.Validate(cue.Concrete(true)); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	out := filled.LookupPath(cue.ParsePath(CuePathOutput)).Eval()
+	out := filled.LookupPath(cue.ParsePath(cuePathOutput)).Eval()
 	if out.Err() != nil {
 		return nil, errors.WithStack(out.Err())
 	}
-	it, err := out.LookupPath(cue.ParsePath(CuePathDevice)).Fields()
+	it, err := out.LookupPath(cue.ParsePath(cuePathDevice)).Fields()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -110,7 +112,7 @@ func ApplyTransform(cctx *cue.Context, in cue.Value, transform cue.Value) (*cue.
 
 // ExtractDeviceConfig extracts the device config from computed results of service transform apply.
 func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
-	cfg := v.LookupPath(cue.ParsePath(CuePathConfig))
+	cfg := v.LookupPath(cue.ParsePath(cuePathConfig))
 	if cfg.Err() != nil {
 		return nil, errors.WithStack(cfg.Err())
 	}
@@ -179,4 +181,59 @@ func newAstNumber(n any) *ast.BasicLit {
 		return &ast.BasicLit{Kind: token.INT, Value: str}
 	}
 	return &ast.BasicLit{Kind: token.FLOAT, Value: str}
+}
+
+// CueKindOf returns cue.Kind of the value placed at the given path.
+func CueKindOf(v cue.Value, path string) cue.Kind {
+	if path == "" {
+		return v.IncompleteKind()
+	} else {
+		return v.LookupPath(cue.ParsePath(path)).IncompleteKind()
+	}
+}
+
+type StrConvFunc func(string) (any, error)
+
+// NewStrConvFunc returns StrConvFunc to convert string to the corresponding type of the given cue.Kind.
+func NewStrConvFunc(kind cue.Kind) (StrConvFunc, error) {
+	switch kind {
+	case cue.StringKind:
+		return func(s string) (any, error) {
+			return s, nil
+		}, nil
+	case cue.IntKind:
+		return func(s string) (any, error) {
+			return strconv.Atoi(s)
+		}, nil
+	case cue.FloatKind:
+		return func(s string) (any, error) {
+			return strconv.ParseFloat(s, 64)
+		}, nil
+	case cue.BoolKind:
+		return func(s string) (any, error) {
+			return strconv.ParseBool(s)
+		}, nil
+	default:
+		err := fmt.Errorf("unexpected kind: %s", kind)
+		return func(s string) (any, error) {
+			return s, nil
+		}, errors.WithStack(err)
+	}
+}
+
+func ConvertInputKeys(transformVal cue.Value, keys map[string]string) (map[string]any, error) {
+	converted := map[string]any{}
+	for k, v := range keys {
+		kind := CueKindOf(transformVal, fmt.Sprintf("%s.%s", cueTypeStrInput, k))
+		convert, err := NewStrConvFunc(kind)
+		if err != nil {
+			return nil, fmt.Errorf("the type of primary key=%s must be string|int|float|bool: %w", k, err)
+		}
+		vv, err := convert(v)
+		if err != nil {
+			return nil, fmt.Errorf("type mismatch: key=%s, value=%s: %w", k, v, err)
+		}
+		converted[k] = vv
+	}
+	return converted, nil
 }
