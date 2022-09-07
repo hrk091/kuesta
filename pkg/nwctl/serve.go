@@ -418,9 +418,10 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		input[k] = v
 	}
 
-	inputVal := cctx.Encode(input)
+	expr := NewAstExpr(input)
+	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
-		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "encode to cue value: %v", inputVal.Err())
 	}
 
 	b, err := FormatCue(inputVal, cue.Final())
@@ -485,7 +486,8 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	//	input[k] = v
 	//}
 
-	inputVal := cctx.Encode(input)
+	expr := NewAstExpr(input)
+	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())
 	}

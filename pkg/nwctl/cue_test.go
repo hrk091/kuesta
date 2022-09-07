@@ -17,6 +17,7 @@
 package nwctl_test
 
 import (
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"fmt"
@@ -287,4 +288,49 @@ func TestFormatCue(t *testing.T) {
 	got, err := nwctl.FormatCue(want)
 	assert.Nil(t, err)
 	assert.True(t, want.Equals(cctx.CompileBytes(got)))
+}
+
+func TestNewAstValue(t *testing.T) {
+	given := map[string]any{
+		"int":    1,
+		"float":  1.1,
+		"bool":   false,
+		"string": "foo",
+		"nil":    nil,
+		"list":   []any{1, "foo", true},
+		"map": map[string]any{
+			"int":    1,
+			"float":  1.0,
+			"bool":   true,
+			"string": "foo",
+			"nil":    nil,
+			"list":   []any{1, "foo", true},
+		},
+	}
+	expr := nwctl.NewAstExpr(given)
+	cctx := cuecontext.New()
+	v := cctx.BuildExpr(expr)
+	assert.Nil(t, v.Err())
+
+	tests := []struct {
+		path string
+		want any
+	}{
+		{"int", 1},
+		{"float", 1.1},
+		{"bool", false},
+		{"string", `"foo"`},
+		{"nil", "null"},
+		{"list", `[1, "foo", true]`},
+		{"map.int", 1},
+		{"map.float", 1.0},
+		{"map.bool", true},
+		{"map.string", `"foo"`},
+		{"map.nil", "null"},
+		{"map.list", `[1, "foo", true]`},
+	}
+	for _, tt := range tests {
+		got := v.LookupPath(cue.ParsePath(tt.path))
+		assert.Equal(t, fmt.Sprint(tt.want), fmt.Sprint(got))
+	}
 }

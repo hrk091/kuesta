@@ -14,27 +14,24 @@
  limitations under the License.
 */
 
-package common
+package common_test
 
-import "sort"
+import (
+	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
-func MergeMap[T any](maps ...map[string]T) map[string]T {
-	merged := map[string]T{}
-	for _, m := range maps {
-		for k, v := range m {
-			merged[k] = v
-		}
-	}
-	return merged
+func TestMergeMap(t *testing.T) {
+	m1 := map[string]int{"a": 1, "b": 2}
+	m2 := map[string]int{"b": 3, "c": 4, "d": 5}
+	m3 := map[string]int{"b": 6, "c": 7, "e": 8}
+	want := map[string]int{"a": 1, "b": 6, "c": 7, "d": 5, "e": 8}
+	assert.Equal(t, want, common.MergeMap(m1, m2, m3))
 }
 
-func SortedMapKeys[T any](m map[string]T) []string {
-	var keys []string
-	for k, _ := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	return keys
+func TestSortedMapKeys(t *testing.T) {
+	m := map[string]int{"b": 2, "c": 3, "a": 1}
+	want := []string{"a", "b", "c"}
+	assert.Equal(t, want, common.SortedMapKeys(m))
 }

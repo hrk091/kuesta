@@ -27,7 +27,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
-	"strings"
 	"testing"
 	"time"
 )
@@ -234,16 +233,6 @@ func getRemoteBranch(t *testing.T, repo *extgogit.Repository, remoteName, branch
 		}
 	}
 	return nil
-}
-
-func hasSyncBranch(t *testing.T, repo *extgogit.Repository, remoteName string) bool {
-	exists := false
-	for _, b := range getRemoteBranches(t, repo, remoteName) {
-		if strings.HasPrefix(b.Name().Short(), "SYNC-") {
-			exists = true
-		}
-	}
-	return exists
 }
 
 func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, string, string) {

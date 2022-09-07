@@ -18,11 +18,15 @@ package nwctl
 
 import (
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/format"
 	"cuelang.org/go/cue/load"
+	"cuelang.org/go/cue/token"
 	cuejson "cuelang.org/go/encoding/json"
 	"fmt"
+	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 var (
@@ -43,6 +47,7 @@ func NewValueFromBuf(cctx *cue.Context, buf []byte) (cue.Value, error) {
 }
 
 // NewValueFromJson creates cue.Value from the given JSON []byte.
+// deprecated: cuejson.Extract causes decoding to wrong type. Use json.UnMarshal and NewAstExpr instead.
 func NewValueFromJson(cctx *cue.Context, buf []byte) (cue.Value, error) {
 	expr, err := cuejson.Extract("from json", buf)
 	if err != nil {
@@ -116,4 +121,62 @@ func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
 func FormatCue(v cue.Value, opts ...cue.Option) ([]byte, error) {
 	syn := v.Syntax(opts...)
 	return format.Node(syn)
+}
+
+// NewAstExpr returns CUE AST Expression for the given value.
+func NewAstExpr(value any) ast.Expr {
+	switch val := value.(type) {
+	case nil:
+		return ast.NewNull()
+	case bool:
+		return ast.NewBool(val)
+	case string:
+		return ast.NewString(val)
+	case float64, int:
+		// json decoder always parses number as float64
+		// and some yaml decoder parses number as int
+		return newAstNumber(val)
+	case []any:
+		var items []ast.Expr
+		for _, item := range val {
+			items = append(items, NewAstExpr(item))
+		}
+		return ast.NewList(items...)
+	case map[string]any:
+		var fields []any
+		for _, k := range common.SortedMapKeys(val) {
+			v := val[k]
+			key := ast.NewIdent(k)
+			value := NewAstExpr(v)
+			f := &ast.Field{
+				Label: key,
+				Value: value,
+			}
+			fields = append(fields, f)
+		}
+		return ast.NewStruct(fields...)
+	case map[any]any:
+		var fields []any
+		// not sorted since there are no general way to compare two keys
+		for k, v := range val {
+			key := ast.NewIdent(k.(string))
+			value := NewAstExpr(v)
+			f := &ast.Field{
+				Label: key,
+				Value: value,
+			}
+			fields = append(fields, f)
+		}
+		return ast.NewStruct(fields...)
+	}
+	return &ast.BottomLit{}
+}
+
+// newAstNumber resolves CUE Integer or Float value.
+func newAstNumber(n any) *ast.BasicLit {
+	str := fmt.Sprintf("%v", n)
+	if _, err := strconv.ParseInt(str, 0, 64); err == nil {
+		return &ast.BasicLit{Kind: token.INT, Value: str}
+	}
+	return &ast.BasicLit{Kind: token.FLOAT, Value: str}
 }

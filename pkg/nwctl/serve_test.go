@@ -492,7 +492,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 	bar:  "one"
 	baz:  "two"
 	desc: "test"
-	port: 2.0
+	port: 2
 }`),
 			codes.OK,
 		},
@@ -518,7 +518,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 	bar:  "one"
 	baz:  "two"
 	desc: "test"
-	port: 2.0
+	port: 2
 }`),
 			codes.OK,
 		},
@@ -584,7 +584,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 
 				buf, err := os.ReadFile(filepath.Join(dir, tt.pathUpdated))
 				assert.Nil(t, err)
-				t.Logf("%s", string(buf))
 				assert.Equal(t, tt.valUpdated, buf)
 			}
 		})
