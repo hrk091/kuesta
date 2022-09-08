@@ -45,41 +45,6 @@ var (
 }`)
 )
 
-// testdata: transform
-var (
-	transform = []byte(`
-package foo
-
-#Input: {
-	port:   uint16
-	noShut: bool
-	mtu:    uint16 | *9000
-}
-
-#Template: {
-	input: #Input
-
-	let _portName = "Ethernet\(input.port)"
-
-	output: devices: {
-		"device1": config: {
-			Interface: "\(_portName)": {
-				Name:        _portName
-				Enabled:     input.noShut
-				Mtu:         input.mtu
-			}
-		}
-		"device2": config: {
-			Interface: "\(_portName)": {
-				Name:        _portName
-				Enabled:     input.noShut
-				Mtu:         input.mtu
-			}
-		}
-	}
-}`)
-)
-
 // testdata: device
 var (
 	device = []byte(`
@@ -199,46 +164,6 @@ func TestNewValueWithInstance(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestApplyTemplate(t *testing.T) {
-	dir := t.TempDir()
-	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
-	exitOnErr(t, err)
-
-	cctx := cuecontext.New()
-	tr, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
-	exitOnErr(t, err)
-
-	t.Run("ok", func(t *testing.T) {
-		in := cctx.CompileBytes(input)
-		exitOnErr(t, in.Err())
-
-		it, err := tr.Apply(in)
-		exitOnErr(t, err)
-
-		assert.True(t, it.Next())
-		assert.Equal(t, "device1", it.Label())
-		assert.True(t, it.Next())
-		assert.Equal(t, "device2", it.Label())
-		assert.False(t, it.Next())
-	})
-
-	t.Run("ok: missing optional fields", func(t *testing.T) {
-		in := cctx.CompileBytes(missingOptinoal)
-		exitOnErr(t, in.Err())
-
-		_, err := tr.Apply(in)
-		assert.Nil(t, err)
-	})
-
-	t.Run("bad: missing required fields", func(t *testing.T) {
-		in := cctx.CompileBytes(missingRequired)
-		exitOnErr(t, in.Err())
-
-		_, err := tr.Apply(in)
-		assert.Error(t, err)
-	})
 }
 
 func TestExtractDeviceConfig(t *testing.T) {

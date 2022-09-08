@@ -183,7 +183,12 @@ func (p *ServicePath) ServiceMetaPath(t PathOpt) string {
 
 // ReadServiceMeta loads the service meta.
 func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
-	return ReadServiceMeta(p.Service, p.ServiceMetaPath(IncludeRoot))
+	meta, err := ReadServiceMeta(p.ServiceMetaPath(IncludeRoot))
+	if err != nil {
+		return nil, err
+	}
+	meta.Name = p.Service
+	return meta, nil
 }
 
 type DevicePath struct {

@@ -42,7 +42,7 @@ func (m *ServiceMeta) ModelData() *pb.ModelData {
 }
 
 // ReadServiceMeta returns ServiceMeta loaded from the metadata file on the given path.
-func ReadServiceMeta(service, path string) (*ServiceMeta, error) {
+func ReadServiceMeta(path string) (*ServiceMeta, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -51,7 +51,6 @@ func ReadServiceMeta(service, path string) (*ServiceMeta, error) {
 	if err := json.Unmarshal(buf, &meta); err != nil {
 		return nil, errors.WithStack(err)
 	}
-	meta.Name = service
 	return &meta, nil
 }
 
@@ -68,6 +67,7 @@ func NewServiceTransformer(cctx *cue.Context, filepaths []string, dir string) (*
 	return &ServiceTransformer{value: v}, nil
 }
 
+// Value returns the cue value contained.
 func (t *ServiceTransformer) Value() cue.Value {
 	return t.value
 }
