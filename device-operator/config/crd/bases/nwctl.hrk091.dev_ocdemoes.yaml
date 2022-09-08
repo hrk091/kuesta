@@ -33,7 +33,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: OcDemoSpec defines the desired state of OcDemo
+            description: DeviceSpec defines the basic specs required to manage target
+              device.
             properties:
               address:
                 type: string
@@ -55,7 +56,7 @@ spec:
             - rolloutRef
             type: object
           status:
-            description: OcDemoStatus defines the observed state of OcDemo
+            description: DeviceStatus defines the observed state of OcDemo
             properties:
               baseRevision:
                 description: BaseRevision is the git revision to assume that the device

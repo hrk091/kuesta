@@ -24,6 +24,7 @@ import (
 	"github.com/hrk091/nwctl/device-operator/pkg/model"
 	"github.com/hrk091/nwctl/pkg/artifact"
 	"github.com/hrk091/nwctl/pkg/common"
+	device "github.com/hrk091/nwctl/pkg/device"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	gclient "github.com/openconfig/gnmi/client"
@@ -95,7 +96,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// setup subscriber pod
-	subscriberPod := NewSubscribePod(&device)
+	subscriberPod := NewSubscribePod(req.NamespacedName, &device.Spec)
 	var p core.Pod
 	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -347,7 +348,7 @@ func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
 func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
 	attachedDevices := &deviceoperator.OcDemoList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(deviceoperator.RefField, deviceRollout.GetName()),
+		FieldSelector: fields.OneTermEqualSelector(device.RefField, deviceRollout.GetName()),
 		Namespace:     deviceRollout.GetNamespace(),
 	}
 	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
@@ -367,13 +368,13 @@ func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Objec
 	return requests
 }
 
-func NewSubscribePod(o *deviceoperator.OcDemo) *core.Pod {
+func NewSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.Pod {
 	allowPrivilegeEscalation := false
 
 	return &core.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("subscriber-%s", o.Name),
-			Namespace: o.Namespace,
+			Name:      fmt.Sprintf("subscriber-%s", name.Name),
+			Namespace: name.Namespace,
 		},
 		Spec: core.PodSpec{
 			Containers: []core.Container{
@@ -384,8 +385,8 @@ func NewSubscribePod(o *deviceoperator.OcDemo) *core.Pod {
 					Env: []core.EnvVar{
 						{Name: "NWCTL_DEVEL", Value: "true"},
 						{Name: "NWCTL_VERBOSE", Value: "2"},
-						{Name: "NWCTL_ADDR", Value: fmt.Sprintf("%s:%d", o.Spec.Address, o.Spec.Port)},
-						{Name: "NWCTL_DEVICE", Value: o.Name},
+						{Name: "NWCTL_ADDR", Value: fmt.Sprintf("%s:%d", spec.Address, spec.Port)},
+						{Name: "NWCTL_DEVICE", Value: name.Name},
 						{Name: "NWCTL_AGGREGATOR_URL", Value: aggregatorUrl},
 					},
 					SecurityContext: &core.SecurityContext{

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"flag"
+	device "github.com/hrk091/nwctl/pkg/device"
 	origzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -125,7 +126,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &deviceoperator.OcDemo{}, deviceoperator.RefField, func(rawObj client.Object) []string {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &deviceoperator.OcDemo{}, device.RefField, func(rawObj client.Object) []string {
 		d := rawObj.(*deviceoperator.OcDemo)
 		if d.Spec.RolloutRef == "" {
 			return nil

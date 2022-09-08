@@ -17,22 +17,9 @@
 package v1alpha1
 
 import (
+	device "github.com/hrk091/nwctl/pkg/device"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const (
-	RefField = ".spec.rolloutRef"
-)
-
-// OcDemoSpec defines the desired state of OcDemo
-type OcDemoSpec struct {
-	DeviceSpec `json:",inline"`
-}
-
-// OcDemoStatus defines the observed state of OcDemo
-type OcDemoStatus struct {
-	DeviceStatus `json:",inline"`
-}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -42,8 +29,7 @@ type OcDemo struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OcDemoSpec   `json:"spec,omitempty"`
-	Status OcDemoStatus `json:"status,omitempty"`
+	device.Device `json:",inline"`
 }
 
 //+kubebuilder:object:root=true

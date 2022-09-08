@@ -20,6 +20,44 @@ import (
 	gnmiclient "github.com/openconfig/gnmi/client"
 )
 
+const (
+	RefField = ".spec.rolloutRef"
+)
+
+type DeviceResource interface {
+	nwctlDevice()
+
+	SpecCopy() *DeviceSpec
+	UpdateSpec(func(*DeviceSpec) error) error
+	StatusCopy() *DeviceStatus
+	UpdateStatus(func(*DeviceStatus) error) error
+}
+
+var _ DeviceResource = &Device{}
+
+type Device struct {
+	Spec   DeviceSpec   `json:"spec,omitempty"`
+	Status DeviceStatus `json:"status,omitempty"`
+}
+
+func (Device) nwctlDevice() {}
+
+func (d *Device) SpecCopy() *DeviceSpec {
+	return d.Spec.DeepCopy()
+}
+
+func (d *Device) StatusCopy() *DeviceStatus {
+	return d.Status.DeepCopy()
+}
+
+func (d *Device) UpdateSpec(fn func(*DeviceSpec) error) error {
+	return fn(&d.Spec)
+}
+
+func (d *Device) UpdateStatus(fn func(*DeviceStatus) error) error {
+	return fn(&d.Status)
+}
+
 // DeviceSpec defines the basic specs required to manage target device.
 type DeviceSpec struct {
 
