@@ -35,6 +35,9 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: fmt vet ## Run tests.
 	go test ./... -coverprofile cover.out
+	cd provisioner && make test
+	cd device-operator && make test
+	cd device-subscriber && make test
 
 ##@ Build Dependencies
 
