@@ -178,3 +178,89 @@ func TestServerTransformer_Apply(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestServiceTransformer_ConvertInputType(t *testing.T) {
+	transformCue := []byte(`#Input: {
+	strVal:   string
+	intVal:   uint16
+	boolVal:  bool
+	floatVal: float64
+	nullVal:  null
+}`)
+	dir := t.TempDir()
+	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
+	exitOnErr(t, err)
+
+	cctx := cuecontext.New()
+	transformer, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
+	exitOnErr(t, err)
+
+	tests := []struct {
+		name    string
+		given   map[string]string
+		want    map[string]any
+		wantErr bool
+	}{
+		{
+			"ok",
+			map[string]string{
+				"strVal":   "foo",
+				"intVal":   "1",
+				"floatVal": "2.0",
+				"boolVal":  "true",
+				"nullVal":  "anyValue",
+			},
+			map[string]any{
+				"strVal":   "foo",
+				"intVal":   1,
+				"floatVal": 2.0,
+				"boolVal":  true,
+				"nullVal":  nil,
+			},
+			false,
+		},
+		{
+			"err: not exist",
+			map[string]string{
+				"notExist": "foo",
+			},
+			nil,
+			true,
+		},
+		{
+			"err: cannot convert int",
+			map[string]string{
+				"intVal": "foo",
+			},
+			nil,
+			true,
+		},
+		{
+			"err: cannot convert float",
+			map[string]string{
+				"floatVal": "foo",
+			},
+			nil,
+			true,
+		},
+		{
+			"err: cannot convert bool",
+			map[string]string{
+				"boolVal": "foo",
+			},
+			nil,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := transformer.ConvertInputType(tt.given)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

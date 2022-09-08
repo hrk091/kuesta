@@ -182,9 +182,17 @@ func NewStrConvFunc(kind cue.Kind) (StrConvFunc, error) {
 		return func(s string) (any, error) {
 			return strconv.ParseFloat(s, 64)
 		}, nil
+	case cue.NumberKind:
+		return func(s string) (any, error) {
+			return strconv.ParseFloat(s, 64)
+		}, nil
 	case cue.BoolKind:
 		return func(s string) (any, error) {
 			return strconv.ParseBool(s)
+		}, nil
+	case cue.NullKind:
+		return func(s string) (any, error) {
+			return nil, nil
 		}, nil
 	default:
 		err := fmt.Errorf("unexpected kind: %s", kind)
@@ -192,21 +200,4 @@ func NewStrConvFunc(kind cue.Kind) (StrConvFunc, error) {
 			return s, nil
 		}, errors.WithStack(err)
 	}
-}
-
-func ConvertInputKeys(transformVal cue.Value, keys map[string]string) (map[string]any, error) {
-	converted := map[string]any{}
-	for k, v := range keys {
-		kind := CueKindOf(transformVal, fmt.Sprintf("%s.%s", cueTypeStrInput, k))
-		convert, err := NewStrConvFunc(kind)
-		if err != nil {
-			return nil, fmt.Errorf("the type of primary key=%s must be string|int|float|bool: %w", k, err)
-		}
-		vv, err := convert(v)
-		if err != nil {
-			return nil, fmt.Errorf("type mismatch: key=%s, value=%s: %w", k, v, err)
-		}
-		converted[k] = vv
-	}
-	return converted, nil
 }

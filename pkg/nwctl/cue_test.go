@@ -45,19 +45,6 @@ var (
 }`)
 )
 
-// testdata: device
-var (
-	device = []byte(`
-config: {
-	Interface: Ethernet1: {
-		Name:    1
-		Enabled: true
-		Mtu:     9000
-	}
-}`)
-	keyMissing = []byte(`something: {foo: "bar"}`)
-)
-
 func TestNewValueFromBuf(t *testing.T) {
 	cctx := cuecontext.New()
 	tests := []struct {
@@ -177,9 +164,17 @@ func TestExtractDeviceConfig(t *testing.T) {
 		Mtu:     9000
 	}
 }`))
+		given := []byte(`
+config: {
+	Interface: Ethernet1: {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`)
 		exitOnErr(t, want.Err())
 
-		v := cctx.CompileBytes(device)
+		v := cctx.CompileBytes(given)
 		exitOnErr(t, v.Err())
 
 		got, err := nwctl.ExtractDeviceConfig(v)
@@ -188,7 +183,8 @@ func TestExtractDeviceConfig(t *testing.T) {
 	})
 
 	t.Run("bad: config missing", func(t *testing.T) {
-		v := cctx.CompileBytes(keyMissing)
+		given := []byte(`something: {foo: "bar"}`)
+		v := cctx.CompileBytes(given)
 		exitOnErr(t, v.Err())
 
 		got, err := nwctl.ExtractDeviceConfig(v)
@@ -216,19 +212,19 @@ func TestFormatCue(t *testing.T) {
 
 func TestNewAstExpr(t *testing.T) {
 	given := map[string]any{
-		"int":    1,
-		"float":  1.1,
-		"bool":   false,
-		"string": "foo",
-		"nil":    nil,
-		"list":   []any{1, "foo", true},
+		"intVal":   1,
+		"floatVal": 1.1,
+		"boolVal":  false,
+		"strVal":   "foo",
+		"nilVal":   nil,
+		"listVal":  []any{1, "foo", true},
 		"map": map[string]any{
-			"int":    1,
-			"float":  1.0,
-			"bool":   true,
-			"string": "foo",
-			"nil":    nil,
-			"list":   []any{1, "foo", true},
+			"intVal":   1,
+			"floatVal": 1.0,
+			"boolVal":  true,
+			"strVal":   "foo",
+			"nilVal":   nil,
+			"listVal":  []any{1, "foo", true},
 		},
 	}
 	expr := nwctl.NewAstExpr(given)
@@ -240,18 +236,18 @@ func TestNewAstExpr(t *testing.T) {
 		path string
 		want any
 	}{
-		{"int", 1},
-		{"float", 1.1},
-		{"bool", false},
-		{"string", `"foo"`},
-		{"nil", "null"},
-		{"list", `[1, "foo", true]`},
-		{"map.int", 1},
-		{"map.float", 1.0},
-		{"map.bool", true},
-		{"map.string", `"foo"`},
-		{"map.nil", "null"},
-		{"map.list", `[1, "foo", true]`},
+		{"intVal", 1},
+		{"floatVal", 1.1},
+		{"boolVal", false},
+		{"strVal", `"foo"`},
+		{"nilVal", "null"},
+		{"listVal", `[1, "foo", true]`},
+		{"map.intVal", 1},
+		{"map.floatVal", 1.0},
+		{"map.boolVal", true},
+		{"map.strVal", `"foo"`},
+		{"map.nilVal", "null"},
+		{"map.listVal", `[1, "foo", true]`},
 	}
 	for _, tt := range tests {
 		got := v.LookupPath(cue.ParsePath(tt.path))
@@ -261,11 +257,11 @@ func TestNewAstExpr(t *testing.T) {
 
 func TestCueKindOf(t *testing.T) {
 	given := []byte(`#Input: {
-	device: string
-	port:   uint16
-	noShut: bool
-	desc:   string | *""
-	mtu:    uint16 | *9000
+	strVal:   string
+	intVal:   uint16
+	boolVal:  bool
+	floatVal: float64
+	nullVal:  null
 }
 `)
 	cctx := cuecontext.New()
@@ -274,8 +270,11 @@ func TestCueKindOf(t *testing.T) {
 
 	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, ""))
 	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, "#Input"))
-	assert.Equal(t, cue.StringKind, nwctl.CueKindOf(val, "#Input.device"))
-	assert.Equal(t, cue.IntKind, nwctl.CueKindOf(val, "#Input.port"))
+	assert.Equal(t, cue.StringKind, nwctl.CueKindOf(val, "#Input.strVal"))
+	assert.Equal(t, cue.IntKind, nwctl.CueKindOf(val, "#Input.intVal"))
+	assert.Equal(t, cue.BoolKind, nwctl.CueKindOf(val, "#Input.boolVal"))
+	assert.Equal(t, cue.NumberKind, nwctl.CueKindOf(val, "#Input.floatVal"))
+	assert.Equal(t, cue.NullKind, nwctl.CueKindOf(val, "#Input.nullVal"))
 }
 
 func TestStringConverter(t *testing.T) {
@@ -310,6 +309,20 @@ func TestStringConverter(t *testing.T) {
 		{
 			"ok: float",
 			cue.FloatKind,
+			"1.1",
+			1.1,
+			false,
+		},
+		{
+			"ok: number",
+			cue.NumberKind,
+			"1.0",
+			1.0,
+			false,
+		},
+		{
+			"ok: number",
+			cue.NumberKind,
 			"1.1",
 			1.1,
 			false,

@@ -20,6 +20,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"encoding/json"
+	"fmt"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"os"
@@ -98,4 +99,25 @@ func (t *ServiceTransformer) Apply(input cue.Value) (*cue.Iterator, error) {
 		return nil, errors.WithStack(err)
 	}
 	return it, nil
+}
+
+// ConvertInputType converts the type of given input according to the type defined as #Input in transform.cue.
+func (t *ServiceTransformer) ConvertInputType(input map[string]string) (map[string]any, error) {
+	converted := map[string]any{}
+	for k, v := range input {
+		kind := CueKindOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, k))
+		if kind == cue.BottomKind {
+			return nil, fmt.Errorf("key=%s is not defined in input types", k)
+		}
+		convert, err := NewStrConvFunc(kind)
+		if err != nil {
+			return nil, fmt.Errorf("the type of key=%s must be in string|int|float|bool|null: %w", k, err)
+		}
+		vv, err := convert(v)
+		if err != nil {
+			return nil, fmt.Errorf("type mismatch: key=%s, value=%s: %w", k, v, err)
+		}
+		converted[k] = vv
+	}
+	return converted, nil
 }

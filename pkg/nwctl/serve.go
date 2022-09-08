@@ -20,7 +20,6 @@ import (
 	"context"
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
 	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
@@ -417,12 +416,12 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	}
 
 	// path keys
-	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
+	transformer, err := sp.NewServiceTransform(cctx)
 	if err != nil {
 		s.Error(l, err, "load transform file")
 		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
 	}
-	convertedKeys, err := ConvertInputKeys(transformVal, r.Keys())
+	convertedKeys, err := transformer.ConvertInputType(r.Keys())
 	if err != nil {
 		s.Error(l, err, "convert types of path keys")
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
@@ -491,12 +490,12 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	}
 
 	// path keys
-	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
+	transformer, err := sp.NewServiceTransform(cctx)
 	if err != nil {
 		s.Error(l, err, "load transform file")
 		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
 	}
-	convertedKeys, err := ConvertInputKeys(transformVal, r.Keys())
+	convertedKeys, err := transformer.ConvertInputType(r.Keys())
 	if err != nil {
 		s.Error(l, err, "convert types of path keys")
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
