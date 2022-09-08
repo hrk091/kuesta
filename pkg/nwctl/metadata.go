@@ -17,6 +17,8 @@
 package nwctl
 
 import (
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/load"
 	"encoding/json"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -30,6 +32,7 @@ type ServiceMeta struct {
 	Keys         []string `json:"keys"`
 }
 
+// ModelData returns the gnmi.ModelData.
 func (m *ServiceMeta) ModelData() *pb.ModelData {
 	return &pb.ModelData{
 		Name:         m.Name,
@@ -38,6 +41,7 @@ func (m *ServiceMeta) ModelData() *pb.ModelData {
 	}
 }
 
+// ReadServiceMeta returns ServiceMeta loaded from the metadata file on the given path.
 func ReadServiceMeta(service, path string) (*ServiceMeta, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
@@ -52,5 +56,46 @@ func ReadServiceMeta(service, path string) (*ServiceMeta, error) {
 }
 
 type ServiceTransformer struct {
-	cue []byte
+	value cue.Value
+}
+
+// NewServiceTransformer creates ServiceTransformer with cue build instance.
+func NewServiceTransformer(cctx *cue.Context, filepaths []string, dir string) (*ServiceTransformer, error) {
+	v, err := NewValueWithInstance(cctx, filepaths, &load.Config{Dir: dir})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &ServiceTransformer{value: v}, nil
+}
+
+func (t *ServiceTransformer) Value() cue.Value {
+	return t.value
+}
+
+// Apply performs cue evaluation of transform.cue using given input.
+// It returns cue.Iterator which iterates items including device name label and device config cue.Value.
+func (t *ServiceTransformer) Apply(input cue.Value) (*cue.Iterator, error) {
+	cctx := t.value.Context()
+	template := cctx.CompileString(cueTypeStrTemplate, cue.Scope(t.value))
+	if template.Err() != nil {
+		return nil, errors.WithStack(template.Err())
+	}
+	filled := template.FillPath(cue.ParsePath(cuePathInput), input)
+	if filled.Err() != nil {
+		return nil, errors.WithStack(filled.Err())
+	}
+
+	filledIn := filled.LookupPath(cue.ParsePath(cuePathOutput))
+	if err := filledIn.Validate(cue.Concrete(true)); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	out := filledIn.Eval()
+	if out.Err() != nil {
+		return nil, errors.WithStack(out.Err())
+	}
+	it, err := out.LookupPath(cue.ParsePath(cuePathDevice)).Fields()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return it, nil
 }

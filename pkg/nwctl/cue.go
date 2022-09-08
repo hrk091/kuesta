@@ -83,33 +83,6 @@ func NewValueWithInstance(cctx *cue.Context, entrypoints []string, loadcfg *load
 	return v, nil
 }
 
-// ApplyTransform performs cue evaluation using given input and transform file.
-// It returns cue.Iterator which iterates items including device name label and device config cue.Value.
-func ApplyTransform(cctx *cue.Context, in cue.Value, transform cue.Value) (*cue.Iterator, error) {
-	template := cctx.CompileString(cueTypeStrTemplate, cue.Scope(transform))
-	if template.Err() != nil {
-		return nil, errors.WithStack(template.Err())
-	}
-	filled := template.FillPath(cue.ParsePath(cuePathInput), in)
-	if filled.Err() != nil {
-		return nil, errors.WithStack(filled.Err())
-	}
-	filledIn := filled.LookupPath(cue.ParsePath(cuePathOutput))
-	if err := filledIn.Validate(cue.Concrete(true)); err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	out := filled.LookupPath(cue.ParsePath(cuePathOutput)).Eval()
-	if out.Err() != nil {
-		return nil, errors.WithStack(out.Err())
-	}
-	it, err := out.LookupPath(cue.ParsePath(cuePathDevice)).Fields()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return it, nil
-}
-
 // ExtractDeviceConfig extracts the device config from computed results of service transform apply.
 func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
 	cfg := v.LookupPath(cue.ParsePath(cuePathConfig))

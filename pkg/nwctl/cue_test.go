@@ -207,15 +207,14 @@ func TestApplyTemplate(t *testing.T) {
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
-
-	tr, err := nwctl.NewValueWithInstance(cctx, []string{"transform.cue"}, &load.Config{Dir: dir})
+	tr, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
 	exitOnErr(t, err)
 
 	t.Run("ok", func(t *testing.T) {
 		in := cctx.CompileBytes(input)
 		exitOnErr(t, in.Err())
 
-		it, err := nwctl.ApplyTransform(cctx, in, tr)
+		it, err := tr.Apply(in)
 		exitOnErr(t, err)
 
 		assert.True(t, it.Next())
@@ -229,7 +228,7 @@ func TestApplyTemplate(t *testing.T) {
 		in := cctx.CompileBytes(missingOptinoal)
 		exitOnErr(t, in.Err())
 
-		_, err = nwctl.ApplyTransform(cctx, in, tr)
+		_, err := tr.Apply(in)
 		assert.Nil(t, err)
 	})
 
@@ -237,7 +236,7 @@ func TestApplyTemplate(t *testing.T) {
 		in := cctx.CompileBytes(missingRequired)
 		exitOnErr(t, in.Err())
 
-		_, err = nwctl.ApplyTransform(cctx, in, tr)
+		_, err := tr.Apply(in)
 		assert.Error(t, err)
 	})
 }

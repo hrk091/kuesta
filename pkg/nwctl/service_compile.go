@@ -19,7 +19,6 @@ package nwctl
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/hrk091/nwctl/pkg/logger"
@@ -62,12 +61,11 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 		return fmt.Errorf("load input file: %w", err)
 	}
 
-	transformVal, err := NewValueWithInstance(cctx, []string{sp.ServiceTransformPath(ExcludeRoot)}, &load.Config{Dir: sp.RootPath()})
+	transformer, err := sp.NewServiceTransform(cctx)
 	if err != nil {
 		return fmt.Errorf("load transform file: %w", err)
 	}
-
-	it, err := ApplyTransform(cctx, inputVal, transformVal)
+	it, err := transformer.Apply(inputVal)
 	if err != nil {
 		return fmt.Errorf("apply transform: %w", err)
 	}

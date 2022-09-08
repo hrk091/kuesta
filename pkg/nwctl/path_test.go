@@ -18,6 +18,8 @@ package nwctl_test
 
 import (
 	"crypto/sha256"
+	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/cuecontext"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
@@ -183,17 +185,22 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 	dir := t.TempDir()
 
 	t.Run("ok: file exists", func(t *testing.T) {
+		cctx := cuecontext.New()
 		p := newValidServicePath()
 		p.RootDir = dir
-		want := []byte("foobar")
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), want)
+		want := cctx.BuildExpr(
+			ast.NewStruct(
+				&ast.Field{Label: ast.NewIdent("test"), Value: ast.NewString("dummy")},
+			),
+		)
+		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
 		exitOnErr(t, err)
 
-		r, err := p.ReadServiceTransform()
+		r, err := p.NewServiceTransform(cctx)
 		if err != nil {
 			t.Error(err)
 		} else {
-			assert.Equal(t, want, r)
+			assert.Equal(t, fmt.Sprint(want), fmt.Sprint(r.Value()))
 		}
 	})
 
@@ -204,7 +211,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
 		exitOnErr(t, err)
 
-		_, err = p.ReadServiceTransform()
+		_, err = p.NewServiceTransform(cuecontext.New())
 		assert.Error(t, err)
 	})
 
@@ -214,7 +221,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		p.Service = "bar"
 		p.Keys = []string{"not", "exist"}
 
-		_, err := p.ReadServiceTransform()
+		_, err := p.NewServiceTransform(cuecontext.New())
 		assert.Error(t, err)
 	})
 }
@@ -256,7 +263,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two", "computed"), 0750)
 		exitOnErr(t, err)
 
-		_, err = p.ReadServiceTransform()
+		_, err = p.ReadServiceComputedFile("device1")
 		assert.Error(t, err)
 	})
 
@@ -266,7 +273,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p.Service = "bar"
 		p.Keys = []string{"not", "exist"}
 
-		_, err := p.ReadServiceTransform()
+		_, err := p.ReadServiceComputedFile("device1")
 		assert.Error(t, err)
 	})
 }

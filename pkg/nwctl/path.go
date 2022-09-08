@@ -18,6 +18,7 @@ package nwctl
 
 import (
 	"crypto/sha256"
+	"cuelang.org/go/cue"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
@@ -144,13 +145,9 @@ func (p *ServicePath) ServiceTransformPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(el...), t)
 }
 
-// ReadServiceTransform loads the specified service's transform file.
-func (p *ServicePath) ReadServiceTransform() ([]byte, error) {
-	buf, err := os.ReadFile(p.ServiceTransformPath(IncludeRoot))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return buf, nil
+// NewServiceTransform loads the specified service's transform file.
+func (p *ServicePath) NewServiceTransform(cctx *cue.Context) (*ServiceTransformer, error) {
+	return NewServiceTransformer(cctx, []string{p.ServiceTransformPath(ExcludeRoot)}, p.RootPath())
 }
 
 // ServiceComputedDirPath returns the path to the specified service's computed dir.
