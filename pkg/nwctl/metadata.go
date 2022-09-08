@@ -17,7 +17,10 @@
 package nwctl
 
 import (
+	"encoding/json"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/pkg/errors"
+	"os"
 )
 
 type ServiceMeta struct {
@@ -33,4 +36,21 @@ func (m *ServiceMeta) ModelData() *pb.ModelData {
 		Organization: m.Organization,
 		Version:      m.Version,
 	}
+}
+
+func ReadServiceMeta(service, path string) (*ServiceMeta, error) {
+	buf, err := os.ReadFile(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	var meta ServiceMeta
+	if err := json.Unmarshal(buf, &meta); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	meta.Name = service
+	return &meta, nil
+}
+
+type ServiceTransformer struct {
+	cue []byte
 }

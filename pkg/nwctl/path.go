@@ -18,7 +18,6 @@ package nwctl
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
@@ -55,6 +54,24 @@ type ServicePath struct {
 
 	Service string
 	Keys    []string `validate:"dive,required"`
+}
+
+// NewServicePathList returns the slice of ServicePath placed in the given root dir.
+func NewServicePathList(dir string) ([]*ServicePath, error) {
+	sp := ServicePath{RootDir: dir}
+	path := sp.ServiceDirPath(IncludeRoot)
+	services, err := os.ReadDir(path)
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("read services dir: %w", err))
+	}
+	var spList []*ServicePath
+	for _, d := range services {
+		if !d.IsDir() {
+			continue
+		}
+		spList = append(spList, &ServicePath{RootDir: dir, Service: d.Name()})
+	}
+	return spList, nil
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -169,36 +186,7 @@ func (p *ServicePath) ServiceMetaPath(t PathOpt) string {
 
 // ReadServiceMeta loads the service meta.
 func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
-	buf, err := os.ReadFile(p.ServiceMetaPath(IncludeRoot))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	var meta ServiceMeta
-	if err := json.Unmarshal(buf, &meta); err != nil {
-		return nil, errors.WithStack(err)
-	}
-	meta.Name = p.Service
-	return &meta, nil
-}
-
-// ReadServiceMetaAll loads all service meta stored in the git repo.
-func (p *ServicePath) ReadServiceMetaAll() ([]*ServiceMeta, error) {
-	var mlist []*ServiceMeta
-	items, err := os.ReadDir(p.ServiceDirPath(IncludeRoot))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	for _, i := range items {
-		if !i.IsDir() {
-			continue
-		}
-		pp := ServicePath{RootDir: p.RootDir, Service: i.Name()}
-		if m, err := pp.ReadServiceMeta(); err == nil {
-			m.Name = i.Name()
-			mlist = append(mlist, m)
-		}
-	}
-	return mlist, nil
+	return ReadServiceMeta(p.Service, p.ServiceMetaPath(IncludeRoot))
 }
 
 type DevicePath struct {
@@ -309,6 +297,21 @@ func (p *DevicePath) ReadActualDeviceConfigFile() ([]byte, error) {
 		return nil, errors.WithStack(err)
 	}
 	return buf, nil
+}
+
+// ReadServiceMetaAll loads all service meta stored in the git repo.
+func ReadServiceMetaAll(dir string) ([]*ServiceMeta, error) {
+	var mlist []*ServiceMeta
+	spList, err := NewServicePathList(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, sp := range spList {
+		if meta, err := sp.ReadServiceMeta(); err == nil {
+			mlist = append(mlist, meta)
+		}
+	}
+	return mlist, nil
 }
 
 // ParseServiceInputPath parses service model `input.cue` filepath and returns its service and keys.

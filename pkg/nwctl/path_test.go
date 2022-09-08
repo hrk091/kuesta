@@ -353,8 +353,7 @@ func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), []byte(`{"keys": ["vlan"]}`)))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	p := nwctl.ServicePath{RootDir: dir}
-	mlist, err := p.ReadServiceMetaAll()
+	mlist, err := nwctl.ReadServiceMetaAll(dir)
 	assert.Nil(t, err)
 	for _, m := range mlist {
 		assert.Contains(t, []string{"foo", "bar"}, m.Name)

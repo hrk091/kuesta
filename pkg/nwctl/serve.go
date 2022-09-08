@@ -294,8 +294,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 		s.Error(l, err, "get gnmi service version")
 		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
 	}
-	p := ServicePath{RootDir: s.cfg.ConfigRootPath}
-	mlist, err := p.ReadServiceMetaAll()
+	mlist, err := ReadServiceMetaAll(s.cfg.ConfigRootPath)
 	if err != nil {
 		s.Error(l, err, "get gnmi service version")
 		return nil, err
