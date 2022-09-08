@@ -334,7 +334,7 @@ func (r *OcDemoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
-	val, err := nwctl.NewValueFromBuf(cctx, buf)
+	val, err := nwctl.NewValueFromBytes(cctx, buf)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

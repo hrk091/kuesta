@@ -45,7 +45,7 @@ var (
 }`)
 )
 
-func TestNewValueFromBuf(t *testing.T) {
+func TestNewValueFromBytes(t *testing.T) {
 	cctx := cuecontext.New()
 	tests := []struct {
 		name    string
@@ -68,7 +68,7 @@ func TestNewValueFromBuf(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := nwctl.NewValueFromBuf(cctx, tt.given)
+			v, err := nwctl.NewValueFromBytes(cctx, tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -107,9 +107,9 @@ func TestNewValueFromJson(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.Nil(t, err)
-				w, err := nwctl.NewValueFromBuf(cctx, []byte(tt.want))
+				w, err := nwctl.NewValueFromBytes(cctx, []byte(tt.want))
 				exitOnErr(t, err)
-				assert.Equal(t, fmt.Sprint(w), fmt.Sprint(got))
+				assert.True(t, w.Equals(got))
 			}
 		})
 	}
@@ -151,47 +151,6 @@ func TestNewValueWithInstance(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestExtractDeviceConfig(t *testing.T) {
-	cctx := cuecontext.New()
-
-	t.Run("ok", func(t *testing.T) {
-		want := cctx.CompileBytes([]byte(`{
-	Interface: "Ethernet1": {
-		Name:    1
-		Enabled: true
-		Mtu:     9000
-	}
-}`))
-		given := []byte(`
-config: {
-	Interface: Ethernet1: {
-		Name:    1
-		Enabled: true
-		Mtu:     9000
-	}
-}`)
-		exitOnErr(t, want.Err())
-
-		v := cctx.CompileBytes(given)
-		exitOnErr(t, v.Err())
-
-		got, err := nwctl.ExtractDeviceConfig(v)
-		assert.Nil(t, err)
-		assert.True(t, want.Equals(cctx.CompileBytes(got)))
-	})
-
-	t.Run("bad: config missing", func(t *testing.T) {
-		given := []byte(`something: {foo: "bar"}`)
-		v := cctx.CompileBytes(given)
-		exitOnErr(t, v.Err())
-
-		got, err := nwctl.ExtractDeviceConfig(v)
-		assert.Nil(t, got)
-		assert.Error(t, err)
-	})
-
 }
 
 func TestFormatCue(t *testing.T) {
@@ -265,7 +224,7 @@ func TestCueKindOf(t *testing.T) {
 }
 `)
 	cctx := cuecontext.New()
-	val, err := nwctl.NewValueFromBuf(cctx, given)
+	val, err := nwctl.NewValueFromBytes(cctx, given)
 	exitOnErr(t, err)
 
 	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, ""))

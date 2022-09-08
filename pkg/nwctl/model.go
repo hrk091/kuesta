@@ -26,6 +26,15 @@ import (
 	"os"
 )
 
+var (
+	cueTypeStrInput    = "#Input"
+	cueTypeStrTemplate = "#Template"
+	cuePathInput       = "input"
+	cuePathOutput      = "output"
+	cuePathDevice      = "devices"
+	cuePathConfig      = "config"
+)
+
 type ServiceMeta struct {
 	Name         string   `json:"name,omitempty"`         // Name of the model.
 	Organization string   `json:"organization,omitempty"` // Organization publishing the model.
@@ -59,8 +68,13 @@ type ServiceTransformer struct {
 	value cue.Value
 }
 
-// NewServiceTransformer creates ServiceTransformer with cue build instance.
-func NewServiceTransformer(cctx *cue.Context, filepaths []string, dir string) (*ServiceTransformer, error) {
+// NewServiceTransformer creates ServiceTransformer with the given cue.Value.
+func NewServiceTransformer(v cue.Value) *ServiceTransformer {
+	return &ServiceTransformer{value: v}
+}
+
+// ReadServiceTransformer builds cue.Instance from the specified files and returns ServiceTransformer.
+func ReadServiceTransformer(cctx *cue.Context, filepaths []string, dir string) (*ServiceTransformer, error) {
 	v, err := NewValueWithInstance(cctx, filepaths, &load.Config{Dir: dir})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -120,4 +134,44 @@ func (t *ServiceTransformer) ConvertInputType(input map[string]string) (map[stri
 		converted[k] = vv
 	}
 	return converted, nil
+}
+
+type Device struct {
+	value cue.Value
+}
+
+// NewDevice creates Device with the given cue.Value.
+func NewDevice(v cue.Value) *Device {
+	return &Device{value: v}
+}
+
+// NewDeviceFromBytes creates Device from the given encoded cue bytes.
+func NewDeviceFromBytes(cctx *cue.Context, buf []byte) (*Device, error) {
+	v, err := NewValueFromBytes(cctx, buf)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &Device{value: v}, nil
+}
+
+// ReadDevice reads the cue file at the specified path and creates Device.
+func ReadDevice(cctx *cue.Context, path string) (*Device, error) {
+	buf, err := os.ReadFile(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return NewDeviceFromBytes(cctx, buf)
+}
+
+func (d *Device) Value() cue.Value {
+	return d.value
+}
+
+// Config returns the device config bytes.
+func (d *Device) Config() ([]byte, error) {
+	cfg := d.value.LookupPath(cue.ParsePath(cuePathConfig))
+	if cfg.Err() != nil {
+		return nil, errors.WithStack(cfg.Err())
+	}
+	return FormatCue(cfg, cue.Final())
 }

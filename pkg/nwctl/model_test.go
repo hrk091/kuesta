@@ -126,7 +126,7 @@ func TestNewServiceTransformer(t *testing.T) {
 			exitOnErr(t, err)
 
 			cctx := cuecontext.New()
-			tr, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
+			tr, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -145,7 +145,7 @@ func TestServerTransformer_Apply(t *testing.T) {
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
-	tr, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
+	tr, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 	exitOnErr(t, err)
 
 	t.Run("ok", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
-	transformer, err := nwctl.NewServiceTransformer(cctx, []string{"transform.cue"}, dir)
+	transformer, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 	exitOnErr(t, err)
 
 	tests := []struct {
@@ -263,4 +263,83 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewDeviceFromBytes(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		given   []byte
+		wantErr bool
+	}{
+		{
+			"ok",
+			[]byte(`config: {
+	Interface: Ethernet1: {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`),
+			false,
+		},
+		{
+			"err: invalid format",
+			[]byte(`config: {`),
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cctx := cuecontext.New()
+			device, err := nwctl.NewDeviceFromBytes(cctx, tt.given)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.NotNil(t, device)
+			}
+		})
+	}
+}
+
+func TestDevice_Config(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		cctx := cuecontext.New()
+		given := []byte(`
+config: {
+	Interface: Ethernet1: {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`)
+		want := cctx.CompileBytes([]byte(`{
+	Interface: "Ethernet1": {
+		Name:    1
+		Enabled: true
+		Mtu:     9000
+	}
+}`))
+		exitOnErr(t, want.Err())
+
+		device, err := nwctl.NewDeviceFromBytes(cctx, given)
+		exitOnErr(t, err)
+		got, err := device.Config()
+		assert.Nil(t, err)
+		assert.True(t, want.Equals(cctx.CompileBytes(got)))
+	})
+
+	t.Run("bad: config missing", func(t *testing.T) {
+		cctx := cuecontext.New()
+		given := []byte(`something: {foo: "bar"}`)
+
+		device, err := nwctl.NewDeviceFromBytes(cctx, given)
+		exitOnErr(t, err)
+		got, err := device.Config()
+		assert.Nil(t, got)
+		assert.Error(t, err)
+	})
+
 }

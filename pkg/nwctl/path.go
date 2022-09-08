@@ -145,9 +145,9 @@ func (p *ServicePath) ServiceTransformPath(t PathOpt) string {
 	return p.addRoot(filepath.Join(el...), t)
 }
 
-// NewServiceTransform loads the specified service's transform file.
-func (p *ServicePath) NewServiceTransform(cctx *cue.Context) (*ServiceTransformer, error) {
-	return NewServiceTransformer(cctx, []string{p.ServiceTransformPath(ExcludeRoot)}, p.RootPath())
+// ReadServiceTransform loads the specified service's transform file.
+func (p *ServicePath) ReadServiceTransform(cctx *cue.Context) (*ServiceTransformer, error) {
+	return ReadServiceTransformer(cctx, []string{p.ServiceTransformPath(ExcludeRoot)}, p.RootPath())
 }
 
 // ServiceComputedDirPath returns the path to the specified service's computed dir.

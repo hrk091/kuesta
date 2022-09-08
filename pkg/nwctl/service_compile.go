@@ -56,12 +56,12 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
 	}
-	inputVal, err := NewValueFromBuf(cctx, buf)
+	inputVal, err := NewValueFromBytes(cctx, buf)
 	if err != nil {
 		return fmt.Errorf("load input file: %w", err)
 	}
 
-	transformer, err := sp.NewServiceTransform(cctx)
+	transformer, err := sp.ReadServiceTransform(cctx)
 	if err != nil {
 		return fmt.Errorf("load transform file: %w", err)
 	}
@@ -72,7 +72,7 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 
 	for it.Next() {
 		device := it.Label()
-		buf, err := ExtractDeviceConfig(it.Value())
+		buf, err := NewDevice(it.Value()).Config()
 		if err != nil {
 			return fmt.Errorf("extract device config: %w", err)
 		}

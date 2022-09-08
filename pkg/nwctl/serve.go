@@ -340,7 +340,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 	}
 
 	cctx := cuecontext.New()
-	val, err := NewValueFromBuf(cctx, buf)
+	val, err := NewValueFromBytes(cctx, buf)
 	if err != nil {
 		s.Error(l, err, "load cue")
 		return nil, status.Errorf(codes.Internal, "failed to read file: %s", req.String())
@@ -416,7 +416,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	}
 
 	// path keys
-	transformer, err := sp.NewServiceTransform(cctx)
+	transformer, err := sp.ReadServiceTransform(cctx)
 	if err != nil {
 		s.Error(l, err, "load transform file")
 		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
@@ -490,7 +490,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	}
 
 	// path keys
-	transformer, err := sp.NewServiceTransform(cctx)
+	transformer, err := sp.ReadServiceTransform(cctx)
 	if err != nil {
 		s.Error(l, err, "load transform file")
 		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())

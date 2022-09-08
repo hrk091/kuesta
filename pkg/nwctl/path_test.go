@@ -196,7 +196,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
 		exitOnErr(t, err)
 
-		r, err := p.NewServiceTransform(cctx)
+		r, err := p.ReadServiceTransform(cctx)
 		if err != nil {
 			t.Error(err)
 		} else {
@@ -211,7 +211,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
 		exitOnErr(t, err)
 
-		_, err = p.NewServiceTransform(cuecontext.New())
+		_, err = p.ReadServiceTransform(cuecontext.New())
 		assert.Error(t, err)
 	})
 
@@ -221,7 +221,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		p.Service = "bar"
 		p.Keys = []string{"not", "exist"}
 
-		_, err := p.NewServiceTransform(cuecontext.New())
+		_, err := p.ReadServiceTransform(cuecontext.New())
 		assert.Error(t, err)
 	})
 }

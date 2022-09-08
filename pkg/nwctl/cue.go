@@ -29,17 +29,8 @@ import (
 	"strconv"
 )
 
-var (
-	cueTypeStrInput    = "#Input"
-	cueTypeStrTemplate = "#Template"
-	cuePathInput       = "input"
-	cuePathOutput      = "output"
-	cuePathDevice      = "devices"
-	cuePathConfig      = "config"
-)
-
-// NewValueFromBuf creates cue.Value from given []byte.
-func NewValueFromBuf(cctx *cue.Context, buf []byte) (cue.Value, error) {
+// NewValueFromBytes creates cue.Value from given []byte.
+func NewValueFromBytes(cctx *cue.Context, buf []byte) (cue.Value, error) {
 	v := cctx.CompileBytes(buf)
 	if v.Err() != nil {
 		return cue.Value{}, errors.WithStack(v.Err())
@@ -81,15 +72,6 @@ func NewValueWithInstance(cctx *cue.Context, entrypoints []string, loadcfg *load
 		return cue.Value{}, errors.WithStack(v.Err())
 	}
 	return v, nil
-}
-
-// ExtractDeviceConfig extracts the device config from computed results of service transform apply.
-func ExtractDeviceConfig(v cue.Value) ([]byte, error) {
-	cfg := v.LookupPath(cue.ParsePath(cuePathConfig))
-	if cfg.Err() != nil {
-		return nil, errors.WithStack(cfg.Err())
-	}
-	return FormatCue(cfg, cue.Final())
 }
 
 // FormatCue formats cue.Value in canonical cue fmt style.
