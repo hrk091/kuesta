@@ -14,11 +14,17 @@
  limitations under the License.
 */
 
-package controllers
+package controllers_test
 
 import (
+	"context"
+	"github.com/hrk091/nwctl/device-operator/controllers"
+	corev1 "k8s.io/api/core/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,7 +37,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	nwctlv1alpha1 "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
+	source "github.com/fluxcd/source-controller/api/v1beta2"
+	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
+	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -41,6 +49,13 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var stopFunc func()
+
+const (
+	timeout   = time.Second * 5
+	interval  = time.Millisecond * 500
+	namespace = "test-ns"
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -55,7 +70,11 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "config", "crd", "bases"),
+			filepath.Join("..", "..", "provisioner", "config", "crd", "bases"),
+			filepath.Join("..", "..", "provisioner", "config", "fluxcd"),
+		},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -65,19 +84,43 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = nwctlv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	utilruntime.Must(deviceoperator.AddToScheme(scheme.Scheme))
+	utilruntime.Must(provisioner.AddToScheme(scheme.Scheme))
+	utilruntime.Must(source.AddToScheme(scheme.Scheme))
 
 	//+kubebuilder:scaffold:scheme
+
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&controllers.OcDemoReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+
+	ctx := context.Background()
+	ctx, stopFunc = context.WithCancel(ctx)
+	go func() {
+		utilruntime.Must(mgr.Start(ctx))
+	}()
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	ns := &corev1.Namespace{}
+	ns.Name = namespace
+	err = k8sClient.Create(ctx, ns)
+	Expect(err).NotTo(HaveOccurred())
+
 }, 60)
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	stopFunc()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

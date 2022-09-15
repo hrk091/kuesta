@@ -1,0 +1,10 @@
+apiVersion: nwctl.hrk091.dev/v1alpha1
+kind: OcDemo
+metadata:
+  name: device1
+  namespace: test-ns
+spec:
+  address: device1.example.com
+  baseRevision: 12345678deadbeef
+  port: 9339
+  rolloutRef: test-devicerollout
