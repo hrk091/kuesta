@@ -19,7 +19,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,9 +28,9 @@ import (
 var _ = Describe("DeviceRollout controller", func() {
 	ctx := context.Background()
 
-	var testDr nwctlv1alpha1.DeviceRollout
+	var testDr provisioner.DeviceRollout
 	must(newTestDataFromFixture("devicerollout", &testDr))
-	desired := nwctlv1alpha1.DeviceConfigMap{
+	desired := provisioner.DeviceConfigMap{
 		"device1": {Checksum: "desired", GitRevision: "desired"},
 		"device2": {Checksum: "desired", GitRevision: "desired"},
 	}
@@ -40,7 +40,7 @@ var _ = Describe("DeviceRollout controller", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(func() error {
-			var dr nwctlv1alpha1.DeviceRollout
+			var dr provisioner.DeviceRollout
 			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
 				return err
 			}
@@ -52,36 +52,36 @@ var _ = Describe("DeviceRollout controller", func() {
 	})
 
 	AfterEach(func() {
-		err := k8sClient.DeleteAllOf(ctx, &nwctlv1alpha1.DeviceRollout{}, client.InNamespace(namespace))
+		err := k8sClient.DeleteAllOf(ctx, &provisioner.DeviceRollout{}, client.InNamespace(namespace))
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("should update DeviceRollout's status to running", func() {
-		var dr nwctlv1alpha1.DeviceRollout
+		var dr provisioner.DeviceRollout
 		Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-		Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseHealthy))
-		Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusRunning))
+		Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseHealthy))
+		Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusRunning))
 		Expect(dr.Status.DesiredDeviceConfigMap).Should(Equal(dr.Spec.DeviceConfigMap))
 		for _, v := range dr.Status.DeviceStatusMap {
-			Expect(v).Should(Equal(nwctlv1alpha1.DeviceStatusRunning))
+			Expect(v).Should(Equal(provisioner.DeviceStatusRunning))
 		}
 	})
 
 	Context("when devices update succeeded", func() {
 
 		BeforeEach(func() {
-			var dr nwctlv1alpha1.DeviceRollout
+			var dr provisioner.DeviceRollout
 			Eventually(func() error {
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 				for k, _ := range dr.Status.DeviceStatusMap {
-					dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
+					dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusCompleted
 				}
 				return k8sClient.Status().Update(ctx, &dr)
 			}, timeout, interval).Should(Succeed())
 
 			Eventually(func() error {
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-				if dr.Status.Status == nwctlv1alpha1.RolloutStatusRunning {
+				if dr.Status.Status == provisioner.RolloutStatusRunning {
 					return fmt.Errorf("not updated yet")
 				}
 				return nil
@@ -89,16 +89,16 @@ var _ = Describe("DeviceRollout controller", func() {
 		})
 
 		It("should update DeviceRollout's status to completed", func() {
-			var dr nwctlv1alpha1.DeviceRollout
+			var dr provisioner.DeviceRollout
 			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-			Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseHealthy))
-			Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusCompleted))
+			Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseHealthy))
+			Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusCompleted))
 		})
 
 		Context("when new config provisioned", func() {
 
 			BeforeEach(func() {
-				var dr nwctlv1alpha1.DeviceRollout
+				var dr provisioner.DeviceRollout
 				Eventually(func() error {
 					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 					dr.Spec.DeviceConfigMap = desired
@@ -107,7 +107,7 @@ var _ = Describe("DeviceRollout controller", func() {
 
 				Eventually(func() error {
 					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-					if dr.Status.Status == nwctlv1alpha1.RolloutStatusCompleted {
+					if dr.Status.Status == provisioner.RolloutStatusCompleted {
 						return fmt.Errorf("not updated yet")
 					}
 					return nil
@@ -115,25 +115,25 @@ var _ = Describe("DeviceRollout controller", func() {
 			})
 
 			It("should update DeviceRollout's status to running", func() {
-				var dr nwctlv1alpha1.DeviceRollout
+				var dr provisioner.DeviceRollout
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-				Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseHealthy))
-				Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusRunning))
+				Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseHealthy))
+				Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusRunning))
 				Expect(dr.Status.DesiredDeviceConfigMap).Should(Equal(desired))
 				Expect(dr.Status.PrevDeviceConfigMap).Should(Equal(testDr.Spec.DeviceConfigMap))
 				for _, v := range dr.Status.DeviceStatusMap {
-					Expect(v).Should(Equal(nwctlv1alpha1.DeviceStatusRunning))
+					Expect(v).Should(Equal(provisioner.DeviceStatusRunning))
 				}
 			})
 
 			Context("when device update failed", func() {
 
 				BeforeEach(func() {
-					var dr nwctlv1alpha1.DeviceRollout
+					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 						for k, _ := range dr.Status.DeviceStatusMap {
-							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
+							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusFailed
 							break
 						}
 						return k8sClient.Status().Update(ctx, &dr)
@@ -141,7 +141,7 @@ var _ = Describe("DeviceRollout controller", func() {
 
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						if dr.Status.Phase == nwctlv1alpha1.RolloutPhaseHealthy {
+						if dr.Status.Phase == provisioner.RolloutPhaseHealthy {
 							return fmt.Errorf("not updated yet")
 						}
 						return nil
@@ -149,58 +149,58 @@ var _ = Describe("DeviceRollout controller", func() {
 				})
 
 				It("should update DeviceRollout's phase to rollback and status to running", func() {
-					var dr nwctlv1alpha1.DeviceRollout
+					var dr provisioner.DeviceRollout
 					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-					Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseRollback))
-					Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusRunning))
+					Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseRollback))
+					Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusRunning))
 					Expect(dr.Status.DesiredDeviceConfigMap).Should(Equal(desired))
 					Expect(dr.Status.PrevDeviceConfigMap).Should(Equal(testDr.Spec.DeviceConfigMap))
 					for _, v := range dr.Status.DeviceStatusMap {
-						Expect(v).Should(Equal(nwctlv1alpha1.DeviceStatusRunning))
+						Expect(v).Should(Equal(provisioner.DeviceStatusRunning))
 					}
 				})
 
 				It("should update DeviceRollout to rollback/completed when rollback succeeded", func() {
-					var dr nwctlv1alpha1.DeviceRollout
+					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 						for k, _ := range dr.Status.DeviceStatusMap {
-							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusCompleted
+							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusCompleted
 						}
 						return k8sClient.Status().Update(ctx, &dr)
 					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						if dr.Status.Status == nwctlv1alpha1.RolloutStatusRunning {
+						if dr.Status.Status == provisioner.RolloutStatusRunning {
 							return fmt.Errorf("not updated yet")
 						}
 						return nil
 					}, timeout, interval).Should(Succeed())
 
-					Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseRollback))
-					Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusCompleted))
+					Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseRollback))
+					Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusCompleted))
 				})
 
 				It("should update DeviceRollout to rollback/failed when rollback failed", func() {
-					var dr nwctlv1alpha1.DeviceRollout
+					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 						for k, _ := range dr.Status.DeviceStatusMap {
-							dr.Status.DeviceStatusMap[k] = nwctlv1alpha1.DeviceStatusFailed
+							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusFailed
 							break
 						}
 						return k8sClient.Status().Update(ctx, &dr)
 					}, timeout, interval).Should(Succeed())
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						if dr.Status.Status == nwctlv1alpha1.RolloutStatusRunning {
+						if dr.Status.Status == provisioner.RolloutStatusRunning {
 							return fmt.Errorf("not updated yet")
 						}
 						return nil
 					}, timeout, interval).Should(Succeed())
 
-					Expect(dr.Status.Phase).Should(Equal(nwctlv1alpha1.RolloutPhaseRollback))
-					Expect(dr.Status.Status).Should(Equal(nwctlv1alpha1.RolloutStatusFailed))
+					Expect(dr.Status.Phase).Should(Equal(provisioner.RolloutPhaseRollback))
+					Expect(dr.Status.Status).Should(Equal(provisioner.RolloutStatusFailed))
 				})
 			})
 		})

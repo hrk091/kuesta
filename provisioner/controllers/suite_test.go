@@ -18,7 +18,7 @@ package controllers_test
 
 import (
 	"context"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	source "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
@@ -36,7 +36,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	"github.com/hrk091/nwctl/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -81,8 +81,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	utilruntime.Must(nwctlv1alpha1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(sourcev1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(provisioner.AddToScheme(scheme.Scheme))
+	utilruntime.Must(source.AddToScheme(scheme.Scheme))
 
 	//+kubebuilder:scaffold:scheme
 
@@ -103,8 +103,8 @@ var _ = BeforeSuite(func() {
 	}).SetupWithManager(mgr)
 	Expect(err).ToNot(HaveOccurred())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	stopFunc = cancel
+	ctx := context.Background()
+	ctx, stopFunc = context.WithCancel(ctx)
 	go func() {
 		utilruntime.Must(mgr.Start(ctx))
 	}()
@@ -114,7 +114,7 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	ns := &corev1.Namespace{}
-	ns.Name = "test-ns"
+	ns.Name = namespace
 	err = k8sClient.Create(ctx, ns)
 	Expect(err).NotTo(HaveOccurred())
 
