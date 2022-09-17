@@ -18,11 +18,14 @@ package controllers_test
 
 import (
 	"context"
+	"fmt"
 	source "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
 	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,8 +51,17 @@ var _ = Describe("DeviceOperator controller", func() {
 		Expect(k8sClient.DeleteAllOf(ctx, &source.GitRepository{}, client.InNamespace(namespace))).NotTo(HaveOccurred())
 	})
 
-	It("should start running", func() {
-		var dr deviceoperator.OcDemo
-		Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &dr)).NotTo(HaveOccurred())
+	It("should create subscriber pod", func() {
+		var pod corev1.Pod
+		Eventually(func() error {
+			key := types.NamespacedName{
+				Name:      fmt.Sprintf("subscriber-%s", testOpe.Name),
+				Namespace: testOpe.Namespace,
+			}
+			if err := k8sClient.Get(ctx, key, &pod); err != nil {
+				return err
+			}
+			return nil
+		}, timeout, interval).Should(Succeed())
 	})
 })
