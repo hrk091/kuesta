@@ -1,7 +1,7 @@
 apiVersion: nwctl.hrk091.dev/v1alpha1
 kind: DeviceRollout
 metadata:
-  name: test-devicerollout
+  name: test-configrepo
   namespace: test-ns
 spec:
   deviceConfigMap:

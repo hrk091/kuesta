@@ -125,7 +125,7 @@ func TestNewTestDataFromFixture(t *testing.T) {
 		var dr nwctlv1alpha1.DeviceRollout
 		err := newTestDataFromFixture("devicerollout", &dr)
 		assert.Nil(t, err)
-		assert.Equal(t, dr.Name, "test-devicerollout")
+		assert.Equal(t, dr.Name, "test-configrepo")
 		assert.Equal(t, dr.Namespace, "test-ns")
 	})
 

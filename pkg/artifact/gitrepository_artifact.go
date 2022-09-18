@@ -130,6 +130,9 @@ func FetchArtifactAt(ctx context.Context, repository sourcev1.GitRepository, dir
 func ReplaceRevision(url, revision string) string {
 	re := regexp.MustCompile(`/(\w+).tar.gz$`)
 	exRev := re.FindStringSubmatch(url)
+	if exRev == nil {
+		return url
+	}
 	return strings.ReplaceAll(url, exRev[1], revision)
 }
 
