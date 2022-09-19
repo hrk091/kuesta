@@ -19,6 +19,7 @@ package controllers_test
 import (
 	"context"
 	"github.com/hrk091/nwctl/device-operator/controllers"
+	device "github.com/hrk091/nwctl/pkg/device"
 	corev1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
@@ -99,6 +100,15 @@ var _ = BeforeSuite(func() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = mgr.GetFieldIndexer().IndexField(context.Background(), &deviceoperator.OcDemo{}, device.RefField, func(rawObj client.Object) []string {
+		d := rawObj.(*deviceoperator.OcDemo)
+		if d.Spec.RolloutRef == "" {
+			return nil
+		}
+		return []string{d.Spec.RolloutRef}
+	})
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx := context.Background()

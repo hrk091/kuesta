@@ -267,6 +267,9 @@ func (s *DeviceRolloutStatus) GetDeviceStatus(name string) DeviceStatus {
 
 // SetDeviceStatus records the given device config to the device status map.
 func (s *DeviceRolloutStatus) SetDeviceStatus(name string, status DeviceStatus) {
+	if s.DeviceStatusMap == nil {
+		s.DeviceStatusMap = map[string]DeviceStatus{}
+	}
 	s.DeviceStatusMap[name] = status
 }
 

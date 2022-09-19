@@ -41,6 +41,7 @@ var _ = Describe("DeviceOperator controller", func() {
 	config1 := []byte("foo")
 	config2 := []byte("bar")
 	rev1st := "rev1"
+	rev2nd := "rev2"
 
 	var testOpe deviceoperator.OcDemo
 	must(newTestDataFromFixture("device1.deviceoperator", &testOpe))
@@ -105,9 +106,8 @@ var _ = Describe("DeviceOperator controller", func() {
 			Eventually(func() error {
 				return k8sClient.Status().Update(ctx, gr)
 			}, timeout, interval).Should(Succeed())
-		})
 
-		It("should initialize device resource with the specified base revision", func() {
+			// set base revision
 			var ope deviceoperator.OcDemo
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &ope); err != nil {
@@ -119,7 +119,6 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
-
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &ope); err != nil {
 					return err
@@ -129,11 +128,53 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
+		})
 
+		It("should initialize device resource with the specified base revision", func() {
+			var ope deviceoperator.OcDemo
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &ope)).NotTo(HaveOccurred())
 			Expect(ope.Status.BaseRevision).To(Equal(rev1st))
 			Expect(ope.Status.LastApplied).To(Equal(config1))
 			Expect(ope.Status.Checksum).To(Equal(hash(config1)))
 		})
+
+		It("should change rollout status to Completed when checksum is the same", func() {
+			var dr provisioner.DeviceRollout
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+					return err
+				}
+				dr.Status.Phase = provisioner.RolloutPhaseHealthy
+				dr.Status.Status = provisioner.RolloutStatusRunning
+				dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
+				if dr.Status.DesiredDeviceConfigMap == nil {
+					dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
+				}
+				dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
+					Checksum:    hash(config1),
+					GitRevision: rev2nd,
+				}
+				fmt.Fprintf(GinkgoWriter, "device rollout status!!!, %+v", dr.Status)
+				if err := k8sClient.Status().Update(ctx, &dr); err != nil {
+					return err
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+					return err
+				}
+				if dr.Status.GetDeviceStatus(testOpe.Name) == provisioner.DeviceStatusRunning {
+					return fmt.Errorf("status not changed yet")
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+
+			Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusCompleted))
+
+		})
+
 	})
 
 })
