@@ -61,7 +61,7 @@ func newTestDataFromFixture(name string, o metav1.Object) error {
 	return nil
 }
 
-func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
+func mustGenTgzArchive(dir string) (string, io.Reader) {
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
@@ -109,6 +109,13 @@ func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
 	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
 
 	return checksum, &out
+}
+
+func newGitRepoArtifact(fn func(dir string)) (string, io.Reader) {
+	dir, err := ioutil.TempDir("", "git-watcher-test-*")
+	must(err)
+	fn(dir)
+	return mustGenTgzArchive(dir)
 }
 
 func hash(buf []byte) string {

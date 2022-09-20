@@ -4,7 +4,7 @@ metadata:
   name: device1
   namespace: test-ns
 spec:
-  address: device1.example.com
+  address: localhost
   baseRevision: 12345678deadbeef
-  port: 9339
+  port: 59339
   rolloutRef: test-configrepo
