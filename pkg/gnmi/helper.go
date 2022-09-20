@@ -57,7 +57,7 @@ func (s *GnmiMock) Get(ctx context.Context, r *pb.GetRequest) (*pb.GetResponse, 
 }
 
 func (s *GnmiMock) Set(ctx context.Context, r *pb.SetRequest) (*pb.SetResponse, error) {
-	if s.GetHandler == nil {
+	if s.SetHandler == nil {
 		return s.UnimplementedGNMIServer.Set(ctx, r)
 	}
 	return s.SetHandler(ctx, r)
@@ -91,6 +91,17 @@ func NewServer(ctx context.Context, s pb.GNMIServer, opts ...grpc.DialOption) (*
 		}
 	}()
 	return g, conn
+}
+
+func NewServerWithListener(s pb.GNMIServer, lis net.Listener) *grpc.Server {
+	g := grpc.NewServer()
+	pb.RegisterGNMIServer(g, s)
+	go func() {
+		if err := g.Serve(lis); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	return g
 }
 
 // GetGNMIServiceVersion returns a pointer to the gNMI service version string.

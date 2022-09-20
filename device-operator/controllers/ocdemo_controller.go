@@ -236,7 +236,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	oldDr := dr.DeepCopy()
 	if gnmiSetErr != nil {
 		// TODO handle connection error
-		r.Error(ctx, err, "apply Set")
+		r.Error(ctx, gnmiSetErr, "apply Set")
 		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusFailed)
 	} else {
 		l.Info(fmt.Sprintf("succeeded SetRequest: response=%s", prototext.Format(resp)))
