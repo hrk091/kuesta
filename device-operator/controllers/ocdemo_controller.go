@@ -86,13 +86,19 @@ type OcDemoReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	_ = log.FromContext(ctx)
+
+	return r.DoReconcile(ctx, req)
+}
+
+func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 	l.Info("start reconciliation")
 
-	var device deviceoperator.OcDemo
-	if err := r.Get(ctx, req.NamespacedName, &device); err != nil {
+	device := deviceoperator.NewDevice(nil)
+	if err := r.Get(ctx, req.NamespacedName, device); err != nil {
 		r.Error(ctx, err, "get DeviceOperator")
-		return ctrl.Result{}, errors.WithStack(client.IgnoreNotFound(err))
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// setup subscriber pod
@@ -102,7 +108,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		if !apierrors.IsNotFound(err) {
 			return ctrl.Result{}, fmt.Errorf("get subscriber subscriberPod: %w", err)
 		}
-		if err = ctrl.SetControllerReference(&device, subscriberPod, r.Scheme); err != nil {
+		if err = ctrl.SetControllerReference(device, subscriberPod, r.Scheme); err != nil {
 			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
 		}
 		if err = r.Create(ctx, subscriberPod); err != nil {
@@ -112,7 +118,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// force set checksum and lastApplied config when baseRevision updated
 	if device.Spec.BaseRevision != device.Status.BaseRevision {
-		if err := r.forceSet(ctx, &device); err != nil {
+		if err := r.forceSet(ctx, req); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
@@ -245,7 +251,7 @@ func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		device.Status.LastApplied = newBuf
 	}
 
-	if err := r.Status().Patch(ctx, &device, client.MergeFrom(oldDevice)); err != nil {
+	if err := r.Status().Patch(ctx, device, client.MergeFrom(oldDevice)); err != nil {
 		r.Error(ctx, err, "patch Device")
 		return ctrl.Result{}, err
 	}
@@ -265,7 +271,13 @@ func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs
 	l.Error(err, msg, kvs...)
 }
 
-func (r *OcDemoReconciler) forceSet(ctx context.Context, device *deviceoperator.OcDemo) error {
+func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
+
+	device := deviceoperator.NewDevice(nil)
+	if err := r.Get(ctx, req.NamespacedName, device); err != nil {
+		r.Error(ctx, err, "get DeviceOperator")
+		return errors.WithStack(client.IgnoreNotFound(err))
+	}
 
 	var dr provisioner.DeviceRollout
 	if err := r.Get(ctx, types.NamespacedName{

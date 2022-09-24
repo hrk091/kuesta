@@ -44,3 +44,10 @@ type OcDemoList struct {
 func init() {
 	SchemeBuilder.Register(&OcDemo{}, &OcDemoList{})
 }
+
+func NewDevice(initFn func() *OcDemo) *OcDemo {
+	if initFn != nil {
+		return initFn()
+	}
+	return &OcDemo{}
+}
