@@ -45,9 +45,10 @@ func init() {
 	SchemeBuilder.Register(&OcDemo{}, &OcDemoList{})
 }
 
-func NewDevice(initFn func() *OcDemo) *OcDemo {
-	if initFn != nil {
-		return initFn()
-	}
+func NewDevice() *OcDemo {
 	return &OcDemo{}
+}
+
+func NewDeviceList() *OcDemoList {
+	return &OcDemoList{}
 }
