@@ -126,29 +126,16 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	tmpDir, err := ioutil.TempDir("", gr.Name)
+	dp, checksum, err := fetchArtifact(ctx, gr, device.Name, "")
 	if err != nil {
-		r.Error(ctx, err, "create temp dir")
+		r.Error(ctx, err, "fetch device config")
 		return ctrl.Result{}, err
-	}
-	defer os.RemoveAll(tmpDir)
-
-	if _, err = artifact.FetchArtifact(ctx, gr, tmpDir); err != nil {
-		r.Error(ctx, err, "fetch artifact")
-		return ctrl.Result{}, err
-	}
-
-	dp := nwctl.DevicePath{RootDir: tmpDir, Device: device.Name}
-	checksum, err := dp.CheckSum()
-	if err != nil {
-		r.Error(ctx, err, "calc checksum")
-		return ctrl.Result{}, err
-	}
-	if checksum != next.Checksum {
+	} else if checksum != next.Checksum {
 		err = fmt.Errorf("checksum is different: want=%s, got=%s", next.Checksum, checksum)
 		r.Error(ctx, err, "check checksum")
 		return ctrl.Result{}, err
 	}
+	defer os.RemoveAll(dp.RootDir)
 
 	cctx := cuecontext.New()
 
@@ -255,24 +242,12 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 		return client.IgnoreNotFound(err)
 	}
 
-	tmpDir, err := ioutil.TempDir("", gr.Name)
+	dp, checksum, err := fetchArtifact(ctx, gr, device.Name, device.Spec.BaseRevision)
 	if err != nil {
-		r.Error(ctx, err, "create temp dir")
+		r.Error(ctx, err, "fetch device config")
 		return err
 	}
-	defer os.RemoveAll(tmpDir)
-
-	if _, err = artifact.FetchArtifactAt(ctx, gr, tmpDir, device.Spec.BaseRevision); err != nil {
-		r.Error(ctx, err, "fetch artifact")
-		return err
-	}
-
-	dp := nwctl.DevicePath{RootDir: tmpDir, Device: device.Name}
-	checksum, err := dp.CheckSum()
-	if err != nil {
-		r.Error(ctx, err, "calc checksum")
-		return err
-	}
+	defer os.RemoveAll(dp.RootDir)
 
 	buf, err := dp.ReadDeviceConfigFile()
 	if err != nil {
@@ -289,6 +264,32 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 		return client.IgnoreNotFound(err)
 	}
 	return nil
+}
+
+func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revision string) (*nwctl.DevicePath, string, error) {
+	tmpDir, err := ioutil.TempDir("", gr.Name)
+	if err != nil {
+		return nil, "", fmt.Errorf("create temp dir: %w", err)
+	}
+
+	if revision == "" {
+		_, err = artifact.FetchArtifact(ctx, gr, tmpDir)
+	} else {
+		_, err = artifact.FetchArtifactAt(ctx, gr, tmpDir, revision)
+	}
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, "", fmt.Errorf("fetch artifact: %w", err)
+	}
+
+	dp := &nwctl.DevicePath{RootDir: tmpDir, Device: device}
+	checksum, err := dp.CheckSum()
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, "", err
+	}
+
+	return dp, checksum, err
 }
 
 func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
