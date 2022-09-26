@@ -100,11 +100,16 @@ func (t *ServiceTransformer) Apply(input cue.Value) (*cue.Iterator, error) {
 		return nil, errors.WithStack(filled.Err())
 	}
 
-	filledIn := filled.LookupPath(cue.ParsePath(cuePathOutput))
+	filledIn := filled.LookupPath(cue.ParsePath(cuePathInput))
 	if err := filledIn.Validate(cue.Concrete(true)); err != nil {
 		return nil, errors.WithStack(err)
 	}
-	out := filledIn.Eval()
+
+	filledOut := filled.LookupPath(cue.ParsePath(cuePathOutput))
+	if err := filledOut.Validate(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	out := filledOut.Eval()
 	if out.Err() != nil {
 		return nil, errors.WithStack(out.Err())
 	}
