@@ -76,6 +76,13 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	if err != nil {
 		return fmt.Errorf("init gNMI impl server: %w", err)
 	}
+	if err := s.cGit.Pull(); err != nil {
+		return fmt.Errorf("pull config git repo: %w", err)
+	}
+	if err := s.sGit.Pull(); err != nil {
+		return fmt.Errorf("pull status git repo: %w", err)
+	}
+
 	pb.RegisterGNMIServer(g, s)
 	reflection.Register(g)
 
@@ -192,7 +199,6 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		s.mu.Unlock()
 	}()
 
-	// TODO run git merge-devices before set
 	// TODO block when git worktree is dirty
 	w, err := s.cGit.Checkout()
 	if err != nil {

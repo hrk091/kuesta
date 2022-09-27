@@ -111,6 +111,7 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 	}
 	p := ServicePath{RootDir: c.cfg.ConfigRootPath, Service: svcKind}
 
+	// TODO update cache periodically or not to have cache
 	meta, ok := c.meta[svcKind]
 	if !ok {
 		m, err := p.ReadServiceMeta()
