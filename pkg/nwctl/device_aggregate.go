@@ -165,13 +165,13 @@ func (s *DeviceAggregateServer) GitPushDeviceConfig(ctx context.Context) error {
 		return fmt.Errorf("init git: %w", err)
 	}
 
+	if err := g.Pull(); err != nil {
+		return fmt.Errorf("git pull: %w", err)
+	}
+
 	w, err := g.Checkout()
 	if err != nil {
 		return fmt.Errorf("git checkout to trunk: %w", err)
-	}
-
-	if err := g.Pull(); err != nil {
-		return fmt.Errorf("git pull: %w", err)
 	}
 
 	if err := g.RemoveGoneBranches(); err != nil {

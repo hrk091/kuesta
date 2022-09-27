@@ -77,10 +77,10 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 		return fmt.Errorf("init gNMI impl server: %w", err)
 	}
 	if err := s.cGit.Pull(); err != nil {
-		return fmt.Errorf("pull config git repo: %w", err)
+		return fmt.Errorf("git pull config repo: %w", err)
 	}
 	if err := s.sGit.Pull(); err != nil {
-		return fmt.Errorf("pull status git repo: %w", err)
+		return fmt.Errorf("git pull status repo: %w", err)
 	}
 
 	pb.RegisterGNMIServer(g, s)
