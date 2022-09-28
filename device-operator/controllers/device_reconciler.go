@@ -53,35 +53,25 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	l := log.FromContext(ctx)
 	l.Info("start reconciliation")
 
-	device := deviceoperator.NewDevice()
-	if err := r.Get(ctx, req.NamespacedName, device); err != nil {
-		r.Error(ctx, err, "get DeviceOperator")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	if err := r.createSubscriberPodIfNotExist(ctx, req.NamespacedName); err != nil {
+		r.Error(ctx, err, "create subscriberPod")
+		return ctrl.Result{}, err
 	}
 
-	// setup subscriber pod
-	subscriberPod := NewSubscribePod(req.NamespacedName, &device.Spec)
-	var p core.Pod
-	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return ctrl.Result{}, fmt.Errorf("get subscriber subscriberPod: %w", err)
-		}
-		if err = ctrl.SetControllerReference(device, subscriberPod, r.Scheme); err != nil {
-			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
-		}
-		if err = r.Create(ctx, subscriberPod); err != nil {
-			return ctrl.Result{}, fmt.Errorf("create subscriber subscriberPod: %w", err)
-		}
+	device, err := r.getDevice(ctx, req.NamespacedName)
+	if err != nil {
+		r.Error(ctx, err, "get Device resource")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// force set checksum and lastApplied config when baseRevision updated
 	if device.Spec.BaseRevision != device.Status.BaseRevision {
 		if err := r.forceSet(ctx, req); err != nil {
+			r.Error(ctx, err, "force update status to the one given by baseRevision")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
 	}
-
 	if device.Status.LastApplied == nil {
 		l.Info("reconcile stopped: lastApplied config is not set. you must initialize lastApplied config to update device config automatically")
 		return ctrl.Result{}, nil
@@ -217,11 +207,9 @@ func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs
 }
 
 func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
-
-	device := deviceoperator.NewDevice()
-	if err := r.Get(ctx, req.NamespacedName, device); err != nil {
-		r.Error(ctx, err, "get DeviceOperator")
-		return errors.WithStack(client.IgnoreNotFound(err))
+	device, err := r.getDevice(ctx, req.NamespacedName)
+	if err != nil {
+		return client.IgnoreNotFound(err)
 	}
 
 	var dr provisioner.DeviceRollout
@@ -229,7 +217,6 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 		Namespace: device.Namespace,
 		Name:      device.Spec.RolloutRef,
 	}, &dr); err != nil {
-		r.Error(ctx, err, "get DeviceRollout")
 		return client.IgnoreNotFound(err)
 	}
 
@@ -238,21 +225,18 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 		Namespace: dr.Namespace,
 		Name:      dr.Name,
 	}, &gr); err != nil {
-		r.Error(ctx, err, "get GitRepository")
 		return client.IgnoreNotFound(err)
 	}
 
 	dp, checksum, err := fetchArtifact(ctx, gr, device.Name, device.Spec.BaseRevision)
 	if err != nil {
-		r.Error(ctx, err, "fetch device config")
-		return err
+		return fmt.Errorf("fetch device config: %w", err)
 	}
 	defer os.RemoveAll(dp.RootDir)
 
 	buf, err := dp.ReadDeviceConfigFile()
 	if err != nil {
-		r.Error(ctx, err, "read device config")
-		return err
+		return fmt.Errorf("read device config: %w", err)
 	}
 
 	old := device.DeepCopy()
@@ -260,8 +244,30 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 	device.Status.Checksum = checksum
 	device.Status.BaseRevision = device.Spec.BaseRevision
 	if err := r.Status().Patch(ctx, device, client.MergeFrom(old)); err != nil {
-		r.Error(ctx, err, "patch DeviceRollout")
+		return fmt.Errorf("patch DeviceRollout: %w", client.IgnoreNotFound(err))
+	}
+	return nil
+}
+
+func (r *OcDemoReconciler) createSubscriberPodIfNotExist(ctx context.Context, nsName types.NamespacedName) error {
+	d, err := r.getDevice(ctx, nsName)
+	if err != nil {
 		return client.IgnoreNotFound(err)
+	}
+
+	subscriberPod := NewSubscribePod(nsName, &d.Spec)
+	var p core.Pod
+	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err == nil {
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("get subscriber Pod: %w", err)
+	}
+
+	if err := ctrl.SetControllerReference(d, subscriberPod, r.Scheme); err != nil {
+		return fmt.Errorf("create subscriber Pod: %w", err)
+	}
+	if err := r.Create(ctx, subscriberPod); err != nil {
+		return fmt.Errorf("create subscriber subscriberPod: %w", err)
 	}
 	return nil
 }

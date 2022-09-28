@@ -19,7 +19,9 @@ package controllers
 import (
 	"context"
 	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -76,4 +78,12 @@ func (r *OcDemoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		Complete(r)
+}
+
+func (r *OcDemoReconciler) getDevice(ctx context.Context, nsName types.NamespacedName) (*deviceoperator.OcDemo, error) {
+	device := deviceoperator.NewDevice()
+	if err := r.Get(ctx, nsName, device); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return device, nil
 }
