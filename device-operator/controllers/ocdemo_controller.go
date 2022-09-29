@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"github.com/hrk091/nwctl/pkg/common"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,22 +33,11 @@ import (
 	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
 )
 
-var (
-	subscriberImage        string
-	subscriberImageVersion string
-	aggregatorUrl          string
-)
-
-func SetupEnv() {
-	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
-	subscriberImageVersion = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE_VERSION")
-	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
-}
-
 // OcDemoReconciler reconciles a OcDemo object
 type OcDemoReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	impl   *DeviceReconciler
 }
 
 //+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=ocdemoes,verbs=get;list;watch;create;update;patch;delete
@@ -65,22 +53,32 @@ type OcDemoReconciler struct {
 func (r *OcDemoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	return r.DoReconcile(ctx, req)
+	return r.impl.DoReconcile(ctx, req)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OcDemoReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.SetupReconciler()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&deviceoperator.OcDemo{}).
 		Watches(
 			&source.Kind{Type: &provisioner.DeviceRollout{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectForDeviceRollout),
+			handler.EnqueueRequestsFromMapFunc(r.impl.findObjectForDeviceRollout),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		Complete(r)
 }
 
-func (r *OcDemoReconciler) getDevice(ctx context.Context, nsName types.NamespacedName) (*deviceoperator.OcDemo, error) {
+func (r *OcDemoReconciler) SetupReconciler() {
+	r.impl = &DeviceReconciler{r}
+}
+
+// DeviceReconciler reconciles a OcDemo object
+type DeviceReconciler struct {
+	*OcDemoReconciler
+}
+
+func (r *DeviceReconciler) getDevice(ctx context.Context, nsName types.NamespacedName) (*deviceoperator.OcDemo, error) {
 	device := deviceoperator.NewDevice()
 	if err := r.Get(ctx, nsName, device); err != nil {
 		return nil, errors.WithStack(err)

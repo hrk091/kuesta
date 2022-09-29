@@ -25,6 +25,7 @@ import (
 	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
 	"github.com/hrk091/nwctl/device-operator/pkg/model"
 	"github.com/hrk091/nwctl/pkg/artifact"
+	"github.com/hrk091/nwctl/pkg/common"
 	device "github.com/hrk091/nwctl/pkg/device"
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
@@ -48,7 +49,19 @@ import (
 	"time"
 )
 
-func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+var (
+	subscriberImage        string
+	subscriberImageVersion string
+	aggregatorUrl          string
+)
+
+func SetupEnv() {
+	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
+	subscriberImageVersion = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE_VERSION")
+	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
+}
+
+func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 	l.Info("start reconciliation")
 
@@ -165,7 +178,7 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
+func (r *DeviceReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
 	if st := logger.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
@@ -173,7 +186,7 @@ func (r *OcDemoReconciler) Error(ctx context.Context, err error, msg string, kvs
 	l.Error(err, msg, kvs...)
 }
 
-func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
+func (r *DeviceReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
 	device, err := r.getDevice(ctx, req.NamespacedName)
 	if err != nil {
 		return client.IgnoreNotFound(err)
@@ -216,7 +229,7 @@ func (r *OcDemoReconciler) forceSet(ctx context.Context, req ctrl.Request) error
 	return nil
 }
 
-func (r *OcDemoReconciler) createSubscriberPodIfNotExist(ctx context.Context, nsName types.NamespacedName) error {
+func (r *DeviceReconciler) createSubscriberPodIfNotExist(ctx context.Context, nsName types.NamespacedName) error {
 	d, err := r.getDevice(ctx, nsName)
 	if err != nil {
 		return client.IgnoreNotFound(err)
@@ -239,7 +252,7 @@ func (r *OcDemoReconciler) createSubscriberPodIfNotExist(ctx context.Context, ns
 	return nil
 }
 
-func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
+func (r *DeviceReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
 	attachedDevices := deviceoperator.NewDeviceList()
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(device.RefField, deviceRollout.GetName()),
