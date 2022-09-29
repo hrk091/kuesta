@@ -17,7 +17,9 @@
 package v1alpha1
 
 import (
+	"fmt"
 	gnmiclient "github.com/openconfig/gnmi/client"
+	"time"
 )
 
 const (
@@ -68,6 +70,15 @@ type DeviceSpec struct {
 	BaseRevision string `json:"baseRevision,omitempty"`
 
 	ConnectionInfo `json:",inline"`
+}
+
+func (s *DeviceSpec) GnmiDestination() gnmiclient.Destination {
+	return gnmiclient.Destination{
+		Addrs:       []string{fmt.Sprintf("%s:%d", s.Address, s.Port)},
+		Target:      "",
+		Timeout:     10 * time.Second,
+		Credentials: s.GnmiCredentials(),
+	}
 }
 
 // DeviceStatus defines the observed state of OcDemo

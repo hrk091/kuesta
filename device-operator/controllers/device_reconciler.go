@@ -29,7 +29,6 @@ import (
 	"github.com/hrk091/nwctl/pkg/logger"
 	"github.com/hrk091/nwctl/pkg/nwctl"
 	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
-	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	gnmiproto "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
@@ -78,10 +77,7 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	var dr provisioner.DeviceRollout
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: device.Namespace,
-		Name:      device.Spec.RolloutRef,
-	}, &dr); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: device.Namespace, Name: device.Spec.RolloutRef}, &dr); err != nil {
 		r.Error(ctx, err, "get DeviceRollout")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -108,10 +104,7 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	l.Info(fmt.Sprintf("next: revision=%s", next.GitRevision))
 
 	var gr fluxcd.GitRepository
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: dr.Namespace,
-		Name:      dr.Name,
-	}, &gr); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Namespace: dr.Namespace, Name: dr.Name}, &gr); err != nil {
 		r.Error(ctx, err, "get GitRepository")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -127,51 +120,25 @@ func (r *OcDemoReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	defer os.RemoveAll(dp.RootDir)
 
-	cctx := cuecontext.New()
-
 	newBuf, err := dp.ReadDeviceConfigFile()
 	if err != nil {
 		r.Error(ctx, err, "read device config")
 		return ctrl.Result{}, err
 	}
-	newObj, err := decodeCueBuf(cctx, newBuf)
+	sr, err := makeSetRequest(newBuf, device.Status.LastApplied)
 	if err != nil {
-		r.Error(ctx, err, "load new device config")
+		r.Error(ctx, err, "make gnmi SetRequest")
 		return ctrl.Result{}, err
 	}
-	curObj, err := decodeCueBuf(cctx, device.Status.LastApplied)
-	if err != nil {
-		r.Error(ctx, err, "load current device config")
-		return ctrl.Result{}, err
-	}
+	l.V(1).Info("gNMI notification", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
 
-	// TODO enhance performance
-	n, err := ygot.Diff(curObj, newObj, &ygot.DiffPathOpt{
-		MapToSinglePath: true,
-	})
-	if err != nil {
-		r.Error(ctx, err, "get config diff")
-		return ctrl.Result{}, err
-	}
-	l.V(1).Info("gNMI notification", "updated", n.GetUpdate(), "deleted", n.GetDelete())
-
-	sr := gnmiproto.SetRequest{
-		Prefix: n.Prefix,
-		Delete: n.Delete,
-		Update: n.Update,
-	}
-	c, err := gnmiclient.New(ctx, gclient.Destination{
-		Addrs:       []string{fmt.Sprintf("%s:%d", device.Spec.Address, device.Spec.Port)},
-		Target:      "",
-		Timeout:     10 * time.Second,
-		Credentials: device.Spec.GnmiCredentials(),
-	})
+	c, err := gnmiclient.New(ctx, device.Spec.GnmiDestination())
 	if err != nil {
 		r.Error(ctx, err, "create gNMI client")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, err
 	}
 
-	resp, gnmiSetErr := c.(*gnmiclient.Client).Set(ctx, &sr)
+	resp, gnmiSetErr := c.(*gnmiclient.Client).Set(ctx, sr)
 
 	oldDevice := device.DeepCopy()
 	oldDr := dr.DeepCopy()
@@ -255,7 +222,7 @@ func (r *OcDemoReconciler) createSubscriberPodIfNotExist(ctx context.Context, ns
 		return client.IgnoreNotFound(err)
 	}
 
-	subscriberPod := NewSubscribePod(nsName, &d.Spec)
+	subscriberPod := newSubscribePod(nsName, &d.Spec)
 	var p core.Pod
 	if err := r.Get(ctx, client.ObjectKeyFromObject(subscriberPod), &p); err == nil {
 		return nil
@@ -270,6 +237,29 @@ func (r *OcDemoReconciler) createSubscriberPodIfNotExist(ctx context.Context, ns
 		return fmt.Errorf("create subscriber subscriberPod: %w", err)
 	}
 	return nil
+}
+
+func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
+	attachedDevices := deviceoperator.NewDeviceList()
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(device.RefField, deviceRollout.GetName()),
+		Namespace:     deviceRollout.GetNamespace(),
+	}
+	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
+		fmt.Printf("unable to list effected devices: %v\n", err)
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(attachedDevices.Items))
+	for i, v := range attachedDevices.Items {
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      v.GetName(),
+				Namespace: v.GetNamespace(),
+			},
+		}
+	}
+	return requests
 }
 
 func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revision string) (*nwctl.DevicePath, string, error) {
@@ -298,8 +288,8 @@ func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revisio
 	return dp, checksum, err
 }
 
-func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
-	val, err := nwctl.NewValueFromBytes(cctx, buf)
+func decodeCueBytes(cctx *cue.Context, bytes []byte) (*model.Device, error) {
+	val, err := nwctl.NewValueFromBytes(cctx, bytes)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -310,30 +300,35 @@ func decodeCueBuf(cctx *cue.Context, buf []byte) (*model.Device, error) {
 	return &o, nil
 }
 
-func (r *OcDemoReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
-	attachedDevices := deviceoperator.NewDeviceList()
-	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(device.RefField, deviceRollout.GetName()),
-		Namespace:     deviceRollout.GetNamespace(),
+func makeSetRequest(newBuf, curBuf []byte) (*gnmiproto.SetRequest, error) {
+	cctx := cuecontext.New()
+
+	newObj, err := decodeCueBytes(cctx, newBuf)
+	if err != nil {
+		return nil, fmt.Errorf("load new device config: %w", err)
 	}
-	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
-		fmt.Printf("unable to list effected devices: %v\n", err)
-		return []reconcile.Request{}
+	curObj, err := decodeCueBytes(cctx, curBuf)
+	if err != nil {
+		return nil, fmt.Errorf("load current device config: %w", err)
 	}
 
-	requests := make([]reconcile.Request, len(attachedDevices.Items))
-	for i, v := range attachedDevices.Items {
-		requests[i] = reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      v.GetName(),
-				Namespace: v.GetNamespace(),
-			},
-		}
+	// TODO enhance performance
+	n, err := ygot.Diff(curObj, newObj, &ygot.DiffPathOpt{
+		MapToSinglePath: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get config diff: %w", err)
 	}
-	return requests
+
+	sr := &gnmiproto.SetRequest{
+		Prefix: n.Prefix,
+		Delete: n.Delete,
+		Update: n.Update,
+	}
+	return sr, nil
 }
 
-func NewSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.Pod {
+func newSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.Pod {
 	allowPrivilegeEscalation := false
 
 	return &core.Pod{
