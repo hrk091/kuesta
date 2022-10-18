@@ -9,8 +9,8 @@ docker-build: test
 docker-push:
 	docker push ${IMG}
 
-.PHONY: manifests
-manifests: kustomize
+.PHONY: deploy-preview
+deploy-preview: kustomize
 	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
 	kubectl kustomize config/${KUSTOMIZE_ROOT}
 
