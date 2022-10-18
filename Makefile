@@ -34,6 +34,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: fmt vet ## Run tests.
+	git diff | cat
 	go test ./... -coverprofile cover.out
 	cd provisioner && make test
 	cd device-operator && make test
