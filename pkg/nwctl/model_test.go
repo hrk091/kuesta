@@ -170,7 +170,7 @@ func TestServerTransformer_Apply(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("bad: missing required fields", func(t *testing.T) {
+	t.Run("err: missing required fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingRequired)
 		exitOnErr(t, in.Err())
 
@@ -331,7 +331,7 @@ config: {
 		assert.True(t, want.Equals(cctx.CompileBytes(got)))
 	})
 
-	t.Run("bad: config missing", func(t *testing.T) {
+	t.Run("err: config missing", func(t *testing.T) {
 		cctx := cuecontext.New()
 		given := []byte(`something: {foo: "bar"}`)
 

@@ -52,7 +52,7 @@ func TestFetchArtifact(t *testing.T) {
 			false,
 		},
 		{
-			"bad: wrong checksum",
+			"err: wrong checksum",
 			func(w http.ResponseWriter, r *http.Request) {
 				if _, err := io.Copy(w, buf); err != nil {
 					panic(err)
@@ -62,7 +62,7 @@ func TestFetchArtifact(t *testing.T) {
 			true,
 		},
 		{
-			"bad: wrong contents",
+			"err: wrong contents",
 			func(w http.ResponseWriter, r *http.Request) {
 				if _, err := w.Write([]byte("wrong content")); err != nil {
 					panic(err)
@@ -72,7 +72,7 @@ func TestFetchArtifact(t *testing.T) {
 			true,
 		},
 		{
-			"bad: error from server",
+			"err: error from server",
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(500)
 			},
@@ -111,7 +111,7 @@ func TestFetchArtifact(t *testing.T) {
 		})
 	}
 
-	t.Run("bad: url not set", func(t *testing.T) {
+	t.Run("err: url not set", func(t *testing.T) {
 		repo := sourcev1.GitRepository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test",

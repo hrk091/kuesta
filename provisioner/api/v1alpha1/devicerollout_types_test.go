@@ -254,19 +254,19 @@ func TestDeviceRolloutStatus_ResolveNextDeviceConfig(t *testing.T) {
 			&prev,
 		},
 		{
-			"bad: not set",
+			"err: not set",
 			"device1",
 			"",
 			nil,
 		},
 		{
-			"bad: healthy but not existing device",
+			"err: healthy but not existing device",
 			"not-exist",
 			apiv1alpha1.RolloutPhaseHealthy,
 			nil,
 		},
 		{
-			"bad: rollback but not existing device",
+			"err: rollback but not existing device",
 			"not-exist",
 			apiv1alpha1.RolloutPhaseRollback,
 			nil,

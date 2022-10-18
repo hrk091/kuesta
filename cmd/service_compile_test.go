@@ -29,12 +29,12 @@ func TestNewRootCmd_ServiceCompile(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"bad: service not set",
+			"err: service not set",
 			[]string{"service", "compile", "-r=./"},
 			true,
 		},
 		{
-			"bad: keys not set",
+			"err: keys not set",
 			[]string{"service", "compile", "abc", "-r=./"},
 			true,
 		},

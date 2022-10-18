@@ -60,7 +60,7 @@ func TestNewValueFromBytes(t *testing.T) {
 			false,
 		},
 		{
-			"bad: cue format",
+			"err: cue format",
 			invalidInput,
 			"",
 			true,
@@ -131,12 +131,12 @@ func TestNewValueWithInstance(t *testing.T) {
 			false,
 		},
 		{
-			"bad: not exist",
+			"err: not exist",
 			[]string{"notExist.cue"},
 			true,
 		},
 		{
-			"bad: no file given",
+			"err: no file given",
 			[]string{},
 			true,
 		},

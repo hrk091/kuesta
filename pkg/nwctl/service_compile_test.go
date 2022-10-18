@@ -51,21 +51,21 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: service is empty",
+			"err: service is empty",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Service = ""
 			},
 			true,
 		},
 		{
-			"bad: keys length is 0",
+			"err: keys length is 0",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Keys = nil
 			},
 			true,
 		},
 		{
-			"bad: one of keys is empty",
+			"err: one of keys is empty",
 			func(cfg *nwctl.ServiceCompileCfg) {
 				cfg.Keys = []string{"one", ""}
 			},

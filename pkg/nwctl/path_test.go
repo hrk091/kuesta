@@ -68,14 +68,14 @@ func TestServicePath_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: rootpath is empty",
+			"err: rootpath is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.RootDir = ""
 			},
 			true,
 		},
 		{
-			"bad: one of keys is empty",
+			"err: one of keys is empty",
 			func(cfg *nwctl.ServicePath) {
 				cfg.Keys = []string{"one", ""}
 			},
@@ -138,7 +138,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -149,7 +149,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -204,7 +204,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -215,7 +215,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -256,7 +256,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -267,7 +267,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -321,7 +321,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: invalid file format", func(t *testing.T) {
+	t.Run("err: invalid file format", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		given := []byte(`{"keys": ["device", "port"]`)
@@ -332,7 +332,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -343,7 +343,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
@@ -399,7 +399,7 @@ func TestDevicePath_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: rootpath is empty",
+			"err: rootpath is empty",
 			func(cfg *nwctl.DevicePath) {
 				cfg.RootDir = ""
 			},
@@ -461,7 +461,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		p.Device = "device2"
@@ -472,7 +472,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidDevicePath()
 		p.Device = "notExist"
 		p.RootDir = dir
@@ -514,7 +514,7 @@ func TestDevicePath_CheckSum(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
-	t.Run("bad: config not found", func(t *testing.T) {
+	t.Run("err: config not found", func(t *testing.T) {
 		dir := t.TempDir()
 		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
 
@@ -543,7 +543,7 @@ func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
 		}
 	})
 
-	t.Run("bad: file not exist", func(t *testing.T) {
+	t.Run("err: file not exist", func(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		p.Device = "device2"
@@ -554,7 +554,7 @@ func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: dir not exist", func(t *testing.T) {
+	t.Run("err: dir not exist", func(t *testing.T) {
 		p := newValidDevicePath()
 		p.Device = "notExist"
 		p.RootDir = dir
@@ -587,14 +587,14 @@ func TestParseServiceInputPath(t *testing.T) {
 			false,
 		},
 		{
-			"bad: not start from services",
+			"err: not start from services",
 			"devices/device1/config.cue",
 			"",
 			[]string{},
 			true,
 		},
 		{
-			"bad: file is not input.cue",
+			"err: file is not input.cue",
 			"services/foo/one/computed/device1.cue",
 			"",
 			[]string{},
@@ -635,13 +635,13 @@ func TestParseServiceComputedFilePath(t *testing.T) {
 			false,
 		},
 		{
-			"bad: not start from services",
+			"err: not start from services",
 			"devices/device1/config.cue",
 			"",
 			true,
 		},
 		{
-			"bad: file is not in computed dir",
+			"err: file is not in computed dir",
 			"services/foo/one/input.cue",
 			"",
 			true,
@@ -685,7 +685,7 @@ func TestNewDevicePathList(t *testing.T) {
 		assert.Len(t, paths, 0)
 	})
 
-	t.Run("bad: no root", func(t *testing.T) {
+	t.Run("err: no root", func(t *testing.T) {
 		dir := t.TempDir()
 
 		_, err := nwctl.NewDevicePathList(dir)

@@ -45,7 +45,7 @@ func TestRootCfg_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: Verbose is over range",
+			"err: Verbose is over range",
 			func(cfg *nwctl.RootCfg) {
 				cfg.Verbose = 4
 			},

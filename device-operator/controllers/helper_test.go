@@ -136,7 +136,7 @@ func TestNewTestDataFromFixture(t *testing.T) {
 		assert.Equal(t, dr.Namespace, "test-ns")
 	})
 
-	t.Run("bad: file not found", func(t *testing.T) {
+	t.Run("err: file not found", func(t *testing.T) {
 		var dr nwctlv1alpha1.DeviceRollout
 		err := newTestDataFromFixture("not-found", &dr)
 		assert.Error(t, err)

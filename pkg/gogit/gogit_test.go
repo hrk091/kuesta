@@ -47,7 +47,7 @@ func TestGitOptions_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: path is empty",
+			"err: path is empty",
 			func(g *gogit.GitOptions) {
 				g.Path = ""
 			},
@@ -272,7 +272,7 @@ func TestGit_Checkout(t *testing.T) {
 		assert.Equal(t, "test", b)
 	})
 
-	t.Run("bad: checkout to existing branch with create opt", func(t *testing.T) {
+	t.Run("err: checkout to existing branch with create opt", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
@@ -284,7 +284,7 @@ func TestGit_Checkout(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: checkout to new branch without create opt", func(t *testing.T) {
+	t.Run("err: checkout to new branch without create opt", func(t *testing.T) {
 		_, dir := initRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
@@ -374,7 +374,7 @@ func TestGit_Push(t *testing.T) {
 		assert.Equal(t, wantMsg, c.Message)
 	})
 
-	t.Run("bad: remote not exist", func(t *testing.T) {
+	t.Run("err: remote not exist", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		noExistRemote := "not-exist"
 

@@ -182,7 +182,7 @@ func TestGetEntireConfig(t *testing.T) {
 			false,
 		},
 		{
-			"bad: no content",
+			"err: no content",
 			func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 				resp := &pb.GetResponse{
 					Notification: []*pb.Notification{},
@@ -192,7 +192,7 @@ func TestGetEntireConfig(t *testing.T) {
 			true,
 		},
 		{
-			"bad: error response",
+			"err: error response",
 			func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 				return nil, status.Error(codes.Internal, "error")
 			},
@@ -240,7 +240,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("bad: error response", func(t *testing.T) {
+	t.Run("err: error response", func(t *testing.T) {
 		cfg := Config{
 			Device: "device1",
 		}
@@ -253,7 +253,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: wrong url", func(t *testing.T) {
+	t.Run("err: wrong url", func(t *testing.T) {
 		cfg := Config{
 			Device: "device1",
 		}
@@ -263,7 +263,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("bad: connection error", func(t *testing.T) {
+	t.Run("err: connection error", func(t *testing.T) {
 		cfg := Config{
 			Device: "device1",
 		}

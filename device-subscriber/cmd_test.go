@@ -44,21 +44,21 @@ func TestConfig_Validate(t *testing.T) {
 			false,
 		},
 		{
-			"bad: device is empty",
+			"err: device is empty",
 			func(cfg *Config) {
 				cfg.Device = ""
 			},
 			true,
 		},
 		{
-			"bad: addr is empty",
+			"err: addr is empty",
 			func(cfg *Config) {
 				cfg.Addr = ""
 			},
 			true,
 		},
 		{
-			"bad: aggregator-url is empty",
+			"err: aggregator-url is empty",
 			func(cfg *Config) {
 				cfg.AggregatorURL = ""
 			},
@@ -86,17 +86,17 @@ func TestNewRootCmd(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"bad: device not set",
+			"err: device not set",
 			[]string{"nwctl-subscribe", "-addr=:9339", "-aggregator-url=http://localhost:8080"},
 			true,
 		},
 		{
-			"bad: addr not set",
+			"err: addr not set",
 			[]string{"nwctl-subscribe", "-d=device1", "-aggregator-url=http://localhost:8080"},
 			true,
 		},
 		{
-			"bad: aggregator-url not set",
+			"err: aggregator-url not set",
 			[]string{"nwctl-subscribe", "-d=device1", "-addr=:9339"},
 			true,
 		},

@@ -52,7 +52,7 @@ func TestCollectPartialDeviceConfig(t *testing.T) {
 		assert.Equal(t, 0, len(files))
 	})
 
-	t.Run("bad: directory not exist", func(t *testing.T) {
+	t.Run("err: directory not exist", func(t *testing.T) {
 		_, err := nwctl.CollectPartialDeviceConfig("notexist", "device1")
 		if assert.Error(t, err) {
 			var pathError *fs.PathError
