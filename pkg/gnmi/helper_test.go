@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+	"time"
 )
 
 func TestGetGNMIServiceVersion(t *testing.T) {
@@ -79,5 +80,10 @@ func TestNewServer(t *testing.T) {
 	assert.True(t, getCalled)
 	assert.True(t, setCalled)
 	assert.True(t, capabilitiesCalled)
-	assert.True(t, subscribeCalled)
+
+	isSubscribeCalled := func() bool {
+		return subscribeCalled
+	}
+
+	assert.Eventually(t, isSubscribeCalled, time.Millisecond*100, time.Millisecond*10)
 }
