@@ -18,7 +18,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - devicerollouts
   verbs:
@@ -26,7 +26,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - devicerollouts/status
   verbs:
@@ -34,7 +34,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - ocdemoes
   verbs:
@@ -46,13 +46,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - ocdemoes/finalizers
   verbs:
   - update
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - ocdemoes/status
   verbs:

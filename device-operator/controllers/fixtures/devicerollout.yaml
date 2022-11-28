@@ -1,4 +1,4 @@
-apiVersion: nwctl.hrk091.dev/v1alpha1
+apiVersion: kuesta.hrk091.dev/v1alpha1
 kind: DeviceRollout
 metadata:
   name: test-configrepo

@@ -6,7 +6,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - devicerollouts
   verbs:
@@ -18,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - devicerollouts/finalizers
   verbs:
   - update
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - devicerollouts/status
   verbs:

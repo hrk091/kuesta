@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
-  name: devicerollouts.nwctl.hrk091.dev
+  name: devicerollouts.kuesta.hrk091.dev

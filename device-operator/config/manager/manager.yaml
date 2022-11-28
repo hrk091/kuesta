@@ -42,9 +42,9 @@ spec:
         name: manager
         env:
           - name: NWCTL_AGGREGATOR_URL
-            value: http://nwctl-aggregator.nwctl-system:8000
+            value: http://kuesta-aggregator.kuesta-system:8000
           - name: NWCTL_SUBSCRIBER_IMAGE
-            value: nwctl-subscriber
+            value: kuesta-subscriber
           - name: NWCTL_SUBSCRIBER_IMAGE_VERSION
             value: latest
         securityContext:

@@ -5,7 +5,7 @@ metadata:
   name: ocdemo-viewer-role
 rules:
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - ocdemoes
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - nwctl.hrk091.dev
+  - kuesta.hrk091.dev
   resources:
   - ocdemoes/status
   verbs:
