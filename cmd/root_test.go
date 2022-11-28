@@ -32,10 +32,10 @@ import (
 
 func TestNewRootCmd(t *testing.T) {
 	dummyToken := "dummy-git-token"
-	exitOnErr(t, os.Setenv("NWCTL_GIT_TOKEN", dummyToken))
+	exitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
 
 	dummyRootpath := "dummy-rootpath"
-	exitOnErr(t, os.Setenv("NWCTL_CONFIG_ROOT_PATH", dummyRootpath))
+	exitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
 
 	_ = cmd.NewRootCmd()
 	assert.Equal(t, dummyToken, viper.GetString(cmd.FlagGitToken))

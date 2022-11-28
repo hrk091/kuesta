@@ -17,7 +17,7 @@ replacements:
         index: 1
     targets:
       - fieldPaths:
-          - spec.template.spec.containers.[name=manager].env.[name=NWCTL_SUBSCRIBER_IMAGE_VERSION].value
+          - spec.template.spec.containers.[name=manager].env.[name=KUESTA_SUBSCRIBER_IMAGE_VERSION].value
         select:
           kind: Deployment
           name: device-operator-controller-manager
