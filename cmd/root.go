@@ -66,14 +66,14 @@ const (
 // NewRootCmd creates command root.
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "nwctl",
-		Short:        "nwctl controls Network Element Configurations.",
+		Use:          "kuesta",
+		Short:        "kuesta controls Network Element Configurations.",
 		SilenceUsage: true,
 	}
 
 	cobra.OnInitialize(initConfig)
 
-	cmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.nwctl.yaml)")
+	cmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.kuesta.yaml)")
 
 	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
@@ -131,14 +131,14 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".nwctl" (without extension).
+		// Search config in home directory with name ".kuesta" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".nwctl")
+		viper.SetConfigName(".kuesta")
 	}
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.SetEnvPrefix("NWCTL")
+	viper.SetEnvPrefix("KUESTA")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
