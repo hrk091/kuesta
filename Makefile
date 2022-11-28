@@ -1,9 +1,9 @@
-IMG ?= nwctl:latest
+IMG ?= kuesta:latest
 KUSTOMIZE_ROOT ?= default
 
 .PHONY: docker-build
 docker-build: test
-	docker build -f build/Dockerfile.nwctl -t ${IMG} .
+	docker build -f build/Dockerfile.kuesta -t ${IMG} .
 
 .PHONY: docker-push
 docker-push:
@@ -11,17 +11,17 @@ docker-push:
 
 .PHONY: deploy-preview
 deploy-preview: kustomize
-	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
+	cd config/bases/kuesta && $(KUSTOMIZE) edit set image kuesta=${IMG}
 	kubectl kustomize config/${KUSTOMIZE_ROOT}
 
 .PHONY: deploy
 deploy: kustomize
-	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
+	cd config/bases/kuesta && $(KUSTOMIZE) edit set image kuesta=${IMG}
 	kubectl apply -k config/${KUSTOMIZE_ROOT}
 
 .PHONY: undeploy
 undeploy: kustomize
-	cd config/bases/nwctl && $(KUSTOMIZE) edit set image nwctl=${IMG}
+	cd config/bases/kuesta && $(KUSTOMIZE) edit set image kuesta=${IMG}
 	kubectl delete -k config/${KUSTOMIZE_ROOT}
 
 .PHONY: fmt

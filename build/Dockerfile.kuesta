@@ -16,14 +16,14 @@ ARG GOARCH=amd64
 RUN CGO_ENABLED=${CGO_ENABLED} \
     GOOS=${GOOS} \
     GOARCH=${GOARCH} \
-    go build -o nwctl -ldflags "-w -s" main.go
+    go build -o kuesta -ldflags "-w -s" main.go
 
 
 FROM scratch
 WORKDIR /bin
-COPY --from=builder /workspace/nwctl .
+COPY --from=builder /workspace/kuesta .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 EXPOSE 9339
 
-ENTRYPOINT ["/bin/nwctl"]
+ENTRYPOINT ["/bin/kuesta"]

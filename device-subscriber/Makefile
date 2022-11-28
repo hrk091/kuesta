@@ -1,4 +1,4 @@
-IMG ?= nwctl-subscriber:latest
+IMG ?= kuesta-subscriber:latest
 
 .PHONY: docker-build
 docker-build: test
