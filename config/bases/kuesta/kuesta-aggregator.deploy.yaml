@@ -1,49 +1,49 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nwctl-aggregator
+  name: kuesta-aggregator
 spec:
   selector:
     matchLabels:
-      app: nwctl-aggregator
+      app: kuesta-aggregator
   replicas: 1
   template:
     metadata:
       labels:
-        app: nwctl-aggregator
+        app: kuesta-aggregator
     spec:
       containers:
-        - name: nwctl
-          image: nwctl:latest
+        - name: kuesta
+          image: kuesta:latest
           command:
-            - /bin/nwctl
+            - /bin/kuesta
           args:
             - device
             - aggregate
           env:
-            - name: NWCTL_DEVEL
+            - name: KUESTA_DEVEL
               value: "true"
-            - name: NWCTL_VERBOSE
+            - name: KUESTA_VERBOSE
               value: "2"
-            - name: NWCTL_STATUS_ROOT_PATH
+            - name: KUESTA_STATUS_ROOT_PATH
               value: /data/repo_status
-            - name: NWCTL_STATUS_REPO_URL
+            - name: KUESTA_STATUS_REPO_URL
               value: https://path/to/repo-status
-            - name: NWCTL_GIT_TOKEN
+            - name: KUESTA_GIT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: nwctl-secrets
+                  name: kuesta-secrets
                   key: gitToken
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /data
-              name: nwctl-aggregator-data
+              name: kuesta-aggregator-data
           ports:
             - containerPort: 8000
               name: http
               protocol: TCP
       volumes:
-        - name: nwctl-aggregator-data
+        - name: kuesta-aggregator-data
           persistentVolumeClaim:
-            claimName: nwctl-aggregator-data
+            claimName: kuesta-aggregator-data

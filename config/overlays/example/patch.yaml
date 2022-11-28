@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nwctl-aggregator
+  name: kuesta-aggregator
 spec:
   template:
     spec:
       containers:
-        - name: nwctl
+        - name: kuesta
           env:
-            - name: NWCTL_STATUS_REPO_URL
-              value: https://github.com/nwctl-example/nwctl-status
+            - name: KUESTA_STATUS_REPO_URL
+              value: https://github.com/kuesta-example/kuesta-status
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nwctl-server
+  name: kuesta-server
 spec:
   template:
     spec:
       containers:
-        - name: nwctl
+        - name: kuesta
           env:
-            - name: NWCTL_CONFIG_REPO_URL
-              value: https://github.com/nwctl-example/nwctl-config
-            - name: NWCTL_STATUS_REPO_URL
-              value: https://github.com/nwctl-example/nwctl-status
+            - name: KUESTA_CONFIG_REPO_URL
+              value: https://github.com/kuesta-example/kuesta-config
+            - name: KUESTA_STATUS_REPO_URL
+              value: https://github.com/kuesta-example/kuesta-status

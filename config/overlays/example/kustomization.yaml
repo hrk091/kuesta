@@ -4,12 +4,12 @@ kind: Kustomization
 resources:
 - ../../default
 
-namespace: nwctl-system
+namespace: kuesta-system
 
 secretGenerator:
   - envs:
       - .env.secret
-    name: nwctl-secrets
+    name: kuesta-secrets
 
 patches:
 - patch.yaml

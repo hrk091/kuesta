@@ -1,52 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nwctl-server
+  name: kuesta-server
 spec:
   selector:
     matchLabels:
-      app: nwctl-server
+      app: kuesta-server
   replicas: 1
   template:
     metadata:
       labels:
-        app: nwctl-server
+        app: kuesta-server
     spec:
       containers:
-        - name: nwctl
-          image: nwctl:latest
+        - name: kuesta
+          image: kuesta:latest
           command:
-            - /bin/nwctl
+            - /bin/kuesta
           args:
             - serve
           env:
-            - name: NWCTL_DEVEL
+            - name: KUESTA_DEVEL
               value: "true"
-            - name: NWCTL_VERBOSE
+            - name: KUESTA_VERBOSE
               value: "2"
-            - name: NWCTL_CONFIG_ROOT_PATH
+            - name: KUESTA_CONFIG_ROOT_PATH
               value: /data/repo_config
-            - name: NWCTL_CONFIG_REPO_URL
+            - name: KUESTA_CONFIG_REPO_URL
               value: https://path/to/repo-config
-            - name: NWCTL_STATUS_ROOT_PATH
+            - name: KUESTA_STATUS_ROOT_PATH
               value: /data/repo_status
-            - name: NWCTL_STATUS_REPO_URL
+            - name: KUESTA_STATUS_REPO_URL
               value: https://path/to/repo-status
-            - name: NWCTL_GIT_TOKEN
+            - name: KUESTA_GIT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: nwctl-secrets
+                  name: kuesta-secrets
                   key: gitToken
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /data
-              name: nwctl-server-data
+              name: kuesta-server-data
           ports:
             - name: grpc
               containerPort: 9339
               protocol: TCP
       volumes:
-        - name: nwctl-server-data
+        - name: kuesta-server-data
           persistentVolumeClaim:
-            claimName: nwctl-server-data
+            claimName: kuesta-server-data
