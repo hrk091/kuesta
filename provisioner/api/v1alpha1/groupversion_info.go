@@ -20,9 +20,9 @@
  THE SOFTWARE.
 */
 
-// Package v1alpha1 contains API Schema definitions for the nwctl v1alpha1 API group
+// Package v1alpha1 contains API Schema definitions for the kuesta v1alpha1 API group
 //+kubebuilder:object:generate=true
-//+groupName=nwctl.hrk091.dev
+//+groupName=kuesta.hrk091.dev
 package v1alpha1
 
 import (
@@ -32,7 +32,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "nwctl.hrk091.dev", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "kuesta.hrk091.dev", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

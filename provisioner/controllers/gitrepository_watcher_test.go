@@ -27,7 +27,7 @@ import (
 	"fmt"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io"
@@ -82,7 +82,7 @@ var _ = Describe("GitRepository watcher", func() {
 	})
 
 	AfterEach(func() {
-		err := k8sClient.DeleteAllOf(ctx, &nwctlv1alpha1.DeviceRollout{}, client.InNamespace(namespace))
+		err := k8sClient.DeleteAllOf(ctx, &kuestav1alpha1.DeviceRollout{}, client.InNamespace(namespace))
 		Expect(err).NotTo(HaveOccurred())
 		err = k8sClient.DeleteAllOf(ctx, &sourcev1.GitRepository{}, client.InNamespace(namespace))
 		Expect(err).NotTo(HaveOccurred())
@@ -90,17 +90,17 @@ var _ = Describe("GitRepository watcher", func() {
 	})
 
 	It("should create DeviceRollout", func() {
-		var dr nwctlv1alpha1.DeviceRollout
+		var dr kuestav1alpha1.DeviceRollout
 		Eventually(func() error {
 			return k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
 		}, timeout, interval).Should(Succeed())
 
-		want := nwctlv1alpha1.DeviceConfigMap{
-			"device1": nwctlv1alpha1.DeviceConfig{
+		want := kuestav1alpha1.DeviceConfigMap{
+			"device1": kuestav1alpha1.DeviceConfig{
 				Checksum:    hash(config1),
 				GitRevision: revision,
 			},
-			"device2": nwctlv1alpha1.DeviceConfig{
+			"device2": kuestav1alpha1.DeviceConfig{
 				Checksum:    hash(config2),
 				GitRevision: revision,
 			},
@@ -120,7 +120,7 @@ var _ = Describe("GitRepository watcher", func() {
 			must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
 
-			var dr nwctlv1alpha1.DeviceRollout
+			var dr kuestav1alpha1.DeviceRollout
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
 			}, timeout, interval).Should(Succeed())
@@ -148,7 +148,7 @@ var _ = Describe("GitRepository watcher", func() {
 		})
 
 		It("should update DeviceRollout", func() {
-			var dr nwctlv1alpha1.DeviceRollout
+			var dr kuestav1alpha1.DeviceRollout
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr); err != nil {
 					return err
@@ -159,12 +159,12 @@ var _ = Describe("GitRepository watcher", func() {
 				return nil
 			}, timeout, interval).Should(Succeed())
 
-			want := nwctlv1alpha1.DeviceConfigMap{
-				"device1": nwctlv1alpha1.DeviceConfig{
+			want := kuestav1alpha1.DeviceConfigMap{
+				"device1": kuestav1alpha1.DeviceConfig{
 					Checksum:    hash(config1),
 					GitRevision: revision,
 				},
-				"device2": nwctlv1alpha1.DeviceConfig{
+				"device2": kuestav1alpha1.DeviceConfig{
 					Checksum:    hash(config2),
 					GitRevision: revision,
 				},

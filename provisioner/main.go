@@ -40,7 +40,7 @@ import (
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
-	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/nttcom/kuesta/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
 
@@ -56,7 +56,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
 
-	utilruntime.Must(nwctlv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kuestav1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

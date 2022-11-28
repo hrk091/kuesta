@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 )
 
 // DeviceRolloutReconciler reconciles a DeviceRollout object
@@ -39,9 +39,9 @@ type DeviceRolloutReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -49,7 +49,7 @@ func (r *DeviceRolloutReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	l := log.FromContext(ctx)
 	l.Info("start reconciliation")
 
-	var dr nwctlv1alpha1.DeviceRollout
+	var dr kuestav1alpha1.DeviceRollout
 	if err := r.Get(ctx, req.NamespacedName, &dr); err != nil {
 		r.Error(ctx, err, "get DeviceRollout")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -79,6 +79,6 @@ func (r *DeviceRolloutReconciler) Error(ctx context.Context, err error, msg stri
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeviceRolloutReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&nwctlv1alpha1.DeviceRollout{}).
+		For(&kuestav1alpha1.DeviceRollout{}).
 		Complete(r)
 }

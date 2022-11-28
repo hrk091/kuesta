@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	AnnKeyResetStatus = "nwctl.hrk091.dev/reset"
+	AnnKeyResetStatus = "kuesta.hrk091.dev/reset"
 )
 
 //+kubebuilder:object:root=true
