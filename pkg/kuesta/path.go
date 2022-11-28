@@ -26,7 +26,7 @@ import (
 	"crypto/sha256"
 	"cuelang.org/go/cue"
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
 	"io"
 	"os"

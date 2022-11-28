@@ -35,8 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
-	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 )
 
 // OcDemoReconciler reconciles a OcDemo object

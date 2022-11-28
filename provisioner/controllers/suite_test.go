@@ -42,8 +42,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
-	"github.com/hrk091/nwctl/provisioner/controllers"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	"github.com/nttcom/kuesta/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

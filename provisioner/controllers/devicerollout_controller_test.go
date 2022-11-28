@@ -25,7 +25,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"

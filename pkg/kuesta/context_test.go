@@ -20,52 +20,25 @@
  THE SOFTWARE.
 */
 
-package nwctl
+package nwctl_test
 
 import (
-	"github.com/hrk091/nwctl/pkg/common"
-	"github.com/hrk091/nwctl/pkg/gogit"
+	"bytes"
+	"context"
+	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
-type RootCfg struct {
-	Verbose        uint8 `validate:"min=0,max=3"`
-	Devel          bool
-	ConfigRootPath string
-	StatusRootPath string
-	ConfigRepoUrl  string
-	StatusRepoUrl  string
-	GitTrunk       string
-	GitRemote      string
-	GitToken       string
-	GitUser        string
-	GitEmail       string
+func TestWriterFromContext(t *testing.T) {
+	ctx := context.Background()
+	assert.Equal(t, os.Stdout, nwctl.WriterFromContext(ctx))
 }
 
-// Validate validates exposed fields according to the `validate` tag.
-func (c *RootCfg) Validate() error {
-	return common.Validate(c)
-}
-
-func (c *RootCfg) ConfigGitOptions() *gogit.GitOptions {
-	return &gogit.GitOptions{
-		RepoUrl:     c.ConfigRepoUrl,
-		Path:        c.ConfigRootPath,
-		TrunkBranch: c.GitTrunk,
-		RemoteName:  c.GitRemote,
-		Token:       c.GitToken,
-		User:        c.GitUser,
-		Email:       c.GitEmail,
-	}
-}
-
-func (c *RootCfg) StatusGitOptions() *gogit.GitOptions {
-	return &gogit.GitOptions{
-		RepoUrl:     c.StatusRepoUrl,
-		Path:        c.StatusRootPath,
-		TrunkBranch: c.GitTrunk,
-		RemoteName:  c.GitRemote,
-		Token:       c.GitToken,
-		User:        c.GitUser,
-		Email:       c.GitEmail,
-	}
+func TestWriterFromContext_WithWriter(t *testing.T) {
+	buf := &bytes.Buffer{}
+	ctx := context.Background()
+	ctx = nwctl.WithWriter(ctx, buf)
+	assert.Equal(t, buf, nwctl.WriterFromContext(ctx))
 }

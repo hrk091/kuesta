@@ -28,7 +28,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"

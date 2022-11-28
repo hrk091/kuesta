@@ -23,7 +23,7 @@
 package common_test
 
 import (
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -1,10 +1,10 @@
-module github.com/hrk091/nwctl/device-subscriber
+module github.com/nttcom/kuesta/device-subscriber
 
 go 1.18
 
 require (
 	cuelang.org/go v0.4.3
-	github.com/hrk091/nwctl v0.0.0
+	github.com/nttcom/kuesta v0.0.0
 	github.com/openconfig/gnmi v0.0.0-20220617175856-41246b1b3507
 	github.com/openconfig/goyang v1.0.0
 	github.com/openconfig/ygot v0.22.1
@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 )
 
-replace github.com/hrk091/nwctl v0.0.0 => ../
+replace github.com/nttcom/kuesta v0.0.0 => ../
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect

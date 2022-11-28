@@ -24,9 +24,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/gogit"
-	"github.com/hrk091/nwctl/pkg/logger"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/gogit"
+	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

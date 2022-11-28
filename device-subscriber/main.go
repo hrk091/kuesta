@@ -23,7 +23,7 @@
 package main
 
 import (
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/logger"
 	"os"
 )
 

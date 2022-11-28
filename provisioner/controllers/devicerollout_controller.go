@@ -24,13 +24,13 @@ package controllers
 
 import (
 	"context"
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/logger"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 )
 
 // DeviceRolloutReconciler reconciles a DeviceRollout object

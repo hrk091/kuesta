@@ -23,7 +23,7 @@
 package cmd_test
 
 import (
-	"github.com/hrk091/nwctl/cmd"
+	"github.com/nttcom/kuesta/cmd"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"os"

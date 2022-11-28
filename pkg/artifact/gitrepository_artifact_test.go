@@ -25,7 +25,7 @@ package artifact_test
 import (
 	"context"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/hrk091/nwctl/pkg/artifact"
+	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/stretchr/testify/assert"
 	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

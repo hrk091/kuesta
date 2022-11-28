@@ -28,7 +28,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"testing"
 
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/logger"
 )
 
 func TestConvertLevel(t *testing.T) {

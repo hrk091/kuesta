@@ -24,7 +24,7 @@ package logger_test
 
 import (
 	"bytes"
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"regexp"

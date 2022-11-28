@@ -24,7 +24,7 @@ package nwctl_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"regexp"

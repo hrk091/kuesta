@@ -23,22 +23,51 @@
 package nwctl_test
 
 import (
-	"bytes"
-	"context"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
-func TestWriterFromContext(t *testing.T) {
-	ctx := context.Background()
-	assert.Equal(t, os.Stdout, nwctl.WriterFromContext(ctx))
-}
+func TestRootCfg_Validate(t *testing.T) {
 
-func TestWriterFromContext_WithWriter(t *testing.T) {
-	buf := &bytes.Buffer{}
-	ctx := context.Background()
-	ctx = nwctl.WithWriter(ctx, buf)
-	assert.Equal(t, buf, nwctl.WriterFromContext(ctx))
+	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
+		cfg := &nwctl.RootCfg{
+			Verbose:        0,
+			Devel:          false,
+			ConfigRootPath: "./",
+		}
+		t(cfg)
+		return cfg
+	}
+
+	tests := []struct {
+		name      string
+		transform func(cfg *nwctl.RootCfg)
+		wantError bool
+	}{
+		{
+			"ok",
+			func(cfg *nwctl.RootCfg) {},
+			false,
+		},
+		{
+			"err: Verbose is over range",
+			func(cfg *nwctl.RootCfg) {
+				cfg.Verbose = 4
+			},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := newValidStruct(tt.transform)
+			err := cfg.Validate()
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }

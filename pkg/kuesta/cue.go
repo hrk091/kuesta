@@ -30,7 +30,7 @@ import (
 	"cuelang.org/go/cue/token"
 	cuejson "cuelang.org/go/encoding/json"
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
 	"strconv"
 )

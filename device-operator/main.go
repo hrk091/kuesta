@@ -25,7 +25,7 @@ package main
 import (
 	"context"
 	"flag"
-	device "github.com/hrk091/nwctl/pkg/device"
+	device "github.com/nttcom/kuesta/pkg/device"
 	origzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -43,9 +43,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
-	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
-	"github.com/hrk091/nwctl/device-operator/controllers"
-	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	"github.com/nttcom/kuesta/device-operator/controllers"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

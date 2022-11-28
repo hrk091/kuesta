@@ -1,4 +1,4 @@
-module github.com/hrk091/nwctl
+module github.com/nttcom/kuesta
 
 go 1.18
 

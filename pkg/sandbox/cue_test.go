@@ -26,7 +26,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/encoding/json"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"runtime/debug"
 	"testing"

@@ -24,8 +24,8 @@ package controllers_test
 
 import (
 	"context"
-	"github.com/hrk091/nwctl/device-operator/controllers"
-	device "github.com/hrk091/nwctl/pkg/device"
+	"github.com/nttcom/kuesta/device-operator/controllers"
+	device "github.com/nttcom/kuesta/pkg/device"
 	corev1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"path/filepath"
@@ -45,8 +45,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	source "github.com/fluxcd/source-controller/api/v1beta2"
-	deviceoperator "github.com/hrk091/nwctl/device-operator/api/v1alpha1"
-	provisioner "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

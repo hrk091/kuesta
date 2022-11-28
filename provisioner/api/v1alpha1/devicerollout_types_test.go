@@ -23,7 +23,7 @@
 package v1alpha1_test
 
 import (
-	apiv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
+	apiv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

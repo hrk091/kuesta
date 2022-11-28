@@ -1,10 +1,10 @@
-module github.com/hrk091/nwctl/provisioner
+module github.com/nttcom/kuesta/provisioner
 
 go 1.18
 
 require (
 	github.com/fluxcd/source-controller/api v0.27.0
-	github.com/hrk091/nwctl v0.0.0
+	github.com/nttcom/kuesta v0.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/stretchr/testify v1.8.0
@@ -15,7 +15,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.2
 )
 
-replace github.com/hrk091/nwctl v0.0.0 => ../
+replace github.com/nttcom/kuesta v0.0.0 => ../
 
 require (
 	cloud.google.com/go v0.97.0 // indirect

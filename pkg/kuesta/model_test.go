@@ -24,7 +24,7 @@ package nwctl_test
 
 import (
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"

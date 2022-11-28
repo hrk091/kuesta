@@ -20,54 +20,52 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package nwctl
 
 import (
-	"github.com/hrk091/nwctl/pkg/nwctl"
-	"github.com/stretchr/testify/assert"
-	"testing"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/gogit"
 )
 
-func TestRootCfg_Validate(t *testing.T) {
+type RootCfg struct {
+	Verbose        uint8 `validate:"min=0,max=3"`
+	Devel          bool
+	ConfigRootPath string
+	StatusRootPath string
+	ConfigRepoUrl  string
+	StatusRepoUrl  string
+	GitTrunk       string
+	GitRemote      string
+	GitToken       string
+	GitUser        string
+	GitEmail       string
+}
 
-	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
-		cfg := &nwctl.RootCfg{
-			Verbose:        0,
-			Devel:          false,
-			ConfigRootPath: "./",
-		}
-		t(cfg)
-		return cfg
+// Validate validates exposed fields according to the `validate` tag.
+func (c *RootCfg) Validate() error {
+	return common.Validate(c)
+}
+
+func (c *RootCfg) ConfigGitOptions() *gogit.GitOptions {
+	return &gogit.GitOptions{
+		RepoUrl:     c.ConfigRepoUrl,
+		Path:        c.ConfigRootPath,
+		TrunkBranch: c.GitTrunk,
+		RemoteName:  c.GitRemote,
+		Token:       c.GitToken,
+		User:        c.GitUser,
+		Email:       c.GitEmail,
 	}
+}
 
-	tests := []struct {
-		name      string
-		transform func(cfg *nwctl.RootCfg)
-		wantError bool
-	}{
-		{
-			"ok",
-			func(cfg *nwctl.RootCfg) {},
-			false,
-		},
-		{
-			"err: Verbose is over range",
-			func(cfg *nwctl.RootCfg) {
-				cfg.Verbose = 4
-			},
-			true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := newValidStruct(tt.transform)
-			err := cfg.Validate()
-			if tt.wantError {
-				assert.Error(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-		})
+func (c *RootCfg) StatusGitOptions() *gogit.GitOptions {
+	return &gogit.GitOptions{
+		RepoUrl:     c.StatusRepoUrl,
+		Path:        c.StatusRootPath,
+		TrunkBranch: c.GitTrunk,
+		RemoteName:  c.GitRemote,
+		Token:       c.GitToken,
+		User:        c.GitUser,
+		Email:       c.GitEmail,
 	}
 }

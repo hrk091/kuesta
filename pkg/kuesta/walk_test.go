@@ -23,7 +23,7 @@
 package nwctl_test
 
 import (
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"io/fs"
 	"path/filepath"

@@ -25,7 +25,7 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/logger"
 	"strings"
 	"time"
 )

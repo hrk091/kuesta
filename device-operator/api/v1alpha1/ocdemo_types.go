@@ -23,7 +23,7 @@
 package v1alpha1
 
 import (
-	device "github.com/hrk091/nwctl/pkg/device"
+	device "github.com/nttcom/kuesta/pkg/device"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

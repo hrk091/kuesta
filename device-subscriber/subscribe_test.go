@@ -25,7 +25,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	nwctlgnmi "github.com/hrk091/nwctl/pkg/gnmi"
+	nwctlgnmi "github.com/nttcom/kuesta/pkg/gnmi"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"

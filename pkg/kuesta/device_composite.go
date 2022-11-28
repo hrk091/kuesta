@@ -24,68 +24,53 @@ package nwctl
 
 import (
 	"context"
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
-	"github.com/hrk091/nwctl/pkg/common"
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/logger"
 )
 
-type ServiceCompileCfg struct {
+type DeviceCompositeCfg struct {
 	RootCfg
 
-	Service string   `validate:"required"`
-	Keys    []string `validate:"gt=0,dive,required"`
+	Device string `validate:"required"`
 }
 
 // Validate validates exposed fields according to the `validate` tag.
-func (c *ServiceCompileCfg) Validate() error {
+func (c *DeviceCompositeCfg) Validate() error {
 	return common.Validate(c)
 }
 
-// RunServiceCompile runs the main process of the `service compile` command.
-func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
+// RunDeviceComposite runs the main process of the `device composite` command.
+func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	l := logger.FromContext(ctx)
-	l.Debug("service compile called")
+	l.Debug("device composite called")
 
 	cctx := cuecontext.New()
+	sp := ServicePath{RootDir: cfg.ConfigRootPath}
+	dp := DevicePath{RootDir: cfg.ConfigRootPath, Device: cfg.Device}
 
-	sp := ServicePath{
-		RootDir: cfg.ConfigRootPath,
-		Service: cfg.Service,
-		Keys:    cfg.Keys,
-	}
-	if err := sp.Validate(); err != nil {
-		return fmt.Errorf("validate ServicePath: %w", err)
-	}
-
-	buf, err := sp.ReadServiceInput()
+	files, err := CollectPartialDeviceConfig(sp.ServiceDirPath(IncludeRoot), cfg.Device)
 	if err != nil {
-		return fmt.Errorf("read input file: %w", err)
+		return fmt.Errorf("collect files: %w", err)
 	}
-	inputVal, err := NewValueFromBytes(cctx, buf)
+	l.Debug("files: ", files)
+
+	// composite all partial device configs into one CUE instance
+	deviceConfig, err := NewValueWithInstance(cctx, files, nil)
 	if err != nil {
-		return fmt.Errorf("load input file: %w", err)
+		return fmt.Errorf("composite files: %w", err)
+	}
+	l.Debug("merged device config cue instance: ", deviceConfig)
+
+	buf, err := FormatCue(deviceConfig, cue.Concrete(true))
+	if err != nil {
+		return fmt.Errorf("format merged config: %w", err)
 	}
 
-	transformer, err := sp.ReadServiceTransform(cctx)
-	if err != nil {
-		return fmt.Errorf("load transform file: %w", err)
-	}
-	it, err := transformer.Apply(inputVal)
-	if err != nil {
-		return fmt.Errorf("apply transform: %w", err)
-	}
-
-	for it.Next() {
-		device := it.Label()
-		buf, err := NewDevice(it.Value()).Config()
-		if err != nil {
-			return fmt.Errorf("extract device config: %w", err)
-		}
-
-		if err := sp.WriteServiceComputedFile(device, buf); err != nil {
-			return fmt.Errorf("save partial device config: %w", err)
-		}
+	if err := dp.WriteDeviceConfigFile(buf); err != nil {
+		return fmt.Errorf("write merged config: %w", err)
 	}
 
 	return nil

@@ -29,7 +29,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/hrk091/nwctl/pkg/common"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"os"

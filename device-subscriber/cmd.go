@@ -23,8 +23,8 @@
 package main
 
 import (
-	"github.com/hrk091/nwctl/pkg/common"
-	"github.com/hrk091/nwctl/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"strings"

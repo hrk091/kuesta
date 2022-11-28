@@ -24,7 +24,7 @@ package main
 
 import (
 	_ "github.com/go-playground/validator/v10"
-	"github.com/hrk091/nwctl/cmd"
+	"github.com/nttcom/kuesta/cmd"
 )
 
 func main() {

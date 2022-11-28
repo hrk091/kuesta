@@ -25,21 +25,22 @@ package nwctl_test
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func TestDeviceCompositeCfg_Validate(t *testing.T) {
+func TestServiceCompileCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(cfg *nwctl.DeviceCompositeCfg)) *nwctl.DeviceCompositeCfg {
-		cfg := &nwctl.DeviceCompositeCfg{
+	newValidStruct := func(t func(cfg *nwctl.ServiceCompileCfg)) *nwctl.ServiceCompileCfg {
+		cfg := &nwctl.ServiceCompileCfg{
 			RootCfg: nwctl.RootCfg{
 				ConfigRootPath: "./",
 			},
-			Device: "device1",
+			Service: "foo",
+			Keys:    []string{"one", "two"},
 		}
 		t(cfg)
 		return cfg
@@ -47,18 +48,32 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.DeviceCompositeCfg)
+		transform func(cfg *nwctl.ServiceCompileCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.DeviceCompositeCfg) {},
+			func(cfg *nwctl.ServiceCompileCfg) {},
 			false,
 		},
 		{
-			"err: device is empty",
-			func(cfg *nwctl.DeviceCompositeCfg) {
-				cfg.Device = ""
+			"err: service is empty",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Service = ""
+			},
+			true,
+		},
+		{
+			"err: keys length is 0",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Keys = nil
+			},
+			true,
+		},
+		{
+			"err: one of keys is empty",
+			func(cfg *nwctl.ServiceCompileCfg) {
+				cfg.Keys = []string{"one", ""}
 			},
 			true,
 		},
@@ -76,7 +91,7 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 	}
 }
 
-func TestRunDeviceComposite(t *testing.T) {
+func TestRunServiceCompile(t *testing.T) {
 	want := []byte(`{
 	Interface: {
 		Ethernet1: {
@@ -89,26 +104,17 @@ func TestRunDeviceComposite(t *testing.T) {
 			Mtu:         9000 @go(,*uint16)
 			Subinterface: {} @go(,map[uint32]*Interface_Subinterface)
 		}
-		Ethernet2: {
-			Name:        "Ethernet2" @go(,*string)
-			Description: "bar"       @go(,*string)
-			Enabled:     false       @go(,*bool)
-			AdminStatus: 1
-			OperStatus:  1
-			Type:        80
-			Mtu:         9000 @go(,*uint16)
-			Subinterface: {} @go(,map[uint32]*Interface_Subinterface)
-		}
 	} @go(,map[string]*Interface)
 	Vlan: {} @go(,map[uint16]*Vlan)
 }
 `)
-	err := nwctl.RunDeviceComposite(context.Background(), &nwctl.DeviceCompositeCfg{
+	err := nwctl.RunServiceCompile(context.Background(), &nwctl.ServiceCompileCfg{
 		RootCfg: nwctl.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
-		Device:  "oc01",
+		Service: "oc_interface",
+		Keys:    []string{"oc01", "1"},
 	})
 	exitOnErr(t, err)
-	got, err := os.ReadFile(filepath.Join("./testdata", "devices", "oc01", "config.cue"))
+	got, err := os.ReadFile(filepath.Join("./testdata", "services", "oc_interface", "oc01", "1", "computed", "oc01.cue"))
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()

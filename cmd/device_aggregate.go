@@ -23,8 +23,8 @@
 package cmd
 
 import (
-	"github.com/hrk091/nwctl/pkg/logger"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

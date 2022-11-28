@@ -27,7 +27,7 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/hrk091/nwctl/pkg/gogit"
+	"github.com/nttcom/kuesta/pkg/gogit"
 	"io/ioutil"
 	"os"
 	"runtime/debug"

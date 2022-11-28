@@ -40,8 +40,8 @@ import (
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
-	nwctlv1alpha1 "github.com/hrk091/nwctl/provisioner/api/v1alpha1"
-	"github.com/hrk091/nwctl/provisioner/controllers"
+	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	"github.com/nttcom/kuesta/provisioner/controllers"
 	//+kubebuilder:scaffold:imports
 
 	origzap "go.uber.org/zap"

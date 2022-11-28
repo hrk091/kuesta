@@ -27,7 +27,7 @@ import (
 	"context"
 	"encoding/json"
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/hrk091/nwctl/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"

@@ -1,12 +1,12 @@
-module github.com/hrk091/nwctl/device-operator
+module github.com/nttcom/kuesta/device-operator
 
 go 1.18
 
 require (
 	cuelang.org/go v0.4.3
 	github.com/fluxcd/source-controller/api v0.27.0
-	github.com/hrk091/nwctl v0.0.0
-	github.com/hrk091/nwctl/provisioner v0.0.0
+	github.com/nttcom/kuesta v0.0.0
+	github.com/nttcom/kuesta/provisioner v0.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/openconfig/gnmi v0.0.0-20220617175856-41246b1b3507
@@ -23,8 +23,8 @@ require (
 )
 
 replace (
-	github.com/hrk091/nwctl v0.0.0 => ../
-	github.com/hrk091/nwctl/provisioner v0.0.0 => ../provisioner/
+	github.com/nttcom/kuesta v0.0.0 => ../
+	github.com/nttcom/kuesta/provisioner v0.0.0 => ../provisioner/
 )
 
 require (
