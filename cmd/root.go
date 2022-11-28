@@ -25,8 +25,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/gogit"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -98,14 +98,14 @@ func NewRootCmd() *cobra.Command {
 	return cmd
 }
 
-func newRootCfg(cmd *cobra.Command) (*nwctl.RootCfg, error) {
+func newRootCfg(cmd *cobra.Command) (*kuesta.RootCfg, error) {
 	gitUser := viper.GetString(FlagGitUser)
 	gitEmail := viper.GetString(FlagGitEmail)
 	if gitUser != gogit.DefaultGitUser && gitEmail == gogit.DefaultGitEmail {
 		gitEmail = fmt.Sprintf("%s@example.com", gitUser)
 	}
 
-	cfg := &nwctl.RootCfg{
+	cfg := &kuesta.RootCfg{
 		Verbose:        cast.ToUint8(viper.GetUint(FlagVerbose)),
 		Devel:          viper.GetBool(FlagDevel),
 		ConfigRootPath: viper.GetString(FlagConfigRootPath),

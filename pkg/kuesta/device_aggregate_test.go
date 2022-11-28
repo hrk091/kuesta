@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -44,13 +44,13 @@ func TestDecodeSaveConfigRequest(t *testing.T) {
 	tests := []struct {
 		name    string
 		given   string
-		want    *nwctl.SaveConfigRequest
+		want    *kuesta.SaveConfigRequest
 		wantErr bool
 	}{
 		{
 			"ok",
 			`{"device": "device1", "config": "foobar"}`,
-			&nwctl.SaveConfigRequest{
+			&kuesta.SaveConfigRequest{
 				Device: "device1",
 				Config: &config,
 			},
@@ -79,7 +79,7 @@ func TestDecodeSaveConfigRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := strings.NewReader(tt.given)
-			got, err := nwctl.DecodeSaveConfigRequest(r)
+			got, err := kuesta.DecodeSaveConfigRequest(r)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -103,19 +103,19 @@ Devices:
 	deleted:   dvc2
 	modified:  dvc3`
 
-	assert.Equal(t, want, nwctl.MakeSyncCommitMessage(stmap))
+	assert.Equal(t, want, kuesta.MakeSyncCommitMessage(stmap))
 }
 
 func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 	dir := t.TempDir()
 	config := "foobar"
-	given := &nwctl.SaveConfigRequest{
+	given := &kuesta.SaveConfigRequest{
 		Device: "device1",
 		Config: &config,
 	}
 
-	s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
-		RootCfg: nwctl.RootCfg{StatusRootPath: dir},
+	s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
+		RootCfg: kuesta.RootCfg{StatusRootPath: dir},
 	})
 	err := s.SaveConfig(context.Background(), given)
 	assert.Nil(t, err)
@@ -133,8 +133,8 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 		oldRef, _ := repo.Head()
 		assert.Greater(t, len(getStatus(t, repo)), 0)
 
-		s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
-			RootCfg: nwctl.RootCfg{
+		s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
+			RootCfg: kuesta.RootCfg{
 				StatusRootPath: dir,
 				GitRemote:      testRemote,
 			},
@@ -154,18 +154,18 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	testRemote := "test-remote"
 	repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
 	config := "foobar"
-	req := nwctl.SaveConfigRequest{
+	req := kuesta.SaveConfigRequest{
 		Device: "device1",
 		Config: &config,
 	}
 
-	s := nwctl.NewDeviceAggregateServer(&nwctl.DeviceAggregateCfg{
-		RootCfg: nwctl.RootCfg{
+	s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
+		RootCfg: kuesta.RootCfg{
 			StatusRootPath: dir,
 			GitRemote:      testRemote,
 		},
 	})
-	nwctl.UpdateCheckDuration = 100 * time.Millisecond
+	kuesta.UpdateCheckDuration = 100 * time.Millisecond
 	s.Run(context.Background())
 
 	buf, err := json.Marshal(req)

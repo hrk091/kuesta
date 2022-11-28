@@ -23,8 +23,8 @@
 package cmd
 
 import (
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,7 +40,7 @@ func newGitCommitCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return nwctl.RunGitCommit(cmd.Context(), cfg)
+			return kuesta.RunGitCommit(cmd.Context(), cfg)
 		},
 	}
 	cmd.Flags().BoolP(FlagPushToMain, "", false, "push to main (otherwise create new branch)")
@@ -49,12 +49,12 @@ func newGitCommitCmd() *cobra.Command {
 	return cmd
 }
 
-func newGitCommitCfg(cmd *cobra.Command, args []string) (*nwctl.GitCommitCfg, error) {
+func newGitCommitCfg(cmd *cobra.Command, args []string) (*kuesta.GitCommitCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &nwctl.GitCommitCfg{
+	cfg := &kuesta.GitCommitCfg{
 		RootCfg:    *rootCfg,
 		PushToMain: viper.GetBool(FlagPushToMain),
 	}

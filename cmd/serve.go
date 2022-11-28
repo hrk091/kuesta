@@ -23,8 +23,8 @@
 package cmd
 
 import (
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,7 +45,7 @@ func newServeCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return nwctl.RunServe(cmd.Context(), cfg)
+			return kuesta.RunServe(cmd.Context(), cfg)
 		},
 	}
 	cmd.Flags().StringP(FlagServeAddr, "a", ":9339", "Bind address of gNMI northbound API.")
@@ -55,12 +55,12 @@ func newServeCmd() *cobra.Command {
 	return cmd
 }
 
-func newServeCfg(cmd *cobra.Command, args []string) (*nwctl.ServeCfg, error) {
+func newServeCfg(cmd *cobra.Command, args []string) (*kuesta.ServeCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &nwctl.ServeCfg{
+	cfg := &kuesta.ServeCfg{
 		RootCfg:    *rootCfg,
 		Addr:       viper.GetString(FlagServeAddr),
 		SyncPeriod: viper.GetInt(FlagSyncInterval),

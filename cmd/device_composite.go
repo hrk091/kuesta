@@ -24,8 +24,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cobra"
 )
 
@@ -40,13 +40,13 @@ func newDeviceCompositeCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return nwctl.RunDeviceComposite(cmd.Context(), cfg)
+			return kuesta.RunDeviceComposite(cmd.Context(), cfg)
 		},
 	}
 	return cmd
 }
 
-func newDeviceCompositeCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceCompositeCfg, error) {
+func newDeviceCompositeCfg(cmd *cobra.Command, args []string) (*kuesta.DeviceCompositeCfg, error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("device is not specified")
 	}
@@ -54,7 +54,7 @@ func newDeviceCompositeCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceComp
 	if err != nil {
 		return nil, err
 	}
-	cfg := &nwctl.DeviceCompositeCfg{
+	cfg := &kuesta.DeviceCompositeCfg{
 		RootCfg: *rootCfg,
 		Device:  args[0],
 	}

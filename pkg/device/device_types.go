@@ -33,7 +33,7 @@ const (
 )
 
 type DeviceResource interface {
-	nwctlDevice()
+	kuestaDevice()
 
 	SpecCopy() *DeviceSpec
 	UpdateSpec(func(*DeviceSpec) error) error
@@ -48,7 +48,7 @@ type Device struct {
 	Status DeviceStatus `json:"status,omitempty"`
 }
 
-func (Device) nwctlDevice() {}
+func (Device) kuestaDevice() {}
 
 func (d *Device) SpecCopy() *DeviceSpec {
 	return d.Spec.DeepCopy()

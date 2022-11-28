@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package nwctl
+package kuesta
 
 import (
 	"cuelang.org/go/cue"

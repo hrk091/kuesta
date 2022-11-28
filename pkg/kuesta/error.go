@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package nwctl
+package kuesta
 
 type ErrConfigValue struct {
 	err string

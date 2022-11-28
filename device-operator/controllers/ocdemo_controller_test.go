@@ -35,7 +35,7 @@ import (
 	//pb "github.com/openconfig/gnmi/proto/gnmi"
 
 	//"github.com/nttcom/kuesta/pkg/gnmi"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -108,7 +108,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)
@@ -211,7 +211,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
-					must(nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
+					must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
 				})
 				h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := io.Copy(w, buf)

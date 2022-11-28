@@ -20,12 +20,12 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"bytes"
 	"context"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -33,12 +33,12 @@ import (
 
 func TestWriterFromContext(t *testing.T) {
 	ctx := context.Background()
-	assert.Equal(t, os.Stdout, nwctl.WriterFromContext(ctx))
+	assert.Equal(t, os.Stdout, kuesta.WriterFromContext(ctx))
 }
 
 func TestWriterFromContext_WithWriter(t *testing.T) {
 	buf := &bytes.Buffer{}
 	ctx := context.Background()
-	ctx = nwctl.WithWriter(ctx, buf)
-	assert.Equal(t, buf, nwctl.WriterFromContext(ctx))
+	ctx = kuesta.WithWriter(ctx, buf)
+	assert.Equal(t, buf, kuesta.WriterFromContext(ctx))
 }

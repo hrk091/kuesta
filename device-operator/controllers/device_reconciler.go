@@ -33,8 +33,8 @@ import (
 	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/nttcom/kuesta/pkg/common"
 	device "github.com/nttcom/kuesta/pkg/device"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	gnmiproto "github.com/openconfig/gnmi/proto/gnmi"
@@ -281,7 +281,7 @@ func (r *DeviceReconciler) findObjectForDeviceRollout(deviceRollout client.Objec
 	return requests
 }
 
-func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revision string) (*nwctl.DevicePath, string, error) {
+func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revision string) (*kuesta.DevicePath, string, error) {
 	tmpDir, err := ioutil.TempDir("", gr.Name)
 	if err != nil {
 		return nil, "", fmt.Errorf("create temp dir: %w", err)
@@ -297,7 +297,7 @@ func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revisio
 		return nil, "", fmt.Errorf("fetch artifact: %w", err)
 	}
 
-	dp := &nwctl.DevicePath{RootDir: tmpDir, Device: device}
+	dp := &kuesta.DevicePath{RootDir: tmpDir, Device: device}
 	checksum, err := dp.CheckSum()
 	if err != nil {
 		os.RemoveAll(tmpDir)
@@ -308,7 +308,7 @@ func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revisio
 }
 
 func decodeCueBytes(cctx *cue.Context, bytes []byte) (*model.Device, error) {
-	val, err := nwctl.NewValueFromBytes(cctx, bytes)
+	val, err := kuesta.NewValueFromBytes(cctx, bytes)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

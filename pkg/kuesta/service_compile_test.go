@@ -20,12 +20,12 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
@@ -34,9 +34,9 @@ import (
 
 func TestServiceCompileCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(cfg *nwctl.ServiceCompileCfg)) *nwctl.ServiceCompileCfg {
-		cfg := &nwctl.ServiceCompileCfg{
-			RootCfg: nwctl.RootCfg{
+	newValidStruct := func(t func(cfg *kuesta.ServiceCompileCfg)) *kuesta.ServiceCompileCfg {
+		cfg := &kuesta.ServiceCompileCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: "./",
 			},
 			Service: "foo",
@@ -48,31 +48,31 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.ServiceCompileCfg)
+		transform func(cfg *kuesta.ServiceCompileCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.ServiceCompileCfg) {},
+			func(cfg *kuesta.ServiceCompileCfg) {},
 			false,
 		},
 		{
 			"err: service is empty",
-			func(cfg *nwctl.ServiceCompileCfg) {
+			func(cfg *kuesta.ServiceCompileCfg) {
 				cfg.Service = ""
 			},
 			true,
 		},
 		{
 			"err: keys length is 0",
-			func(cfg *nwctl.ServiceCompileCfg) {
+			func(cfg *kuesta.ServiceCompileCfg) {
 				cfg.Keys = nil
 			},
 			true,
 		},
 		{
 			"err: one of keys is empty",
-			func(cfg *nwctl.ServiceCompileCfg) {
+			func(cfg *kuesta.ServiceCompileCfg) {
 				cfg.Keys = []string{"one", ""}
 			},
 			true,
@@ -108,8 +108,8 @@ func TestRunServiceCompile(t *testing.T) {
 	Vlan: {} @go(,map[uint16]*Vlan)
 }
 `)
-	err := nwctl.RunServiceCompile(context.Background(), &nwctl.ServiceCompileCfg{
-		RootCfg: nwctl.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
+	err := kuesta.RunServiceCompile(context.Background(), &kuesta.ServiceCompileCfg{
+		RootCfg: kuesta.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})

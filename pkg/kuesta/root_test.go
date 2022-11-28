@@ -20,18 +20,18 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestRootCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(*nwctl.RootCfg)) *nwctl.RootCfg {
-		cfg := &nwctl.RootCfg{
+	newValidStruct := func(t func(*kuesta.RootCfg)) *kuesta.RootCfg {
+		cfg := &kuesta.RootCfg{
 			Verbose:        0,
 			Devel:          false,
 			ConfigRootPath: "./",
@@ -42,17 +42,17 @@ func TestRootCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.RootCfg)
+		transform func(cfg *kuesta.RootCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.RootCfg) {},
+			func(cfg *kuesta.RootCfg) {},
 			false,
 		},
 		{
 			"err: Verbose is over range",
-			func(cfg *nwctl.RootCfg) {
+			func(cfg *kuesta.RootCfg) {
 				cfg.Verbose = 4
 			},
 			true,

@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"context"
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/nttcom/kuesta/pkg/gogit"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"strings"
@@ -74,8 +74,8 @@ Devices:
 
 	t.Run("ok: push to main", func(t *testing.T) {
 		repo, dir := setup(t)
-		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
-			RootCfg: nwctl.RootCfg{
+		err := kuesta.RunGitCommit(context.Background(), &kuesta.GitCommitCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
 			},
@@ -96,8 +96,8 @@ Devices:
 
 	t.Run("ok: push to new branch", func(t *testing.T) {
 		repo, dir := setup(t)
-		err := nwctl.RunGitCommit(context.Background(), &nwctl.GitCommitCfg{
-			RootCfg: nwctl.RootCfg{
+		err := kuesta.RunGitCommit(context.Background(), &kuesta.GitCommitCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
 			},
@@ -138,7 +138,7 @@ Devices:
 	added:     dvc1
 	deleted:   dvc2
 	modified:  dvc3`
-	assert.Equal(t, want, nwctl.MakeCommitMessage(stmap))
+	assert.Equal(t, want, kuesta.MakeCommitMessage(stmap))
 }
 
 func TestCheckGitFileIsStagedOrUnmodified(t *testing.T) {
@@ -170,7 +170,7 @@ func TestCheckGitFileIsStagedOrUnmodified(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := nwctl.CheckGitFileIsStagedOrUnmodified(tt.path, tt.st)
+		err := kuesta.CheckGitFileIsStagedOrUnmodified(tt.path, tt.st)
 		if tt.wantErr {
 			assert.Error(t, err)
 		} else {
@@ -202,7 +202,7 @@ func TestCheckGitIsStagedOrUnmodified(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := nwctl.CheckGitIsStagedOrUnmodified(tt.st)
+		err := kuesta.CheckGitIsStagedOrUnmodified(tt.st)
 		if tt.wantErr > 0 {
 			reg := regexp.MustCompile("bad")
 			assert.Equal(t, tt.wantErr, len(reg.FindAllString(err.Error(), -1)))

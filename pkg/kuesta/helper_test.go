@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
@@ -43,7 +43,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err := nwctl.WriteFileWithMkdir(path, buf)
+		err := kuesta.WriteFileWithMkdir(path, buf)
 		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
@@ -56,7 +56,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		exitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = nwctl.WriteFileWithMkdir(path, buf)
+		err = kuesta.WriteFileWithMkdir(path, buf)
 		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
@@ -69,9 +69,9 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		exitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = nwctl.WriteFileWithMkdir(path, buf)
+		err = kuesta.WriteFileWithMkdir(path, buf)
 		exitOnErr(t, err)
-		err = nwctl.WriteFileWithMkdir(path, buf)
+		err = kuesta.WriteFileWithMkdir(path, buf)
 		exitOnErr(t, err)
 
 		got, err := os.ReadFile(path)

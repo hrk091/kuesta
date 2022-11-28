@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
@@ -74,7 +74,7 @@ func TestNewValueFromBytes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := nwctl.NewValueFromBytes(cctx, tt.given)
+			v, err := kuesta.NewValueFromBytes(cctx, tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -108,12 +108,12 @@ func TestNewValueFromJson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := nwctl.NewValueFromJson(cctx, []byte(tt.given))
+			got, err := kuesta.NewValueFromJson(cctx, []byte(tt.given))
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.Nil(t, err)
-				w, err := nwctl.NewValueFromBytes(cctx, []byte(tt.want))
+				w, err := kuesta.NewValueFromBytes(cctx, []byte(tt.want))
 				exitOnErr(t, err)
 				assert.True(t, w.Equals(got))
 			}
@@ -123,7 +123,7 @@ func TestNewValueFromJson(t *testing.T) {
 
 func TestNewValueWithInstance(t *testing.T) {
 	dir := t.TempDir()
-	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
 	exitOnErr(t, err)
 
 	tests := []struct {
@@ -149,7 +149,7 @@ func TestNewValueWithInstance(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := nwctl.NewValueWithInstance(cuecontext.New(), tt.files, &load.Config{Dir: dir})
+			_, err := kuesta.NewValueWithInstance(cuecontext.New(), tt.files, &load.Config{Dir: dir})
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -170,7 +170,7 @@ func TestFormatCue(t *testing.T) {
 }`))
 	exitOnErr(t, want.Err())
 
-	got, err := nwctl.FormatCue(want)
+	got, err := kuesta.FormatCue(want)
 	assert.Nil(t, err)
 	assert.True(t, want.Equals(cctx.CompileBytes(got)))
 }
@@ -192,7 +192,7 @@ func TestNewAstExpr(t *testing.T) {
 			"listVal":  []any{1, "foo", true},
 		},
 	}
-	expr := nwctl.NewAstExpr(given)
+	expr := kuesta.NewAstExpr(given)
 	cctx := cuecontext.New()
 	v := cctx.BuildExpr(expr)
 	assert.Nil(t, v.Err())
@@ -230,16 +230,16 @@ func TestCueKindOf(t *testing.T) {
 }
 `)
 	cctx := cuecontext.New()
-	val, err := nwctl.NewValueFromBytes(cctx, given)
+	val, err := kuesta.NewValueFromBytes(cctx, given)
 	exitOnErr(t, err)
 
-	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, ""))
-	assert.Equal(t, cue.StructKind, nwctl.CueKindOf(val, "#Input"))
-	assert.Equal(t, cue.StringKind, nwctl.CueKindOf(val, "#Input.strVal"))
-	assert.Equal(t, cue.IntKind, nwctl.CueKindOf(val, "#Input.intVal"))
-	assert.Equal(t, cue.BoolKind, nwctl.CueKindOf(val, "#Input.boolVal"))
-	assert.Equal(t, cue.NumberKind, nwctl.CueKindOf(val, "#Input.floatVal"))
-	assert.Equal(t, cue.NullKind, nwctl.CueKindOf(val, "#Input.nullVal"))
+	assert.Equal(t, cue.StructKind, kuesta.CueKindOf(val, ""))
+	assert.Equal(t, cue.StructKind, kuesta.CueKindOf(val, "#Input"))
+	assert.Equal(t, cue.StringKind, kuesta.CueKindOf(val, "#Input.strVal"))
+	assert.Equal(t, cue.IntKind, kuesta.CueKindOf(val, "#Input.intVal"))
+	assert.Equal(t, cue.BoolKind, kuesta.CueKindOf(val, "#Input.boolVal"))
+	assert.Equal(t, cue.NumberKind, kuesta.CueKindOf(val, "#Input.floatVal"))
+	assert.Equal(t, cue.NullKind, kuesta.CueKindOf(val, "#Input.nullVal"))
 }
 
 func TestStringConverter(t *testing.T) {
@@ -309,7 +309,7 @@ func TestStringConverter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			convert, err := nwctl.NewStrConvFunc(tt.kind)
+			convert, err := kuesta.NewStrConvFunc(tt.kind)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

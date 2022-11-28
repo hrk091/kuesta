@@ -20,11 +20,11 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
@@ -70,13 +70,13 @@ func TestReadServiceMeta(t *testing.T) {
 	tests := []struct {
 		name    string
 		given   []byte
-		want    *nwctl.ServiceMeta
+		want    *kuesta.ServiceMeta
 		wantErr bool
 	}{
 		{
 			"ok",
 			[]byte(`{"name": "foo", "keys": ["device", "port"]}`),
-			&nwctl.ServiceMeta{
+			&kuesta.ServiceMeta{
 				Name: "foo",
 				Keys: []string{"device", "port"},
 			},
@@ -93,9 +93,9 @@ func TestReadServiceMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "metadata.json")
-			err := nwctl.WriteFileWithMkdir(path, tt.given)
+			err := kuesta.WriteFileWithMkdir(path, tt.given)
 			exitOnErr(t, err)
-			got, err := nwctl.ReadServiceMeta(path)
+			got, err := kuesta.ReadServiceMeta(path)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -128,11 +128,11 @@ func TestNewServiceTransformer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
 			exitOnErr(t, err)
 
 			cctx := cuecontext.New()
-			tr, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
+			tr, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -147,11 +147,11 @@ func TestNewServiceTransformer(t *testing.T) {
 
 func TestServerTransformer_Apply(t *testing.T) {
 	dir := t.TempDir()
-	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
-	tr, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
+	tr, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 	exitOnErr(t, err)
 
 	t.Run("ok", func(t *testing.T) {
@@ -194,11 +194,11 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 	nullVal:  null
 }`)
 	dir := t.TempDir()
-	err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
+	err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
 	exitOnErr(t, err)
 
 	cctx := cuecontext.New()
-	transformer, err := nwctl.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
+	transformer, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
 	exitOnErr(t, err)
 
 	tests := []struct {
@@ -298,7 +298,7 @@ func TestNewDeviceFromBytes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cctx := cuecontext.New()
-			device, err := nwctl.NewDeviceFromBytes(cctx, tt.given)
+			device, err := kuesta.NewDeviceFromBytes(cctx, tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -330,7 +330,7 @@ config: {
 }`))
 		exitOnErr(t, want.Err())
 
-		device, err := nwctl.NewDeviceFromBytes(cctx, given)
+		device, err := kuesta.NewDeviceFromBytes(cctx, given)
 		exitOnErr(t, err)
 		got, err := device.Config()
 		assert.Nil(t, err)
@@ -341,7 +341,7 @@ config: {
 		cctx := cuecontext.New()
 		given := []byte(`something: {foo: "bar"}`)
 
-		device, err := nwctl.NewDeviceFromBytes(cctx, given)
+		device, err := kuesta.NewDeviceFromBytes(cctx, given)
 		exitOnErr(t, err)
 		got, err := device.Config()
 		assert.Nil(t, got)

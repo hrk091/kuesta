@@ -20,11 +20,11 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"regexp"
@@ -34,9 +34,9 @@ import (
 
 func TestServiceApplyCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(cfg *nwctl.ServiceApplyCfg)) *nwctl.ServiceApplyCfg {
-		cfg := &nwctl.ServiceApplyCfg{
-			RootCfg: nwctl.RootCfg{
+	newValidStruct := func(t func(cfg *kuesta.ServiceApplyCfg)) *kuesta.ServiceApplyCfg {
+		cfg := &kuesta.ServiceApplyCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: "./",
 			},
 		}
@@ -46,12 +46,12 @@ func TestServiceApplyCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.ServiceApplyCfg)
+		transform func(cfg *kuesta.ServiceApplyCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.ServiceApplyCfg) {},
+			func(cfg *kuesta.ServiceApplyCfg) {},
 			false,
 		},
 	}
@@ -92,7 +92,7 @@ func TestCheckGitStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := nwctl.CheckGitStatus(tt.st)
+		err := kuesta.CheckGitStatus(tt.st)
 		if tt.wantErr > 0 {
 			reg := regexp.MustCompile(".cue")
 			assert.Equal(t, tt.wantErr, len(reg.FindAllString(err.Error(), -1)))
@@ -151,7 +151,7 @@ func TestCheckGitFileStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := nwctl.CheckGitFileStatus(tt.path, tt.st)
+		err := kuesta.CheckGitFileStatus(tt.path, tt.st)
 		if tt.wantErr {
 			assert.Error(t, err)
 		} else {
@@ -172,17 +172,17 @@ func TestServiceCompilePlan_Do(t *testing.T) {
 	exitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
 
 	stmap := getStatus(t, repo)
-	plan := nwctl.NewServiceCompilePlan(stmap, dir)
+	plan := kuesta.NewServiceCompilePlan(stmap, dir)
 	updated := 0
 	deleted := 0
 	err = plan.Do(context.Background(),
-		func(ctx context.Context, sp nwctl.ServicePath) error {
+		func(ctx context.Context, sp kuesta.ServicePath) error {
 			deleted++
 			assert.Equal(t, "foo", sp.Service)
 			assert.Contains(t, []string{"one"}, sp.Keys[0])
 			return nil
 		},
-		func(ctx context.Context, sp nwctl.ServicePath) error {
+		func(ctx context.Context, sp kuesta.ServicePath) error {
 			updated++
 			assert.Equal(t, "foo", sp.Service)
 			assert.Contains(t, []string{"two", "three"}, sp.Keys[0])
@@ -201,7 +201,7 @@ func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 	exitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
-	plan := nwctl.NewServiceCompilePlan(stmap, dir)
+	plan := kuesta.NewServiceCompilePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }
 
@@ -217,10 +217,10 @@ func TestDeviceCompositePlan_Do(t *testing.T) {
 	exitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
 
 	stmap := getStatus(t, repo)
-	plan := nwctl.NewDeviceCompositePlan(stmap, dir)
+	plan := kuesta.NewDeviceCompositePlan(stmap, dir)
 	executed := 0
 	err = plan.Do(context.Background(),
-		func(ctx context.Context, dp nwctl.DevicePath) error {
+		func(ctx context.Context, dp kuesta.DevicePath) error {
 			executed++
 			assert.Contains(t, []string{"device1", "device2", "device3"}, dp.Device)
 			return nil
@@ -237,6 +237,6 @@ func TestDeviceCompositePlan_IsEmpty(t *testing.T) {
 	exitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
-	plan := nwctl.NewDeviceCompositePlan(stmap, dir)
+	plan := kuesta.NewDeviceCompositePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }

@@ -20,12 +20,12 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
@@ -34,9 +34,9 @@ import (
 
 func TestDeviceCompositeCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(cfg *nwctl.DeviceCompositeCfg)) *nwctl.DeviceCompositeCfg {
-		cfg := &nwctl.DeviceCompositeCfg{
-			RootCfg: nwctl.RootCfg{
+	newValidStruct := func(t func(cfg *kuesta.DeviceCompositeCfg)) *kuesta.DeviceCompositeCfg {
+		cfg := &kuesta.DeviceCompositeCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: "./",
 			},
 			Device: "device1",
@@ -47,17 +47,17 @@ func TestDeviceCompositeCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.DeviceCompositeCfg)
+		transform func(cfg *kuesta.DeviceCompositeCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.DeviceCompositeCfg) {},
+			func(cfg *kuesta.DeviceCompositeCfg) {},
 			false,
 		},
 		{
 			"err: device is empty",
-			func(cfg *nwctl.DeviceCompositeCfg) {
+			func(cfg *kuesta.DeviceCompositeCfg) {
 				cfg.Device = ""
 			},
 			true,
@@ -103,8 +103,8 @@ func TestRunDeviceComposite(t *testing.T) {
 	Vlan: {} @go(,map[uint16]*Vlan)
 }
 `)
-	err := nwctl.RunDeviceComposite(context.Background(), &nwctl.DeviceCompositeCfg{
-		RootCfg: nwctl.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
+	err := kuesta.RunDeviceComposite(context.Background(), &kuesta.DeviceCompositeCfg{
+		RootCfg: kuesta.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
 		Device:  "oc01",
 	})
 	exitOnErr(t, err)

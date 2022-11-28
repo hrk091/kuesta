@@ -26,7 +26,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/encoding/json"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"runtime/debug"
 	"testing"
@@ -59,7 +59,7 @@ func TestCueTypeExtract(t *testing.T) {
 }
 `)
 	cctx := cuecontext.New()
-	val, err := nwctl.NewValueFromBytes(cctx, given)
+	val, err := kuesta.NewValueFromBytes(cctx, given)
 	exitOnErr(t, err)
 
 	inputVal := val.LookupPath(cue.ParsePath("#Input"))

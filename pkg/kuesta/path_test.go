@@ -20,22 +20,22 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"crypto/sha256"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func newValidServicePath() *nwctl.ServicePath {
-	return &nwctl.ServicePath{
+func newValidServicePath() *kuesta.ServicePath {
+	return &kuesta.ServicePath{
 		RootDir: "./tmproot",
 		Service: "foo",
 		Keys:    []string{"one", "two"},
@@ -43,7 +43,7 @@ func newValidServicePath() *nwctl.ServicePath {
 }
 
 func TestServicePath_Validate(t *testing.T) {
-	newValidStruct := func(t func(cfg *nwctl.ServicePath)) *nwctl.ServicePath {
+	newValidStruct := func(t func(cfg *kuesta.ServicePath)) *kuesta.ServicePath {
 		cfg := newValidServicePath()
 		t(cfg)
 		return cfg
@@ -51,38 +51,38 @@ func TestServicePath_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.ServicePath)
+		transform func(cfg *kuesta.ServicePath)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.ServicePath) {},
+			func(cfg *kuesta.ServicePath) {},
 			false,
 		},
 		{
 			"ok: service is empty",
-			func(cfg *nwctl.ServicePath) {
+			func(cfg *kuesta.ServicePath) {
 				cfg.Service = ""
 			},
 			false,
 		},
 		{
 			"ok: keys length is 0",
-			func(cfg *nwctl.ServicePath) {
+			func(cfg *kuesta.ServicePath) {
 				cfg.Keys = nil
 			},
 			false,
 		},
 		{
 			"err: rootpath is empty",
-			func(cfg *nwctl.ServicePath) {
+			func(cfg *kuesta.ServicePath) {
 				cfg.RootDir = ""
 			},
 			true,
 		},
 		{
 			"err: one of keys is empty",
-			func(cfg *nwctl.ServicePath) {
+			func(cfg *kuesta.ServicePath) {
 				cfg.Keys = []string{"one", ""}
 			},
 			true,
@@ -110,20 +110,20 @@ func TestServicePath_RootPath(t *testing.T) {
 
 func TestServicePath_ServiceDirPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services", p.ServiceDirPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services", p.ServiceDirPath(nwctl.IncludeRoot))
+	assert.Equal(t, "services", p.ServiceDirPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services", p.ServiceDirPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ServiceItemPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/one/two", p.ServicePath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/one/two", p.ServicePath(nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/one/two", p.ServicePath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two", p.ServicePath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ServiceInputPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/one/two/input.cue", p.ServiceInputPath(nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/one/two/input.cue", p.ServiceInputPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/input.cue", p.ServiceInputPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceInput(t *testing.T) {
@@ -133,7 +133,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
 		exitOnErr(t, err)
 
 		r, err := p.ReadServiceInput()
@@ -183,8 +183,8 @@ func TestServicePath_WriteServiceInputFile(t *testing.T) {
 
 func TestServicePath_ServiceTransformPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/transform.cue", p.ServiceTransformPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/transform.cue", p.ServiceTransformPath(nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/transform.cue", p.ServiceTransformPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/transform.cue", p.ServiceTransformPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceTransform(t *testing.T) {
@@ -199,7 +199,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 				&ast.Field{Label: ast.NewIdent("test"), Value: ast.NewString("dummy")},
 			),
 		)
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
 		exitOnErr(t, err)
 
 		r, err := p.ReadServiceTransform(cctx)
@@ -234,14 +234,14 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 
 func TestServicePath_ServiceComputedDirPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/one/two/computed", p.ServiceComputedDirPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/one/two/computed", p.ServiceComputedDirPath(nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/one/two/computed", p.ServiceComputedDirPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/computed", p.ServiceComputedDirPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ServiceComputedPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/one/two/computed/device1.cue", p.ServiceComputedPath("device1", kuesta.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceComputedFile(t *testing.T) {
@@ -251,7 +251,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
 		exitOnErr(t, err)
 
 		r, err := p.ReadServiceComputedFile("device1")
@@ -301,8 +301,8 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 
 func TestServicePath_ServiceMetaPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/metadata.json", p.ServiceMetaPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/metadata.json", p.ServiceMetaPath(nwctl.IncludeRoot))
+	assert.Equal(t, "services/foo/metadata.json", p.ServiceMetaPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/metadata.json", p.ServiceMetaPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceMeta(t *testing.T) {
@@ -311,12 +311,12 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 	t.Run("ok: file exists", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
-		want := &nwctl.ServiceMeta{
+		want := &kuesta.ServiceMeta{
 			Name: "foo",
 			Keys: []string{"device", "port"},
 		}
 		given := []byte(`{"keys": ["device", "port"]}`)
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
 		exitOnErr(t, err)
 
 		r, err := p.ReadServiceMeta()
@@ -331,7 +331,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		given := []byte(`{"keys": ["device", "port"]`)
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
 		exitOnErr(t, err)
 
 		_, err = p.ReadServiceMeta()
@@ -362,26 +362,26 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 
 func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	dir := t.TempDir()
-	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), []byte(`{"keys": ["device", "port"]}`)))
-	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), []byte(`{"keys": ["vlan"]}`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), []byte(`{"keys": ["device", "port"]}`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), []byte(`{"keys": ["vlan"]}`)))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	mlist, err := nwctl.ReadServiceMetaAll(dir)
+	mlist, err := kuesta.ReadServiceMetaAll(dir)
 	assert.Nil(t, err)
 	for _, m := range mlist {
 		assert.Contains(t, []string{"foo", "bar"}, m.Name)
 	}
 }
 
-func newValidDevicePath() *nwctl.DevicePath {
-	return &nwctl.DevicePath{
+func newValidDevicePath() *kuesta.DevicePath {
+	return &kuesta.DevicePath{
 		RootDir: "./tmproot",
 		Device:  "device1",
 	}
 }
 
 func TestDevicePath_Validate(t *testing.T) {
-	newValidStruct := func(t func(cfg *nwctl.DevicePath)) *nwctl.DevicePath {
+	newValidStruct := func(t func(cfg *kuesta.DevicePath)) *kuesta.DevicePath {
 		cfg := newValidDevicePath()
 		t(cfg)
 		return cfg
@@ -389,24 +389,24 @@ func TestDevicePath_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.DevicePath)
+		transform func(cfg *kuesta.DevicePath)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.DevicePath) {},
+			func(cfg *kuesta.DevicePath) {},
 			false,
 		},
 		{
 			"ok: service is empty",
-			func(cfg *nwctl.DevicePath) {
+			func(cfg *kuesta.DevicePath) {
 				cfg.Device = ""
 			},
 			false,
 		},
 		{
 			"err: rootpath is empty",
-			func(cfg *nwctl.DevicePath) {
+			func(cfg *kuesta.DevicePath) {
 				cfg.RootDir = ""
 			},
 			true,
@@ -427,26 +427,26 @@ func TestDevicePath_Validate(t *testing.T) {
 
 func TestDevicePath_DeviceDirPath(t *testing.T) {
 	p := newValidDevicePath()
-	assert.Equal(t, "devices", p.DeviceDirPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/devices", p.DeviceDirPath(nwctl.IncludeRoot))
+	assert.Equal(t, "devices", p.DeviceDirPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices", p.DeviceDirPath(kuesta.IncludeRoot))
 }
 
 func TestDevicePath_DevicePath(t *testing.T) {
 	p := newValidDevicePath()
-	assert.Equal(t, "devices/device1", p.DevicePath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/devices/device1", p.DevicePath(nwctl.IncludeRoot))
+	assert.Equal(t, "devices/device1", p.DevicePath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1", p.DevicePath(kuesta.IncludeRoot))
 }
 
 func TestDevicePath_DeviceConfigPath(t *testing.T) {
 	p := newValidDevicePath()
-	assert.Equal(t, "devices/device1/config.cue", p.DeviceConfigPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/devices/device1/config.cue", p.DeviceConfigPath(nwctl.IncludeRoot))
+	assert.Equal(t, "devices/device1/config.cue", p.DeviceConfigPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1/config.cue", p.DeviceConfigPath(kuesta.IncludeRoot))
 }
 
 func TestDevicePath_DeviceActualConfigPath(t *testing.T) {
 	p := newValidDevicePath()
-	assert.Equal(t, "devices/device1/actual_config.cue", p.DeviceActualConfigPath(nwctl.ExcludeRoot))
-	assert.Equal(t, "tmproot/devices/device1/actual_config.cue", p.DeviceActualConfigPath(nwctl.IncludeRoot))
+	assert.Equal(t, "devices/device1/actual_config.cue", p.DeviceActualConfigPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/devices/device1/actual_config.cue", p.DeviceActualConfigPath(kuesta.IncludeRoot))
 }
 
 func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
@@ -456,7 +456,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
 		exitOnErr(t, err)
 
 		r, err := p.ReadDeviceConfigFile()
@@ -508,13 +508,13 @@ func TestDevicePath_CheckSum(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
+		exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
 
 		hasher := sha256.New()
 		hasher.Write(config)
 		want := fmt.Sprintf("%x", hasher.Sum(nil))
 
-		dp := nwctl.DevicePath{RootDir: dir, Device: "device1"}
+		dp := kuesta.DevicePath{RootDir: dir, Device: "device1"}
 		got, err := dp.CheckSum()
 		assert.Nil(t, err)
 		assert.Equal(t, want, got)
@@ -524,7 +524,7 @@ func TestDevicePath_CheckSum(t *testing.T) {
 		dir := t.TempDir()
 		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
 
-		dp := nwctl.DevicePath{RootDir: dir, Device: "device1"}
+		dp := kuesta.DevicePath{RootDir: dir, Device: "device1"}
 		_, err := dp.CheckSum()
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
@@ -538,7 +538,7 @@ func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), want)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), want)
 		exitOnErr(t, err)
 
 		r, err := p.ReadActualDeviceConfigFile()
@@ -609,7 +609,7 @@ func TestParseServiceInputPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSvc, gotKeys, err := nwctl.ParseServiceInputPath(tt.given)
+			gotSvc, gotKeys, err := kuesta.ParseServiceInputPath(tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -655,7 +655,7 @@ func TestParseServiceComputedFilePath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := nwctl.ParseServiceComputedFilePath(tt.given)
+			got, err := kuesta.ParseServiceComputedFilePath(tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -672,9 +672,9 @@ func TestNewDevicePathList(t *testing.T) {
 		dir := t.TempDir()
 		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0750))
 		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750))
-		exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
+		exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
 
-		paths, err := nwctl.NewDevicePathList(dir)
+		paths, err := kuesta.NewDevicePathList(dir)
 		assert.Nil(t, err)
 		assert.Len(t, paths, 2)
 		for _, p := range paths {
@@ -686,7 +686,7 @@ func TestNewDevicePathList(t *testing.T) {
 		dir := t.TempDir()
 		exitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0750))
 
-		paths, err := nwctl.NewDevicePathList(dir)
+		paths, err := kuesta.NewDevicePathList(dir)
 		assert.Nil(t, err)
 		assert.Len(t, paths, 0)
 	})
@@ -694,7 +694,7 @@ func TestNewDevicePathList(t *testing.T) {
 	t.Run("err: no root", func(t *testing.T) {
 		dir := t.TempDir()
 
-		_, err := nwctl.NewDevicePathList(dir)
+		_, err := kuesta.NewDevicePathList(dir)
 		assert.Error(t, err)
 	})
 }

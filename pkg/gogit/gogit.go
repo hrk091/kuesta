@@ -41,8 +41,8 @@ const (
 	DefaultAuthUser    = "anonymous"
 	DefaultTrunkBranch = "main"
 	DefaultRemoteName  = "origin"
-	DefaultGitUser     = "nwctl"
-	DefaultGitEmail    = "nwctl@example.com"
+	DefaultGitUser     = "kuesta"
+	DefaultGitEmail    = "kuesta@example.com"
 )
 
 type GitOptions struct {

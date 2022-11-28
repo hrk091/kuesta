@@ -23,8 +23,8 @@
 package cmd
 
 import (
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -44,7 +44,7 @@ func newDeviceAggregateCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return nwctl.RunDeviceAggregate(cmd.Context(), cfg)
+			return kuesta.RunDeviceAggregate(cmd.Context(), cfg)
 		},
 	}
 	cmd.PersistentFlags().StringP(FlagAggregateAddr, "", ":8000", "Bind address of device aggregator")
@@ -53,12 +53,12 @@ func newDeviceAggregateCmd() *cobra.Command {
 	return cmd
 }
 
-func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*nwctl.DeviceAggregateCfg, error) {
+func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*kuesta.DeviceAggregateCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &nwctl.DeviceAggregateCfg{
+	cfg := &kuesta.DeviceAggregateCfg{
 		RootCfg: *rootCfg,
 		Addr:    viper.GetString(FlagAggregateAddr),
 	}

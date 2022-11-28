@@ -26,8 +26,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/artifact"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/nttcom/kuesta/pkg/nwctl"
 	"github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,7 +80,7 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	l.Info(summary)
 
-	dps, err := nwctl.NewDevicePathList(tmpDir)
+	dps, err := kuesta.NewDevicePathList(tmpDir)
 	if err != nil {
 		r.Error(ctx, err, "list devices")
 		return ctrl.Result{}, err

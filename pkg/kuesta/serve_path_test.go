@@ -20,10 +20,10 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
@@ -52,9 +52,9 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "metadata.json")
-				exitOnErr(t, nwctl.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
 			},
-			&nwctl.ServicePath{
+			&kuesta.ServicePath{
 				RootDir: dir,
 				Service: "foo",
 				Keys:    []string{"one", "two"},
@@ -75,9 +75,9 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "metadata.json")
-				exitOnErr(t, nwctl.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
 			},
-			&nwctl.ServicePath{
+			&kuesta.ServicePath{
 				RootDir: dir,
 				Service: "foo",
 				Keys:    []string{"one", "two"},
@@ -94,7 +94,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 				},
 			},
 			nil,
-			&nwctl.DevicePath{
+			&kuesta.DevicePath{
 				RootDir: dir,
 				Device:  "device1",
 			},
@@ -113,7 +113,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 				},
 			},
 			nil,
-			&nwctl.DevicePath{
+			&kuesta.DevicePath{
 				RootDir: dir,
 				Device:  "device1",
 			},
@@ -202,8 +202,8 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			c := nwctl.NewGnmiPathConverter(&nwctl.ServeCfg{
-				RootCfg: nwctl.RootCfg{
+			c := kuesta.NewGnmiPathConverter(&kuesta.ServeCfg{
+				RootCfg: kuesta.RootCfg{
 					ConfigRootPath: dir,
 					StatusRootPath: dir,
 				},
@@ -214,9 +214,9 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 				switch r := got.(type) {
-				case nwctl.ServicePathReq:
+				case kuesta.ServicePathReq:
 					assert.Equal(t, tt.want, r.Path())
-				case nwctl.DevicePathReq:
+				case kuesta.DevicePathReq:
 					assert.Equal(t, tt.want, r.Path())
 				default:
 					t.Fatalf("unexpected type: %T", got)

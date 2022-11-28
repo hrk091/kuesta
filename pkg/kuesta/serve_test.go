@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package nwctl_test
+package kuesta_test
 
 import (
 	"context"
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/nttcom/kuesta/pkg/gogit"
-	"github.com/nttcom/kuesta/pkg/nwctl"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -41,9 +41,9 @@ import (
 
 func TestServeCfg_Validate(t *testing.T) {
 
-	newValidStruct := func(t func(cfg *nwctl.ServeCfg)) *nwctl.ServeCfg {
-		cfg := &nwctl.ServeCfg{
-			RootCfg: nwctl.RootCfg{
+	newValidStruct := func(t func(cfg *kuesta.ServeCfg)) *kuesta.ServeCfg {
+		cfg := &kuesta.ServeCfg{
+			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: "./",
 			},
 			Addr: ":9339",
@@ -54,17 +54,17 @@ func TestServeCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *nwctl.ServeCfg)
+		transform func(cfg *kuesta.ServeCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *nwctl.ServeCfg) {},
+			func(cfg *kuesta.ServeCfg) {},
 			false,
 		},
 		{
 			"err: addr is empty",
-			func(cfg *nwctl.ServeCfg) {
+			func(cfg *kuesta.ServeCfg) {
 				cfg.Addr = ""
 			},
 			true,
@@ -100,7 +100,7 @@ func TestRunSyncLoop(t *testing.T) {
 	})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	nwctl.RunSyncLoop(ctx, git, 100*time.Millisecond)
+	kuesta.RunSyncLoop(ctx, git, 100*time.Millisecond)
 
 	assert.Eventually(t, func() bool {
 		ref, err := repoPuller.Head()
@@ -118,12 +118,12 @@ func TestNorthboundServerImpl_Capabilities(t *testing.T) {
 	fooModel := &pb.ModelData{Name: "foo", Organization: "org-foo", Version: "0.1.0"}
 	barModel := &pb.ModelData{Name: "bar"}
 
-	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), fooMeta))
-	exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), barMeta))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), fooMeta))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), barMeta))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
-		RootCfg: nwctl.RootCfg{
+	s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
+		RootCfg: kuesta.RootCfg{
 			ConfigRootPath: dir,
 		},
 	})
@@ -167,8 +167,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -196,7 +196,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -227,8 +227,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -262,7 +262,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -293,7 +293,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
 			},
 			nil,
 			codes.NotFound,
@@ -321,8 +321,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
 			},
 			nil,
 			codes.Internal,
@@ -337,7 +337,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
 			},
 			nil,
 			codes.Internal,
@@ -349,8 +349,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
-				RootCfg: nwctl.RootCfg{
+			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
+				RootCfg: kuesta.RootCfg{
 					ConfigRootPath: dir,
 					StatusRootPath: dir,
 				},
@@ -388,8 +388,8 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -406,7 +406,7 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -436,8 +436,8 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
-				RootCfg: nwctl.RootCfg{
+			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
+				RootCfg: kuesta.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})
@@ -487,9 +487,9 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -513,8 +513,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -538,7 +538,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
@@ -556,7 +556,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
@@ -584,8 +584,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
-				RootCfg: nwctl.RootCfg{
+			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
+				RootCfg: kuesta.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})
@@ -639,9 +639,9 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -666,8 +666,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			nil,
@@ -685,8 +685,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
@@ -704,8 +704,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
-				exitOnErr(t, nwctl.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
@@ -733,8 +733,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := nwctl.NewNorthboundServerImpl(&nwctl.ServeCfg{
-				RootCfg: nwctl.RootCfg{
+			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
+				RootCfg: kuesta.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})
