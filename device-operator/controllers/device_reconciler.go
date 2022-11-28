@@ -62,9 +62,9 @@ var (
 )
 
 func SetupEnv() {
-	subscriberImage = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE")
-	subscriberImageVersion = common.MustGetEnv("NWCTL_SUBSCRIBER_IMAGE_VERSION")
-	aggregatorUrl = common.MustGetEnv("NWCTL_AGGREGATOR_URL")
+	subscriberImage = common.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE")
+	subscriberImageVersion = common.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE_VERSION")
+	aggregatorUrl = common.MustGetEnv("KUESTA_AGGREGATOR_URL")
 }
 
 func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -358,15 +358,15 @@ func newSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.P
 		Spec: core.PodSpec{
 			Containers: []core.Container{
 				{
-					Name:    "nwctl-subscriber",
+					Name:    "kuesta-subscriber",
 					Image:   subscriberImage + ":" + subscriberImageVersion,
 					Command: []string{"/bin/subscriber"},
 					Env: []core.EnvVar{
-						{Name: "NWCTL_DEVEL", Value: "true"},
-						{Name: "NWCTL_VERBOSE", Value: "2"},
-						{Name: "NWCTL_ADDR", Value: fmt.Sprintf("%s:%d", spec.Address, spec.Port)},
-						{Name: "NWCTL_DEVICE", Value: name.Name},
-						{Name: "NWCTL_AGGREGATOR_URL", Value: aggregatorUrl},
+						{Name: "KUESTA_DEVEL", Value: "true"},
+						{Name: "KUESTA_VERBOSE", Value: "2"},
+						{Name: "KUESTA_ADDR", Value: fmt.Sprintf("%s:%d", spec.Address, spec.Port)},
+						{Name: "KUESTA_DEVICE", Value: name.Name},
+						{Name: "KUESTA_AGGREGATOR_URL", Value: aggregatorUrl},
 					},
 					SecurityContext: &core.SecurityContext{
 						AllowPrivilegeEscalation: &allowPrivilegeEscalation,

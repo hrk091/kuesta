@@ -28,7 +28,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	nwctlv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
@@ -135,7 +135,7 @@ func hash(buf []byte) string {
 func TestNewTestDataFromFixture(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
-		var dr nwctlv1alpha1.DeviceRollout
+		var dr kuestav1alpha1.DeviceRollout
 		err := newTestDataFromFixture("devicerollout", &dr)
 		assert.Nil(t, err)
 		assert.Equal(t, dr.Name, "test-configrepo")
@@ -143,7 +143,7 @@ func TestNewTestDataFromFixture(t *testing.T) {
 	})
 
 	t.Run("err: file not found", func(t *testing.T) {
-		var dr nwctlv1alpha1.DeviceRollout
+		var dr kuestav1alpha1.DeviceRollout
 		err := newTestDataFromFixture("not-found", &dr)
 		assert.Error(t, err)
 	})

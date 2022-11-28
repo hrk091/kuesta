@@ -46,11 +46,11 @@ type OcDemoReconciler struct {
 	impl   *DeviceReconciler
 }
 
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=ocdemoes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=ocdemoes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=ocdemoes/finalizers,verbs=update
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts,verbs=get;list;watch
-//+kubebuilder:rbac:groups=nwctl.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=ocdemoes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=ocdemoes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=ocdemoes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts,verbs=get;list;watch
+//+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 
