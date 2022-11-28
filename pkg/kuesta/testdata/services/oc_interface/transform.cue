@@ -1,7 +1,7 @@
 package oc_interface
 
 import (
-	ocdemo "github.com/hrk091/nwctl/testdata/pkg/ocdemo"
+	ocdemo "github.com/nttcom/kuesta/testdata/pkg/ocdemo"
 )
 
 #Input: {

@@ -1,1 +1,1 @@
-module: "github.com/hrk091/nwctl/testdata"
+module: "github.com/nttcom/kuesta/testdata"
