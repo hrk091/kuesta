@@ -93,17 +93,17 @@ func TestNewRootCmd(t *testing.T) {
 	}{
 		{
 			"err: device not set",
-			[]string{"nwctl-subscribe", "-addr=:9339", "-aggregator-url=http://localhost:8080"},
+			[]string{"kuesta-subscribe", "-addr=:9339", "-aggregator-url=http://localhost:8080"},
 			true,
 		},
 		{
 			"err: addr not set",
-			[]string{"nwctl-subscribe", "-d=device1", "-aggregator-url=http://localhost:8080"},
+			[]string{"kuesta-subscribe", "-d=device1", "-aggregator-url=http://localhost:8080"},
 			true,
 		},
 		{
 			"err: aggregator-url not set",
-			[]string{"nwctl-subscribe", "-d=device1", "-addr=:9339"},
+			[]string{"kuesta-subscribe", "-d=device1", "-addr=:9339"},
 			true,
 		},
 	}

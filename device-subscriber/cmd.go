@@ -47,8 +47,8 @@ func (c *Config) Validate() error {
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "nwctl-subscribe",
-		Short:        "device-subscribe subscribes Network Element Configuration Update.",
+		Use:          "kuesta-subscribe",
+		Short:        "kuesta-subscribe subscribes Network Element Configuration Update.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var cfg Config
@@ -73,7 +73,7 @@ func NewRootCmd() *cobra.Command {
 
 	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.SetEnvPrefix("NWCTL")
+	viper.SetEnvPrefix("KUESTA")
 	viper.AutomaticEnv()
 
 	return cmd

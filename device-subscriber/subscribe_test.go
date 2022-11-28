@@ -25,7 +25,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	nwctlgnmi "github.com/nttcom/kuesta/pkg/gnmi"
+	kuestagnmi "github.com/nttcom/kuesta/pkg/gnmi"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"
@@ -45,7 +45,7 @@ func TestSubscribe(t *testing.T) {
 			JsonIetfVal: []byte(`{"foo": "bar"}`),
 		},
 	}
-	m := &nwctlgnmi.GnmiMock{
+	m := &kuestagnmi.GnmiMock{
 		SubscribeHandler: func(stream pb.GNMI_SubscribeServer) error {
 			for i := 0; i < 3; i++ {
 				resp := &pb.SubscribeResponse{
@@ -66,7 +66,7 @@ func TestSubscribe(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := nwctlgnmi.NewServer(ctx, m)
+	gs, conn := kuestagnmi.NewServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
@@ -117,7 +117,7 @@ func TestSync(t *testing.T) {
 	}
 }`
 
-	m := &nwctlgnmi.GnmiMock{
+	m := &kuestagnmi.GnmiMock{
 		GetHandler: func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 			v := gnmi.TypedValue{
 				Value: &gnmi.TypedValue_JsonIetfVal{
@@ -137,7 +137,7 @@ func TestSync(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := nwctlgnmi.NewServer(ctx, m)
+	gs, conn := kuestagnmi.NewServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
@@ -208,11 +208,11 @@ func TestGetEntireConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &nwctlgnmi.GnmiMock{
+			m := &kuestagnmi.GnmiMock{
 				GetHandler: tt.handler,
 			}
 			ctx := context.Background()
-			s, conn := nwctlgnmi.NewServer(ctx, m)
+			s, conn := kuestagnmi.NewServer(ctx, m)
 			defer s.Stop()
 
 			c, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
