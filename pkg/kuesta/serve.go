@@ -209,7 +209,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	}()
 
 	// TODO block when git worktree is dirty
-	w, err := s.cGit.Checkout()
+	_, err := s.cGit.Checkout()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to checkout to %s", s.cfg.GitTrunk)
 	}
@@ -242,7 +242,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	}
 
 	sp := ServicePath{RootDir: s.cfg.ConfigRootPath}
-	if _, err := w.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
+	if err := s.cGit.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
 		s.Error(l, err, "git add")
 		return nil, status.Errorf(codes.Internal, "failed to git-add")
 	}
