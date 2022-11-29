@@ -48,8 +48,9 @@ import (
 type ServeCfg struct {
 	RootCfg
 
-	Addr       string `validate:"required"`
-	SyncPeriod int
+	Addr            string `validate:"required"`
+	SyncPeriod      int    `validate:"required"`
+	PersistGitState bool
 }
 
 type PathType string
@@ -199,8 +200,10 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, status.Error(codes.Unavailable, "locked")
 	}
 	defer func() {
-		if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
-			s.Error(l, err, "git reset")
+		if !s.cfg.PersistGitState {
+			if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
+				s.Error(l, err, "git reset")
+			}
 		}
 		s.mu.Unlock()
 	}()

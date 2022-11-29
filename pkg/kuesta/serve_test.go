@@ -46,7 +46,9 @@ func TestServeCfg_Validate(t *testing.T) {
 			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: "./",
 			},
-			Addr: ":9339",
+			Addr:            ":9339",
+			SyncPeriod:      10,
+			PersistGitState: false,
 		}
 		t(cfg)
 		return cfg

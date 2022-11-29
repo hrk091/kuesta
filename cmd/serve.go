@@ -30,8 +30,9 @@ import (
 )
 
 const (
-	FlagServeAddr    = "serve-addr"
-	FlagSyncInterval = "sync-interval"
+	FlagServeAddr       = "serve-addr"
+	FlagSyncInterval    = "sync-interval"
+	FlagPersistGitState = "persist-git-state"
 )
 
 func newServeCmd() *cobra.Command {
@@ -50,6 +51,7 @@ func newServeCmd() *cobra.Command {
 	}
 	cmd.Flags().StringP(FlagServeAddr, "a", ":9339", "Bind address of gNMI northbound API.")
 	cmd.Flags().IntP(FlagSyncInterval, "", 10, "Interval to exec git-pull from status repo.")
+	cmd.Flags().BoolP(FlagPersistGitState, "", false, "Persist git workspace even when api call closed without performing hard-reset.")
 	mustBindToViper(cmd)
 
 	return cmd
@@ -61,9 +63,10 @@ func newServeCfg(cmd *cobra.Command, args []string) (*kuesta.ServeCfg, error) {
 		return nil, err
 	}
 	cfg := &kuesta.ServeCfg{
-		RootCfg:    *rootCfg,
-		Addr:       viper.GetString(FlagServeAddr),
-		SyncPeriod: viper.GetInt(FlagSyncInterval),
+		RootCfg:         *rootCfg,
+		Addr:            viper.GetString(FlagServeAddr),
+		SyncPeriod:      viper.GetInt(FlagSyncInterval),
+		PersistGitState: viper.GetBool(FlagSyncInterval),
 	}
 	return cfg, cfg.Validate()
 }
