@@ -33,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -142,6 +143,7 @@ func NewGitWithoutRepo(o *GitOptions) *Git {
 	}
 }
 
+// Clone clones remote git repo to the given local path.
 func (g *Git) Clone(opts ...CloneOpts) (*extgogit.Repository, error) {
 	o := &extgogit.CloneOptions{
 		URL:           g.opts.RepoUrl,
@@ -309,6 +311,36 @@ func (g *Git) Commit(msg string, opts ...CommitOpts) (plumbing.Hash, error) {
 
 // CommitOpts enables modification of the go-git CommitOptions.
 type CommitOpts func(o *extgogit.CommitOptions)
+
+// Add executes `git add` for all created/modified/deleted files included in the given path.
+func (g *Git) Add(path string) error {
+	w, err := g.repo.Worktree()
+	if err != nil {
+		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
+	}
+
+	if _, err := w.Add(path); err != nil {
+		return errors.WithStack(fmt.Errorf("git add: %w", err))
+	}
+
+	// NOTE go-git does not remove deleted files from index except for specifying deleted files individually.
+	// https://github.com/go-git/go-git/issues/113
+	stmap, err := w.Status()
+	prefix := filepath.Clean(path)
+	for fpath, st := range stmap {
+		if prefix != "." && !strings.HasPrefix(fpath, prefix) {
+			continue
+		}
+		if st.Worktree != extgogit.Deleted {
+			continue
+		}
+		if _, err := w.Add(fpath); err != nil {
+			return errors.WithStack(fmt.Errorf("git add %s: %w", fpath, err))
+		}
+	}
+
+	return nil
+}
 
 // Push pushes the specified git branch to remote. If branch is empty, it pushes the branch set by GitOptions.TrunkBranch.
 func (g *Git) Push(opts ...PushOpts) error {

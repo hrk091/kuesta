@@ -347,6 +347,96 @@ func TestGit_Commit(t *testing.T) {
 	})
 }
 
+func TestGit_Add(t *testing.T) {
+
+	t.Run("ok: create new", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		wt, err := repo.Worktree()
+		exitOnErr(t, err)
+
+		filepath := "test/added.txt"
+		exitOnErr(t, createFile(wt, filepath, "dummy"))
+		exitOnErr(t, modifyFile(wt, "README.md", "foobar"))
+
+		g, err := gogit.NewGit(&gogit.GitOptions{
+			Path: dir,
+		})
+		exitOnErr(t, err)
+		err = g.Add("test")
+		assert.Nil(t, err)
+
+		stmap, err := wt.Status()
+		exitOnErr(t, err)
+		count := 0
+		for fpath, st := range stmap {
+			if st.Staging == extgogit.Unmodified {
+				continue
+			}
+			count += 1
+			assert.Equal(t, fpath, filepath)
+			assert.Equal(t, st.Staging, extgogit.Added)
+		}
+		assert.Equal(t, count, 1)
+	})
+
+	t.Run("ok: modify existing", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		wt, err := repo.Worktree()
+		exitOnErr(t, err)
+
+		exitOnErr(t, modifyFile(wt, "README.md", "foobar"))
+
+		g, err := gogit.NewGit(&gogit.GitOptions{
+			Path: dir,
+		})
+		exitOnErr(t, err)
+		err = g.Add("")
+		assert.Nil(t, err)
+
+		stmap, err := wt.Status()
+		exitOnErr(t, err)
+		count := 0
+		for fpath, st := range stmap {
+			if st.Staging == extgogit.Unmodified {
+				continue
+			}
+			count += 1
+			assert.Equal(t, fpath, "README.md")
+			assert.Equal(t, st.Staging, extgogit.Modified)
+		}
+		assert.Equal(t, count, 1)
+	})
+
+	t.Run("ok: delete existing", func(t *testing.T) {
+		repo, dir := initRepo(t, "main")
+		wt, err := repo.Worktree()
+		exitOnErr(t, err)
+
+		t.Log("#################", dir)
+		exitOnErr(t, deleteFile(wt, "README.md"))
+
+		g, err := gogit.NewGit(&gogit.GitOptions{
+			Path: dir,
+		})
+		exitOnErr(t, err)
+		err = g.Add("")
+		assert.Nil(t, err)
+
+		stmap, err := wt.Status()
+		exitOnErr(t, err)
+		count := 0
+		for fpath, st := range stmap {
+			if st.Staging == extgogit.Unmodified {
+				continue
+			}
+			count += 1
+			assert.Equal(t, fpath, "README.md")
+			assert.Equal(t, st.Staging, extgogit.Deleted)
+		}
+		assert.Equal(t, count, 1)
+	})
+}
+
 func TestGit_Push(t *testing.T) {
 	remoteRepo, url := initBareRepo(t)
 

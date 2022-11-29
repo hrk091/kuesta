@@ -99,20 +99,44 @@ func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository,
 	return repo, dir
 }
 
+func createFile(wt *extgogit.Worktree, path, content string) error {
+	f, err := wt.Filesystem.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err = f.Write([]byte(content)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func modifyFile(wt *extgogit.Worktree, path, content string) error {
+	f, err := wt.Filesystem.OpenFile(path, os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = f.Write([]byte(content)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteFile(wt *extgogit.Worktree, path string) error {
+	if err := wt.Filesystem.Remove(path); err != nil {
+		return err
+	}
+	return nil
+}
+
 func addFile(repo *extgogit.Repository, path, content string) error {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
-	f, err := wt.Filesystem.Create(path)
-	if err != nil {
-		return err
-	}
-	if _, err = f.Write([]byte(content)); err != nil {
-		f.Close()
-		return err
-	}
-	if err = f.Close(); err != nil {
+	if err := createFile(wt, path, content); err != nil {
 		return err
 	}
 	if _, err = wt.Add(path); err != nil {
