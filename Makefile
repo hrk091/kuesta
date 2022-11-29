@@ -1,5 +1,5 @@
 IMG ?= kuesta:latest
-KUSTOMIZE_ROOT ?= default
+KUSTOMIZE_ROOT ?= overlays/example
 
 .PHONY: docker-build
 docker-build: test

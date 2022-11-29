@@ -1,4 +1,4 @@
-IMG ?= kuesta-subscriber:latest
+IMG ?= device-subscriber:latest
 
 .PHONY: docker-build
 docker-build: test
