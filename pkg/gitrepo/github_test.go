@@ -1,5 +1,3 @@
-//go:build test_github
-
 /*
  Copyright (c) 2022 NTT Communications Corporation
 
@@ -25,122 +23,85 @@
 package gitrepo_test
 
 import (
-	"context"
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/gitrepo"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
-func TestGitHubClientImpl_HealthCheck(t *testing.T) {
-	c := gitrepo.NewGitHubClient(os.Getenv("GITHUB_TOKEN"))
-	err := c.HealthCheck()
-	assert.Nil(t, err)
-}
-
-func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
-	c := gitrepo.NewGitHubClient(os.Getenv("GITHUB_TOKEN"))
-
-	type given struct {
-		repo    gitrepo.GitRepoRef
-		payload gitrepo.GitPullRequestPayload
-	}
+func TestNewGitHubClient(t *testing.T) {
+	token := ""
 
 	var tests = []struct {
-		name string
-		given
+		name    string
+		given   string
+		wantRet bool
+	}{
+		{
+			"ok",
+			"github.com/hrk091/kuesta-testdata",
+			true,
+		},
+		{
+			"err: incorrect git repo",
+			"not.exist.com/hrk091/kuesta-testdata",
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := gitrepo.NewGitHubClient(tt.given, token)
+			if tt.wantRet {
+				assert.NotNil(t, c)
+			} else {
+				assert.Nil(t, c)
+			}
+		})
+	}
+}
+
+func TestNewRepoRef(t *testing.T) {
+	var tests = []struct {
+		name    string
+		given   string
+		want    gitrepo.GitRepoRef
 		wantErr bool
 	}{
 		{
 			"ok",
-			given{
-				gitrepo.GitRepoRef{
-					Owner: "hrk091",
-					Name:  "kuesta-testdata", // TODO change repo to the public one
-				},
-				gitrepo.GitPullRequestPayload{
-					HeadRef: "github-client-test",
-					BaseRef: "main",
-					Title:   "github-client-test",
-					Body:    "github-client-test",
-				},
+			"github.com/hrk091/kuesta-testdata",
+			gitrepo.GitRepoRef{
+				Owner: "hrk091",
+				Name:  "kuesta-testdata",
 			},
 			false,
 		},
 		{
-			"err: pr-already-created",
-			given{
-				gitrepo.GitRepoRef{
-					Owner: "hrk091",
-					Name:  "kuesta-testdata",
-				},
-				gitrepo.GitPullRequestPayload{
-					HeadRef: "pr-already-created",
-					BaseRef: "main",
-					Title:   "github-client-test",
-					Body:    "github-client-test",
-				},
+			"ok: repoName including slash",
+			"github.com/hrk091/kuesta/testdata",
+			gitrepo.GitRepoRef{
+				Owner: "hrk091",
+				Name:  "kuesta/testdata",
 			},
-			true,
+			false,
 		},
 		{
-			"err: repository not found",
-			given{
-				gitrepo.GitRepoRef{
-					Owner: "hrk091",
-					Name:  "NOT_EXIST",
-				},
-				gitrepo.GitPullRequestPayload{
-					HeadRef: "github-client-test",
-					BaseRef: "main",
-					Title:   "github-client-test",
-					Body:    "github-client-test",
-				},
-			},
-			true,
-		},
-		{
-			"err: base branch not found",
-			given{
-				gitrepo.GitRepoRef{
-					Owner: "hrk091",
-					Name:  "kuesta-testdata",
-				},
-				gitrepo.GitPullRequestPayload{
-					HeadRef: "github-client-test",
-					BaseRef: "NOT_EXIST",
-					Title:   "github-client-test",
-					Body:    "github-client-test",
-				},
-			},
-			true,
-		},
-		{
-			"err: head branch not found",
-			given{
-				gitrepo.GitRepoRef{
-					Owner: "hrk091",
-					Name:  "kuesta-testdata",
-				},
-				gitrepo.GitPullRequestPayload{
-					HeadRef: "NOT_EXIST",
-					BaseRef: "github-client-test",
-					Title:   "github-client-test",
-					Body:    "github-client-test",
-				},
-			},
+			"err: incorrect git repo",
+			"not.exist.com/hrk091/kuesta-testdata",
+			gitrepo.GitRepoRef{},
 			true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			prNum, err := c.CreatePullRequest(ctx, tt.repo, tt.payload)
+			got, err := gitrepo.NewRepoRef(tt.given)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.Nil(t, err)
-				assert.True(t, prNum != 0)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}

@@ -27,26 +27,45 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 )
+
+// NewRepoRef returns GitRepoRef from the remote hostname.
+func NewRepoRef(repoPath string) (GitRepoRef, error) {
+	items := strings.SplitN(repoPath, "/", 3)
+	if items[0] != "github.com" {
+		return GitRepoRef{}, fmt.Errorf("git repository host mismatched")
+	}
+
+	return GitRepoRef{
+		Owner: items[1],
+		Name:  items[2],
+	}, nil
+}
 
 var _ GitRepoClient = &GitHubClientImpl{}
 
 // GitHubClientImpl implements GitRepoClient which works with GitHub.
 type GitHubClientImpl struct {
+	repo        GitRepoRef
 	tokenSource oauth2.TokenSource
 }
 
 // NewGitHubClient creates new GitRepoClient which works with GitHub.
-func NewGitHubClient(token string) GitRepoClient {
+func NewGitHubClient(repoPath string, token string) GitRepoClient {
+	repo, err := NewRepoRef(repoPath)
+	if err != nil {
+		return nil
+	}
 	if token == "" {
-		return &GitHubClientImpl{}
+		return &GitHubClientImpl{repo: repo}
 	}
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	return &GitHubClientImpl{src}
+	return &GitHubClientImpl{repo, src}
 }
 
 func (g GitHubClientImpl) HealthCheck() error {
@@ -60,8 +79,8 @@ func (g GitHubClientImpl) HealthCheck() error {
 	return nil
 }
 
-func (g GitHubClientImpl) CreatePullRequest(ctx context.Context, repo GitRepoRef, payload GitPullRequestPayload) (prNum int, err error) {
-	repoID, err := g.getRepositoryId(ctx, repo)
+func (g GitHubClientImpl) CreatePullRequest(ctx context.Context, payload GitPullRequestPayload) (prNum int, err error) {
+	repoID, err := g.getRepositoryId(ctx, g.repo)
 	if err != nil {
 		return 0, err
 	}

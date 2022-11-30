@@ -41,5 +41,5 @@ type GitRepoClient interface {
 	HealthCheck() error
 
 	// CreatePullRequest creates PullRequest with given parameters.
-	CreatePullRequest(ctx context.Context, repo GitRepoRef, payload GitPullRequestPayload) (prNum int, err error)
+	CreatePullRequest(ctx context.Context, payload GitPullRequestPayload) (prNum int, err error)
 }
