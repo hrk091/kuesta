@@ -27,6 +27,7 @@ import (
 	"fmt"
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/gitrepo"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
@@ -73,7 +74,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	}
 
 	t := time.Now()
-	branchName := "main"
+	branchName := cfg.GitTrunk
 	if !cfg.PushToMain {
 		branchName = fmt.Sprintf("REV-%d", t.Unix())
 		if w, err = git.Checkout(gogit.CheckoutOptsTo(branchName), gogit.CheckoutOptsCreateNew()); err != nil {
@@ -87,6 +88,22 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	}
 	if err := git.Push(gogit.PushOptBranch(branchName)); err != nil {
 		return fmt.Errorf("git push: %w", err)
+	}
+
+	if !cfg.PushToMain {
+		c, err := gitrepo.NewGitRepoClient(cfg.ConfigRepoUrl, cfg.GitToken)
+		if err != nil {
+			return fmt.Errorf("create pull-request from branch=%s: %w", branchName, err)
+		}
+		payload := gitrepo.GitPullRequestPayload{
+			HeadRef: branchName,
+			BaseRef: cfg.GitTrunk,
+			Title:   "[kuesta] Automated PR",
+			Body:    commitMsg,
+		}
+		if _, err := c.CreatePullRequest(ctx, payload); err != nil {
+			return fmt.Errorf("create pull-request from branch=%s: %w", branchName, err)
+		}
 	}
 
 	return nil
