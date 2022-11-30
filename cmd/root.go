@@ -86,6 +86,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP(FlagGitToken, "", "", "git auth token")
 	cmd.PersistentFlags().StringP(FlagGitUser, "", gogit.DefaultGitUser, "git username")
 	cmd.PersistentFlags().StringP(FlagGitEmail, "", gogit.DefaultGitEmail, "git email")
+	cmd.PersistentFlags().BoolP(FlagPushToMain, "", false, "push to main (otherwise create new branch)")
 
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()
@@ -117,6 +118,7 @@ func newRootCfg(cmd *cobra.Command) (*kuesta.RootCfg, error) {
 		GitRemote:      viper.GetString(FlagGitRemote),
 		GitUser:        gitUser,
 		GitEmail:       gitEmail,
+		PushToMain:     viper.GetBool(FlagPushToMain),
 	}
 	return cfg, cfg.Validate()
 }

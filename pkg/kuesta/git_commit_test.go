@@ -78,8 +78,8 @@ Devices:
 			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
+				PushToMain:     true,
 			},
-			PushToMain: true,
 		})
 		assert.Nil(t, err)
 		assert.Equal(t, "main", getBranch(t, repo))
@@ -100,8 +100,8 @@ Devices:
 			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
+				PushToMain:     false,
 			},
-			PushToMain: false,
 		})
 		assert.Nil(t, err)
 		assert.True(t, strings.HasPrefix(getBranch(t, repo), "REV-"))

@@ -38,8 +38,6 @@ import (
 
 type GitCommitCfg struct {
 	RootCfg
-
-	PushToMain bool
 }
 
 // Validate validates exposed fields according to the `validate` tag.

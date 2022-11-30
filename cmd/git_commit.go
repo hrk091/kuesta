@@ -26,7 +26,6 @@ import (
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newGitCommitCmd() *cobra.Command {
@@ -43,7 +42,6 @@ func newGitCommitCmd() *cobra.Command {
 			return kuesta.RunGitCommit(cmd.Context(), cfg)
 		},
 	}
-	cmd.Flags().BoolP(FlagPushToMain, "", false, "push to main (otherwise create new branch)")
 	mustBindToViper(cmd)
 
 	return cmd
@@ -55,8 +53,7 @@ func newGitCommitCfg(cmd *cobra.Command, args []string) (*kuesta.GitCommitCfg, e
 		return nil, err
 	}
 	cfg := &kuesta.GitCommitCfg{
-		RootCfg:    *rootCfg,
-		PushToMain: viper.GetBool(FlagPushToMain),
+		RootCfg: *rootCfg,
 	}
 	return cfg, cfg.Validate()
 }

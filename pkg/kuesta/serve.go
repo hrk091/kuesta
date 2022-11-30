@@ -254,8 +254,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	}
 
 	gitCommitCfg := GitCommitCfg{
-		RootCfg:    s.cfg.RootCfg,
-		PushToMain: true,
+		RootCfg: s.cfg.RootCfg,
 	}
 	if err := RunGitCommit(ctx, &gitCommitCfg); err != nil {
 		s.Error(l, err, "git commit")

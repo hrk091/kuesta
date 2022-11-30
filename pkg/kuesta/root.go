@@ -39,6 +39,7 @@ type RootCfg struct {
 	GitToken       string
 	GitUser        string
 	GitEmail       string
+	PushToMain     bool
 }
 
 // Validate validates exposed fields according to the `validate` tag.
