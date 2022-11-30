@@ -27,16 +27,27 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
+	"net/url"
 	"strings"
 
 	"github.com/shurcooL/githubv4"
 )
 
 // NewRepoRef returns GitRepoRef from the remote hostname.
-func NewRepoRef(repoPath string) (GitRepoRef, error) {
-	items := strings.SplitN(repoPath, "/", 3)
-	if items[0] != "github.com" {
-		return GitRepoRef{}, fmt.Errorf("git repository host mismatched")
+func NewRepoRef(repoURL string) (GitRepoRef, error) {
+	u, err := url.Parse(repoURL)
+	if err != nil {
+		return GitRepoRef{}, errors.WithStack(fmt.Errorf("parse git repository URL: %w", err))
+	}
+	host := u.Hostname()
+	if host != "github.com" {
+		return GitRepoRef{}, errors.WithStack(fmt.Errorf("git repository host mismatched"))
+	}
+	items := strings.SplitN(u.Path, "/", 3)
+	owner := items[1]
+	repoName := items[2]
+	if owner == "" || repoName == "" {
+		return GitRepoRef{}, errors.WithStack(fmt.Errorf("invalid git repository URL: %s", repoURL))
 	}
 
 	return GitRepoRef{
@@ -46,7 +57,7 @@ func NewRepoRef(repoPath string) (GitRepoRef, error) {
 }
 
 func init() {
-	constructors = append(constructors, NewGitHubClient)
+	gitClientConstructors = append(gitClientConstructors, NewGitHubClient)
 }
 
 var _ GitRepoClient = &GitHubClientImpl{}
@@ -58,8 +69,8 @@ type GitHubClientImpl struct {
 }
 
 // NewGitHubClient creates new GitRepoClient which works with GitHub.
-func NewGitHubClient(repoPath string, token string) GitRepoClient {
-	repo, err := NewRepoRef(repoPath)
+func NewGitHubClient(repoURL string, token string) GitRepoClient {
+	repo, err := NewRepoRef(repoURL)
 	if err != nil {
 		return nil
 	}

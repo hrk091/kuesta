@@ -39,13 +39,13 @@ func TestNewGitRepoClient(t *testing.T) {
 	}{
 		{
 			"ok",
-			"github.com/hrk091/kuesta-testdata",
+			"https://github.com/hrk091/kuesta-testdata",
 			"github",
 			false,
 		},
 		{
 			"err: incorrect git repo",
-			"not.exist.com/hrk091/kuesta-testdata",
+			"https://not.exist.com/hrk091/kuesta-testdata",
 			"",
 			true,
 		},

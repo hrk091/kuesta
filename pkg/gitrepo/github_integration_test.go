@@ -33,7 +33,7 @@ import (
 )
 
 func TestGitHubClientImpl_HealthCheck(t *testing.T) {
-	repo := "github.com/hrk091/kuesta-testdata"
+	repo := "https://github.com/hrk091/kuesta-testdata"
 	c := gitrepo.NewGitHubClient(repo, os.Getenv("GITHUB_TOKEN"))
 	err := c.HealthCheck()
 	assert.Nil(t, err)
@@ -55,7 +55,7 @@ func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
 		{
 			"ok",
 			given{
-				"github.com/hrk091/kuesta-testdata",
+				"https://github.com/hrk091/kuesta-testdata",
 				gitrepo.GitPullRequestPayload{
 					HeadRef: "github-client-test",
 					BaseRef: "main",
@@ -68,7 +68,7 @@ func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
 		{
 			"err: pr-already-created",
 			given{
-				"github.com/hrk091/kuesta-testdata",
+				"https://github.com/hrk091/kuesta-testdata",
 				gitrepo.GitPullRequestPayload{
 					HeadRef: "pr-already-created",
 					BaseRef: "main",
@@ -81,7 +81,7 @@ func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
 		{
 			"err: repository not found",
 			given{
-				"github.com/hrk091/NOT_EXIST",
+				"https://github.com/hrk091/NOT_EXIST",
 				gitrepo.GitPullRequestPayload{
 					HeadRef: "github-client-test",
 					BaseRef: "main",
@@ -94,7 +94,7 @@ func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
 		{
 			"err: base branch not found",
 			given{
-				"github.com/hrk091/kuesta-testdata",
+				"https://github.com/hrk091/kuesta-testdata",
 				gitrepo.GitPullRequestPayload{
 					HeadRef: "github-client-test",
 					BaseRef: "NOT_EXIST",
@@ -107,7 +107,7 @@ func TestGitHubClientImpl_CreatePullRequest(t *testing.T) {
 		{
 			"err: head branch not found",
 			given{
-				"github.com/hrk091/kuesta-testdata",
+				"https://github.com/hrk091/kuesta-testdata",
 				gitrepo.GitPullRequestPayload{
 					HeadRef: "NOT_EXIST",
 					BaseRef: "github-client-test",

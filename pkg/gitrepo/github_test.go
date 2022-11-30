@@ -39,12 +39,12 @@ func TestNewGitHubClient(t *testing.T) {
 	}{
 		{
 			"ok",
-			"github.com/hrk091/kuesta-testdata",
+			"https://github.com/hrk091/kuesta-testdata",
 			true,
 		},
 		{
 			"err: incorrect git repo",
-			"not.exist.com/hrk091/kuesta-testdata",
+			"https://not.exist.com/hrk091/kuesta-testdata",
 			false,
 		},
 	}
@@ -70,7 +70,7 @@ func TestNewRepoRef(t *testing.T) {
 	}{
 		{
 			"ok",
-			"github.com/hrk091/kuesta-testdata",
+			"https://github.com/hrk091/kuesta-testdata",
 			gitrepo.GitRepoRef{
 				Owner: "hrk091",
 				Name:  "kuesta-testdata",
@@ -79,7 +79,7 @@ func TestNewRepoRef(t *testing.T) {
 		},
 		{
 			"ok: repoName including slash",
-			"github.com/hrk091/kuesta/testdata",
+			"https://github.com/hrk091/kuesta/testdata",
 			gitrepo.GitRepoRef{
 				Owner: "hrk091",
 				Name:  "kuesta/testdata",
@@ -88,7 +88,19 @@ func TestNewRepoRef(t *testing.T) {
 		},
 		{
 			"err: incorrect git repo",
-			"not.exist.com/hrk091/kuesta-testdata",
+			"https://not.exist.com/hrk091/kuesta-testdata",
+			gitrepo.GitRepoRef{},
+			true,
+		},
+		{
+			"err: repoName not given",
+			"https://not.exist.com/hrk091/",
+			gitrepo.GitRepoRef{},
+			true,
+		},
+		{
+			"err: org not given",
+			"https://not.exist.com/",
 			gitrepo.GitRepoRef{},
 			true,
 		},

@@ -25,6 +25,7 @@ package gitrepo
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 type GitRepoRef struct {
@@ -50,13 +51,15 @@ type GitRepoClient interface {
 	CreatePullRequest(ctx context.Context, payload GitPullRequestPayload) (prNum int, err error)
 }
 
-var constructors []func(string, string) GitRepoClient
+type NewGitClientFunc func(repoURL string, token string) GitRepoClient
 
-func NewGitRepoClient(repoPath string, token string) (GitRepoClient, error) {
-	for _, create := range constructors {
-		if c := create(repoPath, token); c != nil {
+var gitClientConstructors []NewGitClientFunc
+
+func NewGitRepoClient(repoURL string, token string) (GitRepoClient, error) {
+	for _, create := range gitClientConstructors {
+		if c := create(repoURL, token); c != nil {
 			return c, nil
 		}
 	}
-	return nil, fmt.Errorf("resolve correspoinding GitRepoClient: unknown git-repo host: path=%s", repoPath)
+	return nil, errors.WithStack(fmt.Errorf("resolve correspoinding GitRepoClient: unknown git-repo host: path=%s", repoURL))
 }
