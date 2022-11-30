@@ -45,6 +45,10 @@ func NewRepoRef(repoPath string) (GitRepoRef, error) {
 	}, nil
 }
 
+func init() {
+	constructors = append(constructors, NewGitHubClient)
+}
+
 var _ GitRepoClient = &GitHubClientImpl{}
 
 // GitHubClientImpl implements GitRepoClient which works with GitHub.
@@ -66,6 +70,10 @@ func NewGitHubClient(repoPath string, token string) GitRepoClient {
 		&oauth2.Token{AccessToken: token},
 	)
 	return &GitHubClientImpl{repo, src}
+}
+
+func (g GitHubClientImpl) Kind() string {
+	return "github"
 }
 
 func (g GitHubClientImpl) HealthCheck() error {

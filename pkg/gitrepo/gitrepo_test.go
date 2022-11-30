@@ -20,43 +20,46 @@
  THE SOFTWARE.
 */
 
-package gitrepo
+package gitrepo_test
 
 import (
-	"context"
-	"fmt"
+	"github.com/nttcom/kuesta/pkg/gitrepo"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-type GitRepoRef struct {
-	Owner string
-	Name  string
-}
+func TestNewGitRepoClient(t *testing.T) {
+	token := ""
 
-type GitPullRequestPayload struct {
-	HeadRef string
-	BaseRef string
-	Title   string
-	Body    string
-}
-
-type GitRepoClient interface {
-	// Kind returns the kind of git-repo client.
-	Kind() string
-
-	// HealthCheck sends a simple query with auth-token to confirm that the request reaches and is accepted by remote git-repository.
-	HealthCheck() error
-
-	// CreatePullRequest creates PullRequest with given parameters.
-	CreatePullRequest(ctx context.Context, payload GitPullRequestPayload) (prNum int, err error)
-}
-
-var constructors []func(string, string) GitRepoClient
-
-func NewGitRepoClient(repoPath string, token string) (GitRepoClient, error) {
-	for _, create := range constructors {
-		if c := create(repoPath, token); c != nil {
-			return c, nil
-		}
+	var tests = []struct {
+		name     string
+		given    string
+		wantKind string
+		wantErr  bool
+	}{
+		{
+			"ok",
+			"github.com/hrk091/kuesta-testdata",
+			"github",
+			false,
+		},
+		{
+			"err: incorrect git repo",
+			"not.exist.com/hrk091/kuesta-testdata",
+			"",
+			true,
+		},
 	}
-	return nil, fmt.Errorf("resolve correspoinding GitRepoClient: unknown git-repo host: path=%s", repoPath)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := gitrepo.NewGitRepoClient(tt.given, token)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantKind, c.Kind())
+			}
+		})
+	}
 }
