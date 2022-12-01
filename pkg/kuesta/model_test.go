@@ -329,13 +329,35 @@ func TestServiceTransformer_InputKeys(t *testing.T) {
 			false,
 		},
 		{
-			"err: Nan",
+			"err: not starting from 1",
 			[]byte(`
 #Input: {
 	// kuesta:"key=2"
-	bar:   uint16
-	// kuesta:"key=foo"
+	foo:   uint16
+}`),
+			[]string{"foo", "bar", "baz"},
+			true,
+		},
+		{
+			"err: not a sequence starting from 1",
+			[]byte(`
+#Input: {
+	// kuesta:"key=1"
 	foo:   string
+	// kuesta:"key=3"
+	bar:   uint16
+}`),
+			[]string{"foo", "bar", "baz"},
+			true,
+		},
+		{
+			"err: not a number",
+			[]byte(`
+#Input: {
+	// kuesta:"key=1"
+	foo:   uint16
+	// kuesta:"key=bar"
+	bar:   string
 }`),
 			nil,
 			true,

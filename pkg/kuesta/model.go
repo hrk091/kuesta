@@ -30,7 +30,6 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -157,11 +156,7 @@ func (t *ServiceTransformer) InputKeys() ([]string, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	type Key struct {
-		name string
-		seq  int
-	}
-	var keys []Key
+	keys := map[int]string{}
 
 	for it.Next() {
 		name := it.Label()
@@ -177,18 +172,22 @@ func (t *ServiceTransformer) InputKeys() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("convert unique key seq on kuesta tag `%s`: %w", name, err)
 		}
-		keys = append(keys, Key{name, seq})
+		if _, alreadySet := keys[seq]; alreadySet {
+			return nil, errors.WithStack(fmt.Errorf("unique key number duplicated: key=%d", seq))
+		}
+		keys[seq] = name
 	}
 	if len(keys) == 0 {
 		return nil, errors.WithStack(fmt.Errorf("at least one key is needed"))
 	}
 
-	sort.Slice(keys, func(a, b int) bool {
-		return keys[a].seq < keys[b].seq
-	})
 	var ret []string
-	for _, v := range keys {
-		ret = append(ret, v.name)
+	for i := 0; i < len(keys); i++ {
+		v, ok := keys[i+1]
+		if !ok {
+			return nil, errors.WithStack(fmt.Errorf("unique keys must be the sequence starting from 1"))
+		}
+		ret = append(ret, v)
 	}
 	return ret, nil
 }
