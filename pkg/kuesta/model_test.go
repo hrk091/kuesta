@@ -273,6 +273,109 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 	}
 }
 
+func TestServiceTransformer_InputKeys(t *testing.T) {
+
+	var tests = []struct {
+		name    string
+		given   []byte
+		want    []string
+		wantErr bool
+	}{
+		{
+			"ok",
+			[]byte(`
+#Input: {
+	boolVal:  bool
+	// kuesta:"key=1"
+	foo:   string
+	floatVal: float64
+}`),
+			[]string{"foo"},
+			false,
+		},
+		{
+			"ok: multi keys",
+			[]byte(`
+#Input: {
+	// kuesta:"key=2"
+	bar:   uint16
+	boolVal:  bool
+	// kuesta:"key=1"
+	foo:   string
+	floatVal: float64
+	nullVal:  null
+
+	// kuesta:"key=3"
+	baz:   string
+}`),
+			[]string{"foo", "bar", "baz"},
+			false,
+		},
+		{
+			"ok: with other keys",
+			[]byte(`
+#Input: {
+	// kuesta:"key=2"
+	bar:   uint16
+	boolVal:  bool
+	// kuesta:"key=1"
+	foo:   string
+	// kuesta:"dummy"
+	floatVal: float64
+	// kuesta:"dummyKey=dummyVal"
+	nullVal:  null
+
+	// kuesta:"key=3"
+	baz:   string
+}`),
+			[]string{"foo", "bar", "baz"},
+			false,
+		},
+		{
+			"err: Nan",
+			[]byte(`
+#Input: {
+	// kuesta:"key=2"
+	bar:   uint16
+	// kuesta:"key=foo"
+	foo:   string
+}`),
+			nil,
+			true,
+		},
+		{
+			"err: no keys",
+			[]byte(`
+#Input: {
+	foo:   string
+	bar:   uint16
+}`),
+			nil,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			exitOnErr(t, err)
+
+			cctx := cuecontext.New()
+			transformer, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
+			exitOnErr(t, err)
+
+			got, err := transformer.InputKeys()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNewDeviceFromBytes(t *testing.T) {
 
 	tests := []struct {

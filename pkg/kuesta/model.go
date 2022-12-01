@@ -30,6 +30,9 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -146,6 +149,49 @@ func (t *ServiceTransformer) ConvertInputType(input map[string]string) (map[stri
 		converted[k] = vv
 	}
 	return converted, nil
+}
+
+// InputKeys returns unique keys of input specified at the kuesta tag.
+func (t *ServiceTransformer) InputKeys() ([]string, error) {
+	it, err := t.value.LookupPath(cue.ParsePath(cueTypeStrInput)).Fields()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	type Key struct {
+		name string
+		seq  int
+	}
+	var keys []Key
+
+	for it.Next() {
+		name := it.Label()
+		tag, err := CueKuestaTagOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, name))
+		if err != nil {
+			return nil, fmt.Errorf("get kuesta tag of field `%s`: %w", name, err)
+		}
+		kv := strings.SplitN(tag, "=", 2)
+		if kv[0] != "key" {
+			continue
+		}
+		seq, err := strconv.Atoi(kv[1])
+		if err != nil {
+			return nil, fmt.Errorf("convert unique key seq on kuesta tag `%s`: %w", name, err)
+		}
+		keys = append(keys, Key{name, seq})
+	}
+	if len(keys) == 0 {
+		return nil, errors.WithStack(fmt.Errorf("at least one key is needed"))
+	}
+
+	sort.Slice(keys, func(a, b int) bool {
+		return keys[a].seq < keys[b].seq
+	})
+	var ret []string
+	for _, v := range keys {
+		ret = append(ret, v.name)
+	}
+	return ret, nil
 }
 
 type Device struct {
