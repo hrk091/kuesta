@@ -1,3 +1,5 @@
+//go:generate mockgen -package=mock -source=gitrepo.go -destination=mock/gitrepo.go
+
 /*
  Copyright (c) 2022 NTT Communications Corporation
 
@@ -55,11 +57,20 @@ type NewGitClientFunc func(repoURL string, token string) GitRepoClient
 
 var gitClientConstructors []NewGitClientFunc
 
+// NewGitRepoClient creates new GitRepoClient for the given git repository kind.
 func NewGitRepoClient(repoURL string, token string) (GitRepoClient, error) {
 	for _, create := range gitClientConstructors {
 		if c := create(repoURL, token); c != nil {
 			return c, nil
 		}
 	}
-	return nil, errors.WithStack(fmt.Errorf("resolve correspoinding GitRepoClient: unknown git-repo host: path=%s", repoURL))
+	return nil, errors.WithStack(fmt.Errorf("resolve correspoinding GitRepoClient: unknown git-repo host: path=`%s`", repoURL))
+}
+
+// ReplaceGitClientConstructors replaces gitClientConstructors with the given one, TEST USE ONLY.
+func ReplaceGitClientConstructors(c GitRepoClient) {
+	fn := func(repoURL string, token string) GitRepoClient {
+		return c
+	}
+	gitClientConstructors = []NewGitClientFunc{fn}
 }

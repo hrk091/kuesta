@@ -26,6 +26,9 @@ import (
 	"context"
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/golang/mock/gomock"
+	"github.com/nttcom/kuesta/pkg/gitrepo"
+	"github.com/nttcom/kuesta/pkg/gitrepo/mock"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
@@ -96,7 +99,12 @@ Devices:
 
 	t.Run("ok: push to new branch", func(t *testing.T) {
 		repo, dir := setup(t)
-		err := kuesta.RunGitCommit(context.Background(), &kuesta.GitCommitCfg{
+		mockGitClient := mock.NewMockGitRepoClient(gomock.NewController(t))
+		ctx := context.Background()
+		mockGitClient.EXPECT().CreatePullRequest(ctx, gomock.Any()).Return(42, nil)
+		gitrepo.ReplaceGitClientConstructors(mockGitClient)
+
+		err := kuesta.RunGitCommit(ctx, &kuesta.GitCommitCfg{
 			RootCfg: kuesta.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",

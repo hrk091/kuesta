@@ -28,6 +28,13 @@ import (
 	"testing"
 )
 
+//func NewMockClientFunc(t *testing.T) gitrepo.NewGitClientFunc {
+//	mockCtrl := gomock.NewController(t)
+//	return func(repoURL string, token string) gitrepo.GitRepoClient {
+//		return NewMockGitRepoClient(mockCtrl)
+//	}
+//}
+//
 func TestNewGitRepoClient(t *testing.T) {
 	token := ""
 
