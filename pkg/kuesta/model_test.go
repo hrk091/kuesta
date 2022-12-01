@@ -75,18 +75,15 @@ func TestReadServiceMeta(t *testing.T) {
 	}{
 		{
 			"ok",
-			[]byte(`
-kind: "foo"
-keys: ["device", "port"]`),
+			[]byte(`kind: "foo"`),
 			&kuesta.ServiceMeta{
 				Kind: "foo",
-				Keys: []string{"device", "port"},
 			},
 			false,
 		},
 		{
 			"err: invalid format",
-			[]byte(`keys: ["device", "port"`),
+			[]byte(`kind: "foo`),
 			nil,
 			true,
 		},

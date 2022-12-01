@@ -313,9 +313,8 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p.RootDir = dir
 		want := &kuesta.ServiceMeta{
 			Kind: "foo",
-			Keys: []string{"device", "port"},
 		}
-		given := []byte(`"keys": ["device", "port"]`)
+		given := []byte(`kind: foo`)
 		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		exitOnErr(t, err)
 
@@ -330,7 +329,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 	t.Run("err: invalid file format", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
-		given := []byte(`{"keys": ["device", "port"]`)
+		given := []byte(`kind: "foo`)
 		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		exitOnErr(t, err)
 
@@ -362,8 +361,8 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 
 func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	dir := t.TempDir()
-	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`{"keys": ["device", "port"]}`)))
-	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(`{"keys": ["vlan"]}`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
 	mlist, err := kuesta.ReadServiceMetaAll(dir)

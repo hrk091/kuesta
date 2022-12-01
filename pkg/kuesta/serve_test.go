@@ -116,10 +116,9 @@ func TestRunSyncLoop(t *testing.T) {
 func TestNorthboundServerImpl_Capabilities(t *testing.T) {
 	dir := t.TempDir()
 	fooMeta := []byte(`
-keys: ["device", "port"]
 organization: org-foo
 version: 0.1.0`)
-	barMeta := []byte(`keys: ["vlan"]`)
+	barMeta := []byte(``)
 	fooModel := &pb.ModelData{Name: "foo", Organization: "org-foo", Version: "0.1.0"}
 	barModel := &pb.ModelData{Name: "bar"}
 

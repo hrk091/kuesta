@@ -45,11 +45,10 @@ var (
 )
 
 type ServiceMeta struct {
-	Kind         string   `yaml:"kind,omitempty"`         // Kind of the model.
-	Organization string   `yaml:"organization,omitempty"` // Organization publishing the model.
-	Version      string   `yaml:"version,omitempty"`      // Semantic version of the model.
-	Description  string   `yaml:"description"`
-	Keys         []string `yaml:"keys"`
+	Kind         string `yaml:"kind,omitempty"`         // Kind of the model.
+	Organization string `yaml:"organization,omitempty"` // Organization publishing the model.
+	Version      string `yaml:"version,omitempty"`      // Semantic version of the model.
+	Description  string `yaml:"description"`
 }
 
 // ModelData returns the gnmi.ModelData.
