@@ -77,7 +77,7 @@ func TestReadServiceMeta(t *testing.T) {
 			"ok",
 			[]byte(`{"name": "foo", "keys": ["device", "port"]}`),
 			&kuesta.ServiceMeta{
-				Name: "foo",
+				Kind: "foo",
 				Keys: []string{"device", "port"},
 			},
 			false,

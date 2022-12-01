@@ -40,7 +40,7 @@ const (
 	DirComputed         = "computed"
 	FileInputCue        = "input.cue"
 	FileTransformCue    = "transform.cue"
-	FileServiceMetaJson = "metadata.json"
+	FileServiceMetaYaml = "metadata.yaml"
 	FileConfigCue       = "config.cue"
 	FileActualConfigCue = "actual_config.cue"
 )
@@ -183,7 +183,7 @@ func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error 
 
 // ServiceMetaPath returns the path to the service meta.
 func (p *ServicePath) ServiceMetaPath(t PathOpt) string {
-	el := append(p.serviceColElem(), FileServiceMetaJson)
+	el := append(p.serviceColElem(), FileServiceMetaYaml)
 	return p.addRoot(filepath.Join(el...), t)
 }
 
@@ -193,7 +193,11 @@ func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
 	if err != nil {
 		return nil, err
 	}
-	meta.Name = p.Service
+	if meta.Kind == "" {
+		meta.Kind = p.Service
+	} else if meta.Kind != p.Service {
+		return nil, fmt.Errorf("kind and service path are mismatched: kind=%s, path=%s", meta.Kind, p.Service)
+	}
 	return meta, nil
 }
 

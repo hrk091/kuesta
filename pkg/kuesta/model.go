@@ -25,10 +25,10 @@ package kuesta
 import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
-	"encoding/json"
 	"fmt"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	"os"
 )
 
@@ -42,16 +42,17 @@ var (
 )
 
 type ServiceMeta struct {
-	Name         string   `json:"name,omitempty"`         // Name of the model.
-	Organization string   `json:"organization,omitempty"` // Organization publishing the model.
-	Version      string   `json:"version,omitempty"`      // Semantic version of the model.
-	Keys         []string `json:"keys"`
+	Kind         string   `yaml:"kind,omitempty"`         // Kind of the model.
+	Organization string   `yaml:"organization,omitempty"` // Organization publishing the model.
+	Version      string   `yaml:"version,omitempty"`      // Semantic version of the model.
+	Description  string   `yaml:"description"`
+	Keys         []string `yaml:"keys"`
 }
 
 // ModelData returns the gnmi.ModelData.
 func (m *ServiceMeta) ModelData() *pb.ModelData {
 	return &pb.ModelData{
-		Name:         m.Name,
+		Name:         m.Kind,
 		Organization: m.Organization,
 		Version:      m.Version,
 	}
@@ -64,7 +65,7 @@ func ReadServiceMeta(path string) (*ServiceMeta, error) {
 		return nil, errors.WithStack(err)
 	}
 	var meta ServiceMeta
-	if err := json.Unmarshal(buf, &meta); err != nil {
+	if err := yaml.Unmarshal(buf, &meta); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &meta, nil

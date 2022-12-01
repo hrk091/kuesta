@@ -312,7 +312,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := &kuesta.ServiceMeta{
-			Name: "foo",
+			Kind: "foo",
 			Keys: []string{"device", "port"},
 		}
 		given := []byte(`{"keys": ["device", "port"]}`)
@@ -369,7 +369,7 @@ func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	mlist, err := kuesta.ReadServiceMetaAll(dir)
 	assert.Nil(t, err)
 	for _, m := range mlist {
-		assert.Contains(t, []string{"foo", "bar"}, m.Name)
+		assert.Contains(t, []string{"foo", "bar"}, m.Kind)
 	}
 }
 
