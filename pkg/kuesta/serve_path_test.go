@@ -51,8 +51,8 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				path := filepath.Join(dir, "services", "foo", "metadata.json")
-				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
+				path := filepath.Join(dir, "services", "foo", "metadata.yaml")
+				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`keys: ["bar", "baz"]`)))
 			},
 			&kuesta.ServicePath{
 				RootDir: dir,
@@ -74,8 +74,8 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				path := filepath.Join(dir, "services", "foo", "metadata.json")
-				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`{"keys": ["bar", "baz"]}`)))
+				path := filepath.Join(dir, "services", "foo", "metadata.yaml")
+				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`keys: ["bar", "baz"]`)))
 			},
 			&kuesta.ServicePath{
 				RootDir: dir,

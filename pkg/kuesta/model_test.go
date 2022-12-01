@@ -75,7 +75,9 @@ func TestReadServiceMeta(t *testing.T) {
 	}{
 		{
 			"ok",
-			[]byte(`{"name": "foo", "keys": ["device", "port"]}`),
+			[]byte(`
+kind: "foo"
+keys: ["device", "port"]`),
 			&kuesta.ServiceMeta{
 				Kind: "foo",
 				Keys: []string{"device", "port"},
@@ -84,7 +86,7 @@ func TestReadServiceMeta(t *testing.T) {
 		},
 		{
 			"err: invalid format",
-			[]byte(`{"keys": ["device", "port"]`),
+			[]byte(`keys: ["device", "port"`),
 			nil,
 			true,
 		},
@@ -92,7 +94,7 @@ func TestReadServiceMeta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			path := filepath.Join(dir, "metadata.json")
+			path := filepath.Join(dir, "metadata.yaml")
 			err := kuesta.WriteFileWithMkdir(path, tt.given)
 			exitOnErr(t, err)
 			got, err := kuesta.ReadServiceMeta(path)

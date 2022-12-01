@@ -301,8 +301,8 @@ func TestServicePath_WriteServiceComputedFile(t *testing.T) {
 
 func TestServicePath_ServiceMetaPath(t *testing.T) {
 	p := newValidServicePath()
-	assert.Equal(t, "services/foo/metadata.json", p.ServiceMetaPath(kuesta.ExcludeRoot))
-	assert.Equal(t, "tmproot/services/foo/metadata.json", p.ServiceMetaPath(kuesta.IncludeRoot))
+	assert.Equal(t, "services/foo/metadata.yaml", p.ServiceMetaPath(kuesta.ExcludeRoot))
+	assert.Equal(t, "tmproot/services/foo/metadata.yaml", p.ServiceMetaPath(kuesta.IncludeRoot))
 }
 
 func TestServicePath_ReadServiceMeta(t *testing.T) {
@@ -315,8 +315,8 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 			Kind: "foo",
 			Keys: []string{"device", "port"},
 		}
-		given := []byte(`{"keys": ["device", "port"]}`)
-		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		given := []byte(`"keys": ["device", "port"]`)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		exitOnErr(t, err)
 
 		r, err := p.ReadServiceMeta()
@@ -331,7 +331,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		given := []byte(`{"keys": ["device", "port"]`)
-		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), given)
+		err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		exitOnErr(t, err)
 
 		_, err = p.ReadServiceMeta()
@@ -362,8 +362,8 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 
 func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	dir := t.TempDir()
-	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.json"), []byte(`{"keys": ["device", "port"]}`)))
-	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.json"), []byte(`{"keys": ["vlan"]}`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`{"keys": ["device", "port"]}`)))
+	exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(`{"keys": ["vlan"]}`)))
 	exitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
 	mlist, err := kuesta.ReadServiceMetaAll(dir)
