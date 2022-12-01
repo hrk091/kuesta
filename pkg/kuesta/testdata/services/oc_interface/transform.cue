@@ -5,7 +5,9 @@ import (
 )
 
 #Input: {
+	// kuesta:"key=1"
 	device: string
+	// kuesta:"key=2"
 	port:   uint16
 	noShut: bool
 	desc:   string | *""

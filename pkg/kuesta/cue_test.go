@@ -242,6 +242,115 @@ func TestCueKindOf(t *testing.T) {
 	assert.Equal(t, cue.NullKind, kuesta.CueKindOf(val, "#Input.nullVal"))
 }
 
+func TestCueCommentOf(t *testing.T) {
+	given := []byte(`#Input: {
+	// kuesta:"key=1"
+	key1:   string
+	// kuesta:"key=2"
+	key2:   uint16
+}
+`)
+	cctx := cuecontext.New()
+	val, err := kuesta.NewValueFromBytes(cctx, given)
+	exitOnErr(t, err)
+
+	t1, err := kuesta.CueKuestaTagOf(val, "#Input.key1")
+	assert.Equal(t, "key=1", t1)
+	assert.Nil(t, err)
+	t2, err := kuesta.CueKuestaTagOf(val, "#Input.key2")
+	assert.Equal(t, "key=2", t2)
+	assert.Nil(t, err)
+}
+
+func TestGetKuestaTag(t *testing.T) {
+	var tests = []struct {
+		name    string
+		given   []byte
+		want    string
+		wantErr bool
+	}{
+		{
+			"ok",
+			[]byte(`
+#Input : {
+    // kuesta:"key=1"
+    foo: string
+}`),
+			"key=1",
+			false,
+		},
+		{
+			"ok: multiline",
+			[]byte(`
+#Input : {
+    // foo is foo
+    // kuesta:"key=1"
+    foo: string
+}`),
+			"key=1",
+			false,
+		},
+		{
+			"ok: multiline trailing another comment",
+			[]byte(`
+#Input : {
+    // kuesta:"key=1"
+    // foo is foo
+    foo: string
+}`),
+			"key=1",
+			false,
+		},
+		{
+			"ok: no comment",
+			[]byte(`
+#Input : {
+    foo: string
+}`),
+			"",
+			false,
+		},
+		{
+			"ok: no tag",
+			[]byte(`
+#Input : {
+    // foo is foo
+    foo: string
+}`),
+			"",
+			false,
+		},
+		{
+			"err: multi tag",
+			[]byte(`
+#Input : {
+    // kuesta:"key=1"
+    // kuesta:"key=2"
+    foo: string
+}`),
+			"",
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cctx := cuecontext.New()
+			val, err := kuesta.NewValueFromBytes(cctx, tt.given)
+			exitOnErr(t, err)
+
+			tag, err := kuesta.GetKuestaTag(val.LookupPath(cue.ParsePath("#Input.foo")))
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tt.want, tag)
+				assert.Nil(t, err)
+			}
+		})
+	}
+
+}
+
 func TestStringConverter(t *testing.T) {
 	tests := []struct {
 		name    string

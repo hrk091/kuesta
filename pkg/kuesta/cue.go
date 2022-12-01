@@ -32,7 +32,12 @@ import (
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
+	"regexp"
 	"strconv"
+)
+
+var (
+	reKuestaTag = regexp.MustCompile(`kuesta:"([A-Za-z0-9\-_=]+)"`)
 )
 
 // NewValueFromBytes creates cue.Value from given []byte.
@@ -154,6 +159,32 @@ func CueKindOf(v cue.Value, path string) cue.Kind {
 }
 
 type StrConvFunc func(string) (any, error)
+
+// CueKuestaTagOf returns the tag written in comment.
+func CueKuestaTagOf(v cue.Value, path string) (string, error) {
+	vv := v
+	if path != "" {
+		vv = v.LookupPath(cue.ParsePath(path))
+	}
+	return GetKuestaTag(vv)
+}
+
+func GetKuestaTag(v cue.Value) (string, error) {
+	cgs := ast.Comments(v.Source())
+	if len(cgs) == 0 {
+		return "", nil
+	}
+	// NOTE: kuesta tag must be place at the last comment group
+	cg := cgs[len(cgs)-1]
+	matches := reKuestaTag.FindAllStringSubmatch(cg.Text(), -1)
+	if len(matches) == 0 {
+		return "", nil
+	}
+	if len(matches) > 1 {
+		return "", errors.WithStack(fmt.Errorf("multiple kuesta tag found: %v", matches))
+	}
+	return matches[0][1], nil
+}
 
 // NewStrConvFunc returns StrConvFunc to convert string to the corresponding type of the given cue.Kind.
 func NewStrConvFunc(kind cue.Kind) (StrConvFunc, error) {
