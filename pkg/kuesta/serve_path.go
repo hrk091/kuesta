@@ -23,6 +23,7 @@
 package kuesta
 
 import (
+	"cuelang.org/go/cue/cuecontext"
 	"fmt"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -117,19 +118,18 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 	}
 	p := ServicePath{RootDir: c.cfg.ConfigRootPath, Service: svcKind}
 
-	// TODO update cache periodically or not to have cache
-	meta, ok := c.meta[svcKind]
-	if !ok {
-		m, err := p.ReadServiceMeta()
-		if err != nil {
-			return ServicePathReq{}, err
-		}
-		c.meta[svcKind] = m
-		meta = m
+	cctx := cuecontext.New()
+	tf, err := p.ReadServiceTransform(cctx)
+	if err != nil {
+		return ServicePathReq{}, fmt.Errorf("load service transform.cue: %w", err)
+	}
+	uniqKeys, err := tf.InputKeys()
+	if err != nil {
+		return ServicePathReq{}, fmt.Errorf("resolve service keys from transform.cue: %w", err)
 	}
 
 	keys := map[string]string{}
-	for _, k := range meta.Keys {
+	for _, k := range uniqKeys {
 		if v, ok := elemKey[k]; ok == true {
 			keys[k] = v
 			p.Keys = append(p.Keys, v)

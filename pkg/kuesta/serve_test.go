@@ -141,7 +141,13 @@ version: 0.1.0`)
 }
 
 func TestNorthboundServerImpl_Get(t *testing.T) {
-	serviceMeta := []byte(`keys: ["bar", "baz"]`)
+	transformCue := []byte(`
+#Input: {
+	// kuesta:"key=1"
+	bar:   string
+	// kuesta:"key=2"
+	baz:   int64
+}`)
 	serviceInput := []byte(`{port: 1}`)
 	serviceInputJson := []byte(`{"port":1}`)
 	invalidServiceInput := []byte(`{port: 1`)
@@ -172,7 +178,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
@@ -232,7 +238,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
@@ -298,7 +304,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			nil,
 			codes.NotFound,
@@ -326,7 +332,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
 			},
 			nil,
@@ -374,7 +380,13 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 
 func TestNorthboundServerImpl_Delete(t *testing.T) {
 	serviceInput := []byte(`{port: 1}`)
-	serviceMeta := []byte(`keys: ["bar", "baz"]`)
+	transformCue := []byte(`
+#Input: {
+	// kuesta:"key=1"
+	bar:   string
+	// kuesta:"key=2"
+	baz:   int64
+}`)
 
 	tests := []struct {
 		name        string
@@ -393,7 +405,7 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.UpdateResult{
@@ -411,28 +423,13 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
+				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			codes.OK,
-		},
-		{
-			"err: metadata not exist",
-			&pb.Path{
-				Elem: []*pb.PathElem{
-					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "two"}},
-				},
-			},
-			func(dir string) {},
-			&pb.UpdateResult{
-				Op: pb.UpdateResult_DELETE,
-			},
-			"",
-			codes.InvalidArgument,
 		},
 	}
 
@@ -465,8 +462,16 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 }
 
 func TestNorthboundServerImpl_Replace(t *testing.T) {
-	serviceMeta := []byte(`keys: ["bar", "baz"]`)
-	serviceTransform := []byte(`#Input: {bar: string, baz: int, intVal: int, floatVal: float, strVal: string}`)
+	serviceTransform := []byte(`
+#Input: {
+	// kuesta:"key=1"
+	bar: string
+	// kuesta:"key=2"
+	baz: int
+    intVal: int
+    floatVal: float
+    strVal: string
+}`)
 	serviceInputToBeUpdated := []byte(`{intVal: 1, floatVal: 1.1, strVal: "blabla"}`)
 	requestJson := []byte(`{"bar": "dummy", "baz": 100, "intVal": 2, "floatVal": 2.1, "notDefined": "test"}`)
 	invalidJson := []byte(`{"intVal": 2`)
@@ -492,7 +497,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
@@ -518,7 +522,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
@@ -532,24 +535,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			codes.OK,
 		},
 		{
-			"err: metadata not exist",
-			&pb.Path{
-				Elem: []*pb.PathElem{
-					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
-				},
-			},
-			&pb.TypedValue{
-				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
-			},
-			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-			},
-			filepath.Join("services", "foo", "one", "two", "input.cue"),
-			nil,
-			codes.InvalidArgument,
-		},
-		{
 			"err: transform.cue not exist",
 			&pb.Path{
 				Elem: []*pb.PathElem{
@@ -560,12 +545,10 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			&pb.TypedValue{
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
-			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
-			},
+			func(dir string) {},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
-			codes.Internal,
+			codes.InvalidArgument,
 		},
 		{
 			"err: invalid json input",
@@ -617,8 +600,16 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 }
 
 func TestNorthboundServerImpl_Update(t *testing.T) {
-	serviceMeta := []byte(`keys: ["bar", "baz"]`)
-	serviceTransform := []byte(`#Input: {bar: string, baz: int, intVal: int, floatVal: float, strVal: string}`)
+	serviceTransform := []byte(`
+#Input: {
+	// kuesta:"key=1"
+	bar: string
+	// kuesta:"key=2"
+	baz: int
+    intVal: int
+    floatVal: float
+    strVal: string
+}`)
 	serviceInputToBeUpdated := []byte(`{intVal: 1, floatVal: 1.1, strVal: "blabla"}`)
 	requestJson := []byte(`{"bar": "dummy", "baz": 100, "intVal": 2, "floatVal": 2.1, "notDefined": "test"}`)
 	invalidJson := []byte(`{"intVal": 2`)
@@ -644,7 +635,6 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
@@ -671,31 +661,11 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			nil,
 			codes.NotFound,
-		},
-		{
-			"err: metadata not exist",
-			&pb.Path{
-				Elem: []*pb.PathElem{
-					{Name: "services"},
-					{Name: "service", Key: map[string]string{"kind": "foo", "bar": "one", "baz": "2"}},
-				},
-			},
-			&pb.TypedValue{
-				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
-			},
-			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
-			},
-			filepath.Join("services", "foo", "one", "two", "input.cue"),
-			nil,
-			codes.InvalidArgument,
 		},
 		{
 			"err: transform.cue not exist",
@@ -709,12 +679,11 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), serviceMeta))
 				exitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
-			codes.Internal,
+			codes.InvalidArgument,
 		},
 		{
 			"err: invalid json input",
