@@ -151,7 +151,6 @@ func (g *Git) Clone(opts ...CloneOpts) (*extgogit.Repository, error) {
 		RemoteName:    g.opts.RemoteName,
 		ReferenceName: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
 		Progress:      os.Stdout,
-		Depth:         1, // shallow clone
 	}
 	for _, tr := range opts {
 		if tr != nil {
