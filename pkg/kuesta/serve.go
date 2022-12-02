@@ -188,6 +188,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 		notifications = append(notifications, n)
 	}
 
+	notifications[0].Timestamp = s.getCommitTimeOrNow()
 	return &pb.GetResponse{Notification: notifications}, nil
 }
 
@@ -262,9 +263,18 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	}
 
 	return &pb.SetResponse{
-		Prefix:   prefix,
-		Response: results,
+		Prefix:    prefix,
+		Response:  results,
+		Timestamp: s.getCommitTimeOrNow(),
 	}, nil
+}
+
+func (s *NorthboundServer) getCommitTimeOrNow() int64 {
+	commit, err := s.cGit.Head()
+	if err != nil {
+		return time.Now().UnixNano()
+	}
+	return commit.Author.When.UnixNano()
 }
 
 type GnmiRequestHandler interface {
@@ -460,7 +470,6 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 }
 
 // Update updates the service input stored at the supplied path.
-// TODO test
 func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
 	l := logger.FromContext(ctx)
 
