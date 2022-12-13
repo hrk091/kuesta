@@ -20,33 +20,30 @@
  THE SOFTWARE.
 */
 
-package common
+package kuesta_test
 
 import (
+	"context"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/stretchr/testify/assert"
 	"os"
-	"runtime/debug"
 	"testing"
 )
 
-func ExitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
-
-func MustNil(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func Chdir(t *testing.T, path string) {
-	cd, err := os.Getwd()
-	t.Log(cd)
-	MustNil(err)
-	ExitOnErr(t, os.Chdir(path))
-	t.Cleanup(func() {
-		os.Chdir(cd)
+func TestRunCueGetImpl(t *testing.T) {
+	common.Chdir(t, "./testdata")
+	called := false
+	var getter = kuesta.CueGetFunc(func(modPath, outDir string) error {
+		assert.Equal(t, "github.com/nttcom/kuesta/testdata", modPath)
+		assert.Equal(t, "types/pkg/model", outDir)
+		called = true
+		return nil
 	})
+	kuesta.RunCueGetImpl(context.Background(), "./pkg/model/sample.go", getter)
+
+	var err error
+	_, err = os.Stat("./types/pkg/model/sample.go")
+	assert.Nil(t, err)
+	assert.True(t, called)
 }
