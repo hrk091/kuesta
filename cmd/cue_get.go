@@ -23,6 +23,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
@@ -54,8 +55,12 @@ func newCueGetCfg(cmd *cobra.Command, args []string) (*kuesta.CueGetCfg, error) 
 	if err != nil {
 		return nil, err
 	}
+	if len(args) == 0 {
+		return nil, fmt.Errorf("target file is not specified")
+	}
 	cfg := &kuesta.CueGetCfg{
-		RootCfg: *rootCfg,
+		RootCfg:  *rootCfg,
+		FilePath: args[0],
 	}
 	return cfg, cfg.Validate()
 }

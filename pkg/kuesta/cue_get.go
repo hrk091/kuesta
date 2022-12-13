@@ -23,17 +23,33 @@
 package kuesta
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/pkg/errors"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type CueGetCfg struct {
 	RootCfg
+
+	FilePath string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *CueGetCfg) Validate() error {
+	if filepath.Ext(c.FilePath) != ".go" {
+		return fmt.Errorf("target is not go file")
+	}
 	return common.Validate(c)
 }
 
@@ -42,5 +58,124 @@ func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 	l := logger.FromContext(ctx)
 	_ = WriterFromContext(ctx)
 	l.Debug("cue get called")
+
+	if err := validateIsModuleRoot(); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+
+	in, err := loadInput(cfg.FilePath)
+	if err != nil {
+		return fmt.Errorf("load given go file: %w", err)
+	}
+
+	out, err := setupOutput(cfg.FilePath)
+	if err != nil {
+		return fmt.Errorf("setup output file: %w", err)
+	}
+	defer out.Close()
+
+	if err := ConvertMapKeyToString(cfg.FilePath, in, out); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func validateIsModuleRoot() error {
+	if _, err := os.Stat("go.mod"); err != nil {
+		return errors.WithStack(fmt.Errorf("must run at the go module root where go.mod placed"))
+	}
+	return nil
+}
+
+func loadInput(path string) (io.Reader, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return bytes.NewReader(data), nil
+}
+
+func setupOutput(path string) (*os.File, error) {
+	outDir, outFile := getOutFilePath(path)
+	if err := os.MkdirAll(outDir, 0750); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	out, err := os.OpenFile(filepath.Join(outDir, outFile), os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return out, nil
+}
+
+func getOutFilePath(path string) (string, string) {
+	dir, filename := filepath.Split(path)
+	trimmed := strings.TrimSuffix(dir, "/")
+	dir = filepath.Join("types", trimmed)
+	return dir, filename
+}
+
+type VisitFunc func(n ast.Node) ast.Visitor
+
+func (v VisitFunc) Visit(n ast.Node) ast.Visitor {
+	return v(n)
+}
+
+// ConvertMapKeyToString converts all go structs in the given go file to the structure supported by kuesta.
+// It extracts go structs and converts all map keys to string if the go struct contains maps with non-string key.
+func ConvertMapKeyToString(path string, in io.Reader, out io.Writer) error {
+	var v ast.Visitor
+	v = VisitFunc(func(n ast.Node) ast.Visitor {
+		if n == nil {
+			return v
+		}
+		if _, ok := n.(*ast.MapType); !ok {
+			// continue to next node using the same visitor
+			return v
+		}
+
+		called := false
+		w := VisitFunc(func(n ast.Node) ast.Visitor {
+			if called {
+				return nil
+			}
+			called = true
+			if ident, ok := n.(*ast.Ident); ok {
+				if ident.Name != "string" {
+					ident.Name = "string"
+				}
+			}
+			return nil
+		})
+		return w
+	})
+
+	_, filename := filepath.Split(path)
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, filename, in, 0)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(out, "package %s", f.Name)
+	for _, d := range f.Decls {
+		if _, ok := d.(*ast.GenDecl); !ok {
+			continue
+		}
+		ast.Walk(v, d)
+		s, err := formatDecl(d)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "\n\n%s", s)
+	}
+	return nil
+}
+
+func formatDecl(f any) (io.Writer, error) {
+	buf := &bytes.Buffer{}
+	fset := token.NewFileSet()
+	if err := format.Node(buf, fset, f); err != nil {
+		return nil, err
+	}
+	return buf, nil
 }
