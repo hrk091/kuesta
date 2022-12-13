@@ -191,7 +191,7 @@ if [[ ! -d cue.mod ]]; then
     cue mod init %s 
 fi
 # Generate cue type defs
-cue get go %s
+cue get go --local %s
 `, modPath, filepath.Join(modPath, outDir))
 
 	if err := exec.Command("/bin/bash", "-c", script).Run(); err != nil {
