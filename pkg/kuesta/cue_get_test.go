@@ -23,6 +23,7 @@
 package kuesta_test
 
 import (
+	"bytes"
 	"context"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
@@ -40,10 +41,75 @@ func TestRunCueGetImpl(t *testing.T) {
 		called = true
 		return nil
 	})
-	kuesta.RunCueGetImpl(context.Background(), "./pkg/model/sample.go", getter)
+	err := kuesta.RunCueGetImpl(context.Background(), "./pkg/model/sample.go", getter)
+	assert.Nil(t, err)
 
-	var err error
 	_, err = os.Stat("./types/pkg/model/sample.go")
 	assert.Nil(t, err)
 	assert.True(t, called)
+}
+
+func TestConvertMapKeyToString(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		given   []byte
+		want    []byte
+		wantErr bool
+	}{
+		{
+			"ok",
+			[]byte(`package model
+
+type TestDevice struct {
+	Interface map[float]*Interface ` + "`" + `path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"` + "`" + `
+	Vlan      map[uint16]*Vlan      ` + "`" + `path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"` + "`" + `
+}`),
+			[]byte(`package model
+
+type TestDevice struct {
+	Interface map[string]*Interface ` + "`" + `path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"` + "`" + `
+	Vlan      map[string]*Vlan      ` + "`" + `path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"` + "`" + `
+}`),
+			false,
+		},
+		{
+			"ok: no change",
+			[]byte(`package model
+
+type TestDevice struct {
+	Interface map[string]*Interface ` + "`" + `path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"` + "`" + `
+	Vlan      map[string]*Vlan      ` + "`" + `path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"` + "`" + `
+}`),
+			[]byte(`package model
+
+type TestDevice struct {
+	Interface map[string]*Interface ` + "`" + `path:"interfaces/interface" module:"openconfig-interfaces/openconfig-interfaces"` + "`" + `
+	Vlan      map[string]*Vlan      ` + "`" + `path:"vlans/vlan" module:"openconfig-vlan/openconfig-vlan"` + "`" + `
+}`),
+			false,
+		},
+		{
+			"err: invalid file",
+			[]byte(`package model
+
+type TestDevice struct {`),
+			nil,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			err := kuesta.ConvertMapKeyToString("./pkg/model/sample.go", bytes.NewReader(tt.given), buf)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.want, buf.Bytes())
+			}
+		})
+	}
+
 }
