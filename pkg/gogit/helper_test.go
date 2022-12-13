@@ -27,42 +27,35 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"io/ioutil"
 	"os"
-	"runtime/debug"
 	"testing"
 	"time"
 )
 
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
-
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, addFile(repo, "README.md", "# test"))
+	common.ExitOnErr(t, addFile(repo, "README.md", "# test"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
-	exitOnErr(t, createBranch(repo, branch))
+	common.ExitOnErr(t, err)
+	common.ExitOnErr(t, createBranch(repo, branch))
 	return repo, dir
 }
 
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	return repo, dir
 }
 
@@ -73,7 +66,7 @@ func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, stri
 		Name: "origin",
 		URLs: []string{dirBare},
 	})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	return repo, dir, dirBare
 }
@@ -83,19 +76,19 @@ func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *go
 
 	opt.Path = dir
 	git, err := gogit.NewGit(opt)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	remote, err := git.Remote("origin")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	return remote, git, dir
 }
 
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	return repo, dir
 }
 

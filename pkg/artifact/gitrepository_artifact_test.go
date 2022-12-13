@@ -26,6 +26,7 @@ import (
 	"context"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/nttcom/kuesta/pkg/artifact"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/stretchr/testify/assert"
 	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,7 +111,7 @@ func TestFetchArtifact(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 				got, err := os.ReadFile(filepath.Join(dir, "test.txt"))
-				exitOnErr(t, err)
+				common.ExitOnErr(t, err)
 				assert.Equal(t, want, got)
 			}
 

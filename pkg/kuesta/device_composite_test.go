@@ -25,6 +25,7 @@ package kuesta_test
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -107,9 +108,9 @@ func TestRunDeviceComposite(t *testing.T) {
 		RootCfg: kuesta.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
 		Device:  "oc01",
 	})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "devices", "oc01", "config.cue"))
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)

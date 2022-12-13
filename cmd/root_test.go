@@ -24,6 +24,7 @@ package cmd_test
 
 import (
 	"github.com/nttcom/kuesta/cmd"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -32,18 +33,12 @@ import (
 
 func TestNewRootCmd(t *testing.T) {
 	dummyToken := "dummy-git-token"
-	exitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
+	common.ExitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
 
 	dummyRootpath := "dummy-rootpath"
-	exitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
+	common.ExitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
 
 	_ = cmd.NewRootCmd()
 	assert.Equal(t, dummyToken, viper.GetString(cmd.FlagGitToken))
 	assert.Equal(t, dummyRootpath, viper.GetString(cmd.FlagConfigRootPath))
-}
-
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Fatal(err)
-	}
 }

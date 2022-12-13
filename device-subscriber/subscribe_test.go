@@ -25,6 +25,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/nttcom/kuesta/pkg/common"
 	kuestagnmi "github.com/nttcom/kuesta/pkg/gnmi"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
@@ -70,7 +71,7 @@ func TestSubscribe(t *testing.T) {
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	count := 0
 	err = Subscribe(ctx, client, func() error {
@@ -141,14 +142,14 @@ func TestSync(t *testing.T) {
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	cfg := Config{
 		Device: "device1",
 	}
 	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req SaveConfigRequest
-		exitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
+		common.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
 		assert.Equal(t, req.Device, cfg.Device)
 		assert.Equal(t, want, req.Config)
 	}))
@@ -236,7 +237,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var req SaveConfigRequest
-			exitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
+			common.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
 			assert.Equal(t, req.Device, cfg.Device)
 			assert.Equal(t, req.Config, deviceConfig)
 		}))

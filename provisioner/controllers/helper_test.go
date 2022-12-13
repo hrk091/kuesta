@@ -28,6 +28,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
+	"github.com/nttcom/kuesta/pkg/common"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -36,23 +37,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"testing"
 )
-
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
 
 func newTestDataFromFixture(name string, o metav1.Object) error {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("./fixtures/%s.yaml", name))
@@ -104,8 +91,8 @@ func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
 		panic(err)
 	}
 
-	must(tw.Close())
-	must(gw.Close())
+	common.MustNil(tw.Close())
+	common.MustNil(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer

@@ -36,17 +36,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"testing"
 )
-
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
 
 func must(err error) {
 	if err != nil {

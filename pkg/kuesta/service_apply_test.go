@@ -24,6 +24,7 @@ package kuesta_test
 
 import (
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
@@ -163,13 +164,13 @@ func TestCheckGitFileStatus(t *testing.T) {
 func TestServiceCompilePlan_Do(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-	exitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-	exitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+	common.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
 
 	stmap := getStatus(t, repo)
 	plan := kuesta.NewServiceCompilePlan(stmap, dir)
@@ -196,9 +197,9 @@ func TestServiceCompilePlan_Do(t *testing.T) {
 func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
 	plan := kuesta.NewServiceCompilePlan(stmap, dir)
@@ -208,13 +209,13 @@ func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 func TestDeviceCompositePlan_Do(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	exitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, deleteFile(repo, "services/foo/one/computed/device1.cue"))
-	exitOnErr(t, addFile(repo, "services/foo/two/computed/device2.cue", "{}"))
-	exitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
+	common.ExitOnErr(t, deleteFile(repo, "services/foo/one/computed/device1.cue"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/two/computed/device2.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
 
 	stmap := getStatus(t, repo)
 	plan := kuesta.NewDeviceCompositePlan(stmap, dir)
@@ -232,9 +233,9 @@ func TestDeviceCompositePlan_Do(t *testing.T) {
 func TestDeviceCompositePlan_IsEmpty(t *testing.T) {
 	var err error
 	repo, dir := initRepo(t, "main")
-	exitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
+	common.ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
 	plan := kuesta.NewDeviceCompositePlan(stmap, dir)

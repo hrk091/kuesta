@@ -27,6 +27,7 @@ import (
 	"fmt"
 	source "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"net"
@@ -72,11 +73,11 @@ var _ = Describe("DeviceOperator controller", func() {
 	rev2nd := "rev2"
 
 	var testOpe deviceoperator.OcDemo
-	must(newTestDataFromFixture("device1.deviceoperator", &testOpe))
+	common.MustNil(newTestDataFromFixture("device1.deviceoperator", &testOpe))
 	var testDr provisioner.DeviceRollout
-	must(newTestDataFromFixture("devicerollout", &testDr))
+	common.MustNil(newTestDataFromFixture("devicerollout", &testDr))
 	var testGr source.GitRepository
-	must(newTestDataFromFixture("gitrepository", &testGr))
+	common.MustNil(newTestDataFromFixture("gitrepository", &testGr))
 
 	BeforeEach(func() {
 		Expect(k8sClient.Create(ctx, testOpe.DeepCopy())).NotTo(HaveOccurred())
@@ -108,11 +109,11 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)
-				must(err)
+				common.MustNil(err)
 			}))
 
 			Eventually(func() error {
@@ -211,11 +212,11 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
-					must(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
+					common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
 				})
 				h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := io.Copy(w, buf)
-					must(err)
+					common.MustNil(err)
 				}))
 
 				// TODO check followings are really needed
@@ -264,7 +265,7 @@ var _ = Describe("DeviceOperator controller", func() {
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				must(err)
+				common.MustNil(err)
 				gs := gnmi.NewServerWithListener(m, lis)
 				defer gs.Stop()
 
@@ -294,7 +295,7 @@ var _ = Describe("DeviceOperator controller", func() {
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				must(err)
+				common.MustNil(err)
 				gs := gnmi.NewServerWithListener(m, lis)
 				defer gs.Stop()
 

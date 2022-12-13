@@ -26,25 +26,18 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/encoding/json"
+	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/stretchr/testify/assert"
-	"runtime/debug"
 	"testing"
 )
-
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
 
 func TestCueExtract(t *testing.T) {
 	t.Skip()
 	jsonVal := []byte(`{"port": 2, "desc": "test"}`)
 	cctx := cuecontext.New()
 	expr, err := json.Extract("test", jsonVal)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	v := cctx.BuildExpr(expr)
 	t.Fatal(v)
 }
@@ -60,7 +53,7 @@ func TestCueTypeExtract(t *testing.T) {
 `)
 	cctx := cuecontext.New()
 	val, err := kcue.NewValueFromBytes(cctx, given)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	inputVal := val.LookupPath(cue.ParsePath("#Input"))
 	portVal := inputVal.LookupPath(cue.ParsePath("port"))

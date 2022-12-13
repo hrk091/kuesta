@@ -27,12 +27,12 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"testing"
 	"time"
 )
@@ -44,7 +44,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err := kuesta.WriteFileWithMkdir(path, buf)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -53,11 +53,11 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: existing dir", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = kuesta.WriteFileWithMkdir(path, buf)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -66,13 +66,13 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: write multiple times", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = kuesta.WriteFileWithMkdir(path, buf)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 		err = kuesta.WriteFileWithMkdir(path, buf)
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -83,34 +83,27 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 // test helpers
 
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
-
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, addFile(repo, "README.md", "# test"))
+	common.ExitOnErr(t, addFile(repo, "README.md", "# test"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
-	exitOnErr(t, createBranch(repo, branch))
+	common.ExitOnErr(t, err)
+	common.ExitOnErr(t, createBranch(repo, branch))
 	return repo, dir
 }
 
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	return repo, dir
 }
 
@@ -208,25 +201,25 @@ func deleteFile(repo *extgogit.Repository, path string) error {
 
 func getStatus(t *testing.T, repo *extgogit.Repository) extgogit.Status {
 	w, err := repo.Worktree()
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	stmap, err := w.Status()
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	return stmap
 }
 
 func getBranch(t *testing.T, repo *extgogit.Repository) string {
 	ref, err := repo.Head()
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	return ref.Name().Short()
 }
 
 func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName string) []*plumbing.Reference {
 	remote, err := repo.Remote(remoteName)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	branches, err := remote.List(&extgogit.ListOptions{})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	return branches
 }
@@ -249,33 +242,33 @@ func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, 
 		Name: remote,
 		URLs: []string{url},
 	})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, addFile(repo, "devices/device1/actual_config.cue", "{will_deleted: _}"))
-	exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{will_updated: _}"))
+	common.ExitOnErr(t, addFile(repo, "devices/device1/actual_config.cue", "{will_deleted: _}"))
+	common.ExitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{will_updated: _}"))
 	_, err = commit(repo, time.Now())
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
-	exitOnErr(t, repo.CreateBranch(&config.Branch{
+	common.ExitOnErr(t, repo.CreateBranch(&config.Branch{
 		Name:   "main",
 		Remote: remote,
 		Merge:  plumbing.NewBranchReferenceName("main"),
 	}))
 
-	exitOnErr(t, push(repo, "main", remote))
+	common.ExitOnErr(t, push(repo, "main", remote))
 
-	exitOnErr(t, deleteFile(repo, "devices/device1/actual_config.cue"))
-	exitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{updated: _}"))
-	exitOnErr(t, addFile(repo, "devices/device3/actual_config.cue", "{added: _}"))
+	common.ExitOnErr(t, deleteFile(repo, "devices/device1/actual_config.cue"))
+	common.ExitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{updated: _}"))
+	common.ExitOnErr(t, addFile(repo, "devices/device3/actual_config.cue", "{added: _}"))
 
 	return repo, dir, url
 }
 
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	//dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	return repo, dir
 }

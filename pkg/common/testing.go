@@ -33,3 +33,9 @@ func ExitOnErr(t *testing.T, err error) {
 		t.Fatal(err)
 	}
 }
+
+func MustNil(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

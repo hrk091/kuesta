@@ -25,6 +25,7 @@ package kuesta_test
 import (
 	"context"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -113,9 +114,9 @@ func TestRunServiceCompile(t *testing.T) {
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "services", "oc_interface", "oc01", "1", "computed", "oc01.cue"))
-	exitOnErr(t, err)
+	common.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)

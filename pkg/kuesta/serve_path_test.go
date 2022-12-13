@@ -23,6 +23,7 @@
 package kuesta_test
 
 import (
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "transform.cue")
-				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
+				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
 #Input: {
 	// kuesta:"key=1"
 	bar:   string
@@ -81,7 +82,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "transform.cue")
-				exitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
+				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
 #Input: {
 	// kuesta:"key=1"
 	bar:   string

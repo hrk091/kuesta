@@ -27,6 +27,7 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/golang/mock/gomock"
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gitrepo"
 	"github.com/nttcom/kuesta/pkg/gitrepo/mock"
 	"github.com/nttcom/kuesta/pkg/gogit"
@@ -47,19 +48,19 @@ func TestRunGitCommit(t *testing.T) {
 			Name: "origin",
 			URLs: []string{url},
 		})
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
-		exitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-		exitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
+		common.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+		common.ExitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
 		_, err = commit(repo, time.Now())
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 
-		exitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-		exitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-		exitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
-		exitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
-		exitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
-		exitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
+		common.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
+		common.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
+		common.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+		common.ExitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
+		common.ExitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
+		common.ExitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
 		return repo, dir
 	}
 
@@ -91,9 +92,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 		h, err := g.Head()
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 
@@ -118,9 +119,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 		h, err := g.Head()
-		exitOnErr(t, err)
+		common.ExitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 

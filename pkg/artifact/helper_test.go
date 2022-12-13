@@ -28,23 +28,9 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
+	"github.com/nttcom/kuesta/pkg/common"
 	"io"
-	"runtime/debug"
-	"testing"
 )
-
-func exitOnErr(t *testing.T, err error) {
-	if err != nil {
-		t.Log(string(debug.Stack()))
-		t.Fatal(err)
-	}
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
 
 func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	var buf bytes.Buffer
@@ -57,8 +43,8 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	if _, err := tw.Write([]byte(content)); err != nil {
 		panic(err)
 	}
-	must(tw.Close())
-	must(gw.Close())
+	common.MustNil(tw.Close())
+	common.MustNil(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer
