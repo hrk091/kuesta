@@ -12,6 +12,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/openconfig/gnmi v0.0.0-20220617175856-41246b1b3507
 	github.com/pkg/errors v0.9.1
+	github.com/rogpeppe/go-internal v1.8.1
 	github.com/shurcooL/githubv4 v0.0.0-20221126192849-0b5c4c7994eb
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.5.0
@@ -22,6 +23,7 @@ require (
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	google.golang.org/grpc v1.46.2
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.25.0
 )
 
@@ -86,7 +88,6 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
 	sigs.k8s.io/controller-runtime v0.11.2 // indirect

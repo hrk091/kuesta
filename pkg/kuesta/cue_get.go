@@ -29,12 +29,14 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
+	"github.com/rogpeppe/go-internal/modfile"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -75,50 +77,14 @@ func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 	defer out.Close()
 
 	if err := ConvertMapKeyToString(cfg.FilePath, in, out); err != nil {
-		return err
+		return fmt.Errorf("convert map key to string: %w", err)
+	}
+
+	if err := execCueGet(cfg.FilePath); err != nil {
+		return fmt.Errorf("execute cue get: %w", err)
 	}
 
 	return nil
-}
-
-func validateIsModuleRoot() error {
-	if _, err := os.Stat("go.mod"); err != nil {
-		return errors.WithStack(fmt.Errorf("must run at the go module root where go.mod placed"))
-	}
-	return nil
-}
-
-func loadInput(path string) (io.Reader, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return bytes.NewReader(data), nil
-}
-
-func setupOutput(path string) (*os.File, error) {
-	outDir, outFile := getOutFilePath(path)
-	if err := os.MkdirAll(outDir, 0750); err != nil {
-		return nil, errors.WithStack(err)
-	}
-	out, err := os.OpenFile(filepath.Join(outDir, outFile), os.O_CREATE|os.O_RDWR, 0666)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return out, nil
-}
-
-func getOutFilePath(path string) (string, string) {
-	dir, filename := filepath.Split(path)
-	trimmed := strings.TrimSuffix(dir, "/")
-	dir = filepath.Join("types", trimmed)
-	return dir, filename
-}
-
-type VisitFunc func(n ast.Node) ast.Visitor
-
-func (v VisitFunc) Visit(n ast.Node) ast.Visitor {
-	return v(n)
 }
 
 // ConvertMapKeyToString converts all go structs in the given go file to the structure supported by kuesta.
@@ -169,6 +135,88 @@ func ConvertMapKeyToString(path string, in io.Reader, out io.Writer) error {
 		fmt.Fprintf(out, "\n\n%s", s)
 	}
 	return nil
+}
+
+func validateIsModuleRoot() error {
+	if _, err := os.Stat("go.mod"); err != nil {
+		return errors.WithStack(fmt.Errorf("must run at the go module root where go.mod placed"))
+	}
+	return nil
+}
+
+func loadInput(path string) (io.Reader, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return bytes.NewReader(data), nil
+}
+
+func setupOutput(path string) (*os.File, error) {
+	outDir, outFile := getOutFilePath(path)
+	if err := os.MkdirAll(outDir, 0750); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	out, err := os.OpenFile(filepath.Join(outDir, outFile), os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return out, nil
+}
+
+func execCueGet(path string) error {
+	script, err := genCueGetScript(path)
+	if err != nil {
+		return fmt.Errorf("generate cue get script: %w", err)
+	}
+	if err := exec.Command("/bin/bash", "-c", script).Run(); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func getOutFilePath(path string) (string, string) {
+	dir, filename := filepath.Split(path)
+	trimmed := strings.TrimSuffix(dir, "/")
+	dir = filepath.Join("types", trimmed)
+	return dir, filename
+}
+
+func resolveModuleName() (string, error) {
+	buf, err := os.ReadFile("go.mod")
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	modPath := modfile.ModulePath(buf)
+	if modPath == "" {
+		return "", errors.WithStack(fmt.Errorf("module name is not found: the go.mod format might be invalid"))
+	}
+	return modPath, nil
+}
+
+func genCueGetScript(path string) (string, error) {
+	outDir, _ := getOutFilePath(path)
+	modPath, err := resolveModuleName()
+	if err != nil {
+		return "", fmt.Errorf("resolve module name: %w", err)
+	}
+
+	cueGetScript := fmt.Sprintf(`
+# Init cue.mod if not setup yet
+if [[ ! -d cue.mod ]]; then
+    cue mod init %s 
+fi
+# Generate cue type defs
+cue get go %s
+`, modPath, filepath.Join(modPath, outDir))
+
+	return cueGetScript, nil
+}
+
+type VisitFunc func(n ast.Node) ast.Visitor
+
+func (v VisitFunc) Visit(n ast.Node) ast.Visitor {
+	return v(n)
 }
 
 func formatDecl(f any) (io.Writer, error) {
