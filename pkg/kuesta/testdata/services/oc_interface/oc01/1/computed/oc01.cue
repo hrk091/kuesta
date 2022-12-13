@@ -8,8 +8,8 @@
 			OperStatus:  1
 			Type:        80
 			Mtu:         9000 @go(,*uint16)
-			Subinterface: {} @go(,map[uint32]*Interface_Subinterface)
+			Subinterface: {} @go(,map[string]*Interface_Subinterface)
 		}
 	} @go(,map[string]*Interface)
-	Vlan: {} @go(,map[uint16]*Vlan)
+	Vlan: {} @go(,map[string]*Vlan)
 }
