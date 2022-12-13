@@ -30,7 +30,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nttcom/kuesta/device-subscriber/pkg/model"
-	"github.com/nttcom/kuesta/pkg/kuesta"
+	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/logger"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
@@ -129,7 +129,7 @@ func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {
 	// convert to CUE
 	cctx := cuecontext.New()
 	v := cctx.Encode(obj)
-	b, err := kuesta.FormatCue(v, cue.Final())
+	b, err := kcue.FormatCue(v, cue.Final())
 	if err != nil {
 		return fmt.Errorf("encode cue.Value to bytes: %w", err)
 	}

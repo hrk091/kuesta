@@ -26,6 +26,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"fmt"
+	kcue "github.com/nttcom/kuesta/pkg/cue"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -83,7 +84,7 @@ func NewServiceTransformer(v cue.Value) *ServiceTransformer {
 
 // ReadServiceTransformer builds cue.Instance from the specified files and returns ServiceTransformer.
 func ReadServiceTransformer(cctx *cue.Context, filepaths []string, dir string) (*ServiceTransformer, error) {
-	v, err := NewValueWithInstance(cctx, filepaths, &load.Config{Dir: dir})
+	v, err := kcue.NewValueWithInstance(cctx, filepaths, &load.Config{Dir: dir})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -132,11 +133,11 @@ func (t *ServiceTransformer) Apply(input cue.Value) (*cue.Iterator, error) {
 func (t *ServiceTransformer) ConvertInputType(input map[string]string) (map[string]any, error) {
 	converted := map[string]any{}
 	for k, v := range input {
-		kind := CueKindOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, k))
+		kind := kcue.CueKindOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, k))
 		if kind == cue.BottomKind {
 			return nil, fmt.Errorf("key=%s is not defined in input types", k)
 		}
-		convert, err := NewStrConvFunc(kind)
+		convert, err := kcue.NewStrConvFunc(kind)
 		if err != nil {
 			return nil, fmt.Errorf("the type of key=%s must be in string|int|float|bool|null: %w", k, err)
 		}
@@ -160,7 +161,7 @@ func (t *ServiceTransformer) InputKeys() ([]string, error) {
 
 	for it.Next() {
 		name := it.Label()
-		tag, err := CueKuestaTagOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, name))
+		tag, err := kcue.CueKuestaTagOf(t.value, fmt.Sprintf("%s.%s", cueTypeStrInput, name))
 		if err != nil {
 			return nil, fmt.Errorf("get kuesta tag of field `%s`: %w", name, err)
 		}
@@ -203,7 +204,7 @@ func NewDevice(v cue.Value) *Device {
 
 // NewDeviceFromBytes creates Device from the given encoded cue bytes.
 func NewDeviceFromBytes(cctx *cue.Context, buf []byte) (*Device, error) {
-	v, err := NewValueFromBytes(cctx, buf)
+	v, err := kcue.NewValueFromBytes(cctx, buf)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -229,5 +230,5 @@ func (d *Device) Config() ([]byte, error) {
 	if cfg.Err() != nil {
 		return nil, errors.WithStack(cfg.Err())
 	}
-	return FormatCue(cfg, cue.Final())
+	return kcue.FormatCue(cfg, cue.Final())
 }

@@ -27,6 +27,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/logger"
 )
 
@@ -62,7 +63,7 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
 	}
-	inputVal, err := NewValueFromBytes(cctx, buf)
+	inputVal, err := cue.NewValueFromBytes(cctx, buf)
 	if err != nil {
 		return fmt.Errorf("load input file: %w", err)
 	}

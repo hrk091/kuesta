@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
+	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/gnmi"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
@@ -364,7 +365,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 	}
 
 	cctx := cuecontext.New()
-	val, err := NewValueFromBytes(cctx, buf)
+	val, err := kcue.NewValueFromBytes(cctx, buf)
 	if err != nil {
 		s.Error(l, err, "load cue")
 		return nil, status.Errorf(codes.Internal, "failed to read file: %s", req.String())
@@ -451,13 +452,13 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
 	}
 
-	expr := NewAstExpr(common.MergeMap(input, convertedKeys))
+	expr := kcue.NewAstExpr(common.MergeMap(input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "encode to cue value: %v", inputVal.Err())
 	}
 
-	b, err := FormatCue(inputVal, cue.Final())
+	b, err := kcue.FormatCue(inputVal, cue.Final())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
 	}
@@ -524,13 +525,13 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
 	}
 
-	expr := NewAstExpr(common.MergeMap(curInput, input, convertedKeys))
+	expr := kcue.NewAstExpr(common.MergeMap(curInput, input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())
 	}
 
-	b, err := FormatCue(inputVal, cue.Final())
+	b, err := kcue.FormatCue(inputVal, cue.Final())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
 	}

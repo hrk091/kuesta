@@ -32,6 +32,7 @@ import (
 	"github.com/nttcom/kuesta/device-operator/pkg/model"
 	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/nttcom/kuesta/pkg/common"
+	kcue "github.com/nttcom/kuesta/pkg/cue"
 	device "github.com/nttcom/kuesta/pkg/device"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
@@ -308,7 +309,7 @@ func fetchArtifact(ctx context.Context, gr fluxcd.GitRepository, device, revisio
 }
 
 func decodeCueBytes(cctx *cue.Context, bytes []byte) (*model.Device, error) {
-	val, err := kuesta.NewValueFromBytes(cctx, bytes)
+	val, err := kcue.NewValueFromBytes(cctx, bytes)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

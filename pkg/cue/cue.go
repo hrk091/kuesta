@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package cue
 
 import (
 	"cuelang.org/go/cue"

@@ -20,54 +20,16 @@
  THE SOFTWARE.
 */
 
-package sandbox_test
+package common
 
 import (
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/encoding/json"
-	kcue "github.com/nttcom/kuesta/pkg/cue"
-	"github.com/stretchr/testify/assert"
 	"runtime/debug"
 	"testing"
 )
 
-func exitOnErr(t *testing.T, err error) {
+func ExitOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Log(string(debug.Stack()))
 		t.Fatal(err)
 	}
-}
-
-func TestCueExtract(t *testing.T) {
-	t.Skip()
-	jsonVal := []byte(`{"port": 2, "desc": "test"}`)
-	cctx := cuecontext.New()
-	expr, err := json.Extract("test", jsonVal)
-	exitOnErr(t, err)
-	v := cctx.BuildExpr(expr)
-	t.Fatal(v)
-}
-
-func TestCueTypeExtract(t *testing.T) {
-	given := []byte(`#Input: {
-	device: string
-	port:   uint16
-	noShut: bool
-	desc:   string | *""
-	mtu:    uint16 | *9000
-}
-`)
-	cctx := cuecontext.New()
-	val, err := kcue.NewValueFromBytes(cctx, given)
-	exitOnErr(t, err)
-
-	inputVal := val.LookupPath(cue.ParsePath("#Input"))
-	portVal := inputVal.LookupPath(cue.ParsePath("port"))
-	deviceVal := inputVal.LookupPath(cue.ParsePath("device"))
-	descVal := inputVal.LookupPath(cue.ParsePath("desc"))
-
-	assert.Equal(t, cue.StringKind, deviceVal.IncompleteKind())
-	assert.Equal(t, cue.StringKind, descVal.IncompleteKind())
-	assert.Equal(t, cue.IntKind, portVal.IncompleteKind())
 }

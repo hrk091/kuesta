@@ -28,6 +28,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
+	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/logger"
 )
 
@@ -58,13 +59,13 @@ func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	l.Debug("files: ", files)
 
 	// composite all partial device configs into one CUE instance
-	deviceConfig, err := NewValueWithInstance(cctx, files, nil)
+	deviceConfig, err := kcue.NewValueWithInstance(cctx, files, nil)
 	if err != nil {
 		return fmt.Errorf("composite files: %w", err)
 	}
 	l.Debug("merged device config cue instance: ", deviceConfig)
 
-	buf, err := FormatCue(deviceConfig, cue.Concrete(true))
+	buf, err := kcue.FormatCue(deviceConfig, cue.Concrete(true))
 	if err != nil {
 		return fmt.Errorf("format merged config: %w", err)
 	}

@@ -32,6 +32,20 @@ import (
 
 // testdata: transform
 var (
+	input = []byte(`{
+	port:   1
+	noShut: true
+	mtu:    9000
+}`)
+	missingRequired = []byte(`{
+	port:   1
+    mtu: 9000
+}`)
+	missingOptinoal = []byte(`{
+	port:   1
+	noShut: true
+}`)
+
 	transform = []byte(`
 package foo
 
