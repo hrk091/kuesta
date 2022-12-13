@@ -58,32 +58,41 @@ func (c *CueGetCfg) Validate() error {
 // RunCueGet runs the main process of the `cue get` command.
 func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 	l := logger.FromContext(ctx)
-	_ = WriterFromContext(ctx)
 	l.Debug("cue get called")
+	return RunCueGetImpl(ctx, cfg.FilePath, execCueGet)
+}
+
+func RunCueGetImpl(ctx context.Context, path string, getter CueGetter) error {
+	_ = WriterFromContext(ctx)
 
 	if err := validateIsModuleRoot(); err != nil {
 		return fmt.Errorf("validate: %w", err)
 	}
 
-	in, err := loadInput(cfg.FilePath)
+	in, err := loadInput(path)
 	if err != nil {
 		return fmt.Errorf("load given go file: %w", err)
 	}
 
-	out, err := setupOutput(cfg.FilePath)
+	out, err := setupOutput(path)
 	if err != nil {
 		return fmt.Errorf("setup output file: %w", err)
 	}
 	defer out.Close()
 
-	if err := ConvertMapKeyToString(cfg.FilePath, in, out); err != nil {
+	if err := ConvertMapKeyToString(path, in, out); err != nil {
 		return fmt.Errorf("convert map key to string: %w", err)
 	}
 
-	if err := execCueGet(cfg.FilePath); err != nil {
-		return fmt.Errorf("execute cue get: %w", err)
+	outDir, _ := getOutFilePath(path)
+	modPath, err := resolveModuleName()
+	if err != nil {
+		return fmt.Errorf("resolve module name: %w", err)
 	}
 
+	if err := getter.Exec(modPath, outDir); err != nil {
+		return fmt.Errorf("execute cue get: %w", err)
+	}
 	return nil
 }
 
@@ -164,16 +173,32 @@ func setupOutput(path string) (*os.File, error) {
 	return out, nil
 }
 
-func execCueGet(path string) error {
-	script, err := genCueGetScript(path)
-	if err != nil {
-		return fmt.Errorf("generate cue get script: %w", err)
-	}
+type CueGetter interface {
+	Exec(modPath, outDir string) error
+}
+
+type CueGetFunc func(modPath, outDir string) error
+
+func (fn CueGetFunc) Exec(modPath, outDir string) error {
+	return fn(modPath, outDir)
+}
+
+var execCueGet = CueGetFunc(func(modPath, outDir string) error {
+
+	script := fmt.Sprintf(`
+# Init cue.mod if not setup yet
+if [[ ! -d cue.mod ]]; then
+    cue mod init %s 
+fi
+# Generate cue type defs
+cue get go %s
+`, modPath, filepath.Join(modPath, outDir))
+
 	if err := exec.Command("/bin/bash", "-c", script).Run(); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
-}
+})
 
 func getOutFilePath(path string) (string, string) {
 	dir, filename := filepath.Split(path)
@@ -192,25 +217,6 @@ func resolveModuleName() (string, error) {
 		return "", errors.WithStack(fmt.Errorf("module name is not found: the go.mod format might be invalid"))
 	}
 	return modPath, nil
-}
-
-func genCueGetScript(path string) (string, error) {
-	outDir, _ := getOutFilePath(path)
-	modPath, err := resolveModuleName()
-	if err != nil {
-		return "", fmt.Errorf("resolve module name: %w", err)
-	}
-
-	cueGetScript := fmt.Sprintf(`
-# Init cue.mod if not setup yet
-if [[ ! -d cue.mod ]]; then
-    cue mod init %s 
-fi
-# Generate cue type defs
-cue get go %s
-`, modPath, filepath.Join(modPath, outDir))
-
-	return cueGetScript, nil
 }
 
 type VisitFunc func(n ast.Node) ast.Visitor
