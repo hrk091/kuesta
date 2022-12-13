@@ -151,6 +151,9 @@ const (
 
 	// DeviceStatusUnknown indicates that the device is missing in device status.
 	DeviceStatusUnknown DeviceStatus = "Unknown"
+
+	// DeviceStatusChecksumError indicates that the provided config is incorrect since the checksum is not matched.
+	DeviceStatusChecksumError DeviceStatus = "ConnectionError"
 )
 
 // IsRunning returns true when rollout status is in `Running`.

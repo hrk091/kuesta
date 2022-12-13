@@ -208,6 +208,66 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		})
 
+		updateConfig := func() error {
+			var dr provisioner.DeviceRollout
+			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+				return err
+			}
+			dr.Status.Phase = provisioner.RolloutPhaseHealthy
+			dr.Status.Status = provisioner.RolloutStatusRunning
+			dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
+			if dr.Status.DesiredDeviceConfigMap == nil {
+				dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
+			}
+			dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
+				Checksum:    hash(config2),
+				GitRevision: rev2nd,
+			}
+			fmt.Fprintf(GinkgoWriter, "device rollout status!!!, %+v", dr.Status)
+			if err := k8sClient.Status().Update(ctx, &dr); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
+			checksum, buf := newGitRepoArtifact(func(dir string) {
+				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "mismatched", "config.cue"), []byte("dummy")))
+			})
+			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, err := io.Copy(w, buf)
+				common.MustNil(err)
+			}))
+
+			gr := testGr.DeepCopy()
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), gr)
+			}, timeout, interval).Should(Succeed())
+			gr.Status.Artifact = &source.Artifact{
+				URL:      h.URL,
+				Checksum: checksum,
+				Revision: rev2nd,
+			}
+			Eventually(func() error {
+				return k8sClient.Status().Update(ctx, gr)
+			}, timeout, interval).Should(Succeed())
+
+			Eventually(updateConfig, timeout, interval).Should(Succeed())
+
+			var dr provisioner.DeviceRollout
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+					return err
+				}
+				if dr.Status.GetDeviceStatus(testOpe.Name) == provisioner.DeviceStatusRunning {
+					return fmt.Errorf("status not changed yet")
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+
+			Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusChecksumError))
+		})
+
 		Context("when device config updated", func() {
 
 			BeforeEach(func() {
@@ -219,7 +279,6 @@ var _ = Describe("DeviceOperator controller", func() {
 					common.MustNil(err)
 				}))
 
-				// TODO check followings are really needed
 				gr := testGr.DeepCopy()
 				Eventually(func() error {
 					return k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), gr)
@@ -233,28 +292,6 @@ var _ = Describe("DeviceOperator controller", func() {
 					return k8sClient.Status().Update(ctx, gr)
 				}, timeout, interval).Should(Succeed())
 			})
-
-			updateConfig := func() error {
-				var dr provisioner.DeviceRollout
-				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
-					return err
-				}
-				dr.Status.Phase = provisioner.RolloutPhaseHealthy
-				dr.Status.Status = provisioner.RolloutStatusRunning
-				dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
-				if dr.Status.DesiredDeviceConfigMap == nil {
-					dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
-				}
-				dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
-					Checksum:    hash(config2),
-					GitRevision: rev2nd,
-				}
-				fmt.Fprintf(GinkgoWriter, "device rollout status!!!, %+v", dr.Status)
-				if err := k8sClient.Status().Update(ctx, &dr); err != nil {
-					return err
-				}
-				return nil
-			}
 
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false

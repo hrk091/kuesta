@@ -37,6 +37,7 @@ import (
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	gnmiproto "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
@@ -108,15 +109,12 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 
 	next := dr.Status.ResolveNextDeviceConfig(device.Name)
 	if next == nil || next.Checksum == "" {
-		l.Info("device data is not stored at git repository, re-check after 10 seconds")
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		l.Info("device data is not stored at git repository")
+		return ctrl.Result{}, nil
 	}
 	if next.Checksum == device.Status.Checksum {
 		l.Info(fmt.Sprintf("already provisioned: revision=%s", next.GitRevision))
-		oldDr := dr.DeepCopy()
-		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusCompleted)
-		if err := r.Status().Patch(ctx, &dr, client.MergeFrom(oldDr)); err != nil {
-			r.Error(ctx, err, "update DeviceRollout")
+		if err := r.updateRolloutStatus(ctx, dr, device.Name, provisioner.DeviceStatusCompleted); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
@@ -130,15 +128,19 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	dp, checksum, err := fetchArtifact(ctx, gr, device.Name, "")
+	defer os.RemoveAll(dp.RootDir)
 	if err != nil {
-		r.Error(ctx, err, "fetch device config")
-		return ctrl.Result{}, err
-	} else if checksum != next.Checksum {
+		r.Error(ctx, err, "failed to fetch device config. re-check after 10 seconds")
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	}
+	if checksum != next.Checksum {
 		err = fmt.Errorf("checksum is different: want=%s, got=%s", next.Checksum, checksum)
 		r.Error(ctx, err, "check checksum")
-		return ctrl.Result{}, err
+		if err := r.updateRolloutStatus(ctx, dr, device.Name, provisioner.DeviceStatusChecksumError); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
 	}
-	defer os.RemoveAll(dp.RootDir)
 
 	newBuf, err := dp.ReadDeviceConfigFile()
 	if err != nil {
@@ -152,33 +154,41 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	l.V(1).Info("gNMI notification", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
 
-	c, err := gnmiclient.New(ctx, device.Spec.GnmiDestination())
-	if err != nil {
-		r.Error(ctx, err, "create gNMI client")
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, err
+	var c gclient.Impl
+	for i := 0; i < 3; i++ {
+		if c, err = gnmiclient.New(ctx, device.Spec.GnmiDestination()); err == nil {
+			break
+		}
 	}
+	if err != nil {
+		r.Error(ctx, err, "failed to create gNMI client and connect for 3 times. mark as ConnectionError")
+		if err := r.updateRolloutStatus(ctx, dr, device.Name, provisioner.DeviceStatusConnectionError); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+	defer c.Close()
 
 	resp, gnmiSetErr := c.(*gnmiclient.Client).Set(ctx, sr)
 
-	oldDevice := device.DeepCopy()
-	oldDr := dr.DeepCopy()
 	if gnmiSetErr != nil {
-		// TODO handle connection error
 		r.Error(ctx, gnmiSetErr, "apply Set")
-		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusFailed)
-	} else {
-		l.Info(fmt.Sprintf("succeeded SetRequest: response=%s", prototext.Format(resp)))
-		dr.Status.SetDeviceStatus(device.Name, provisioner.DeviceStatusCompleted)
-		device.Status.Checksum = next.Checksum
-		device.Status.LastApplied = newBuf
+		if err := r.updateRolloutStatus(ctx, dr, device.Name, provisioner.DeviceStatusFailed); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
 	}
+
+	l.Info(fmt.Sprintf("succeeded SetRequest: response=%s", prototext.Format(resp)))
+	oldDevice := device.DeepCopy()
+	device.Status.Checksum = next.Checksum
+	device.Status.LastApplied = newBuf
 
 	if err := r.Status().Patch(ctx, device, client.MergeFrom(oldDevice)); err != nil {
 		r.Error(ctx, err, "patch Device")
 		return ctrl.Result{}, err
 	}
-	if err := r.Status().Patch(ctx, &dr, client.MergeFrom(oldDr)); err != nil {
-		r.Error(ctx, err, "update DeviceRollout")
+	if err := r.updateRolloutStatus(ctx, dr, device.Name, provisioner.DeviceStatusCompleted); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -191,6 +201,16 @@ func (r *DeviceReconciler) Error(ctx context.Context, err error, msg string, kvs
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)
+}
+
+func (r *DeviceReconciler) updateRolloutStatus(ctx context.Context, dr provisioner.DeviceRollout, name string, status provisioner.DeviceStatus) error {
+	oldDr := dr.DeepCopy()
+	dr.Status.SetDeviceStatus(name, status)
+	if err := r.Status().Patch(ctx, &dr, client.MergeFrom(oldDr)); err != nil {
+		r.Error(ctx, err, "update DeviceRollout")
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (r *DeviceReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
