@@ -38,6 +38,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"net"
@@ -52,6 +53,9 @@ type ServeCfg struct {
 	Addr            string `validate:"required"`
 	SyncPeriod      int    `validate:"required"`
 	PersistGitState bool
+	TLSCrtPath      string
+	TLSKeyPath      string
+	NoTLS           bool
 }
 
 type PathType string
@@ -77,9 +81,16 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// TODO credential
-	//opts := credentials.ServerCredentials()
-	g := grpc.NewServer()
+	var g *grpc.Server
+	if cfg.NoTLS {
+		g = grpc.NewServer()
+	} else {
+		creds, err := credentials.NewServerTLSFromFile(cfg.TLSCrtPath, cfg.TLSKeyPath)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		g = grpc.NewServer(grpc.Creds(creds))
+	}
 	s, err := NewNorthboundServer(cfg)
 	if err != nil {
 		return fmt.Errorf("init gNMI impl server: %w", err)
