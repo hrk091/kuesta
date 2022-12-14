@@ -53,9 +53,9 @@ type ServeCfg struct {
 	Addr            string `validate:"required"`
 	SyncPeriod      int    `validate:"required"`
 	PersistGitState bool
+	NoTLS           bool
 	TLSCrtPath      string
 	TLSKeyPath      string
-	NoTLS           bool
 }
 
 type PathType string
@@ -71,6 +71,11 @@ const (
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *ServeCfg) Validate() error {
+	if !c.NoTLS {
+		if c.TLSKeyPath == "" || c.TLSCrtPath == "" {
+			return fmt.Errorf("tls-key and tls-crt options must be set to run on TLS")
+		}
+	}
 	return common.Validate(c)
 }
 

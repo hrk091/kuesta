@@ -61,6 +61,9 @@ const (
 	FlagGitUser        = "git-user"
 	FlagGitEmail       = "git-email"
 	FlagPushToMain     = "push-to-main"
+	FlagNoTLS          = "notls"
+	FlagTLSCrt         = "tls-crt"
+	FlagTLSKey         = "tls-key"
 )
 
 // NewRootCmd creates command root.
@@ -87,6 +90,9 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP(FlagGitUser, "", gogit.DefaultGitUser, "git username")
 	cmd.PersistentFlags().StringP(FlagGitEmail, "", gogit.DefaultGitEmail, "git email")
 	cmd.PersistentFlags().BoolP(FlagPushToMain, "", false, "push to main (otherwise create new branch)")
+	cmd.PersistentFlags().BoolP(FlagNoTLS, "", false, "Run server without TLS.")
+	cmd.PersistentFlags().StringP(FlagTLSCrt, "", "", "Path to the TLS server certificate file.")
+	cmd.PersistentFlags().StringP(FlagTLSKey, "", "", "Path to the TLS server private key file.")
 
 	mustBindToViper(cmd)
 	cmd.Version = getVcsRevision()

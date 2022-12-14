@@ -30,6 +30,7 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -46,11 +47,19 @@ var (
 type DeviceAggregateCfg struct {
 	RootCfg
 
-	Addr string
+	Addr       string
+	NoTLS      bool
+	TLSCrtPath string
+	TLSKeyPath string
 }
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *DeviceAggregateCfg) Validate() error {
+	if !c.NoTLS {
+		if c.TLSKeyPath == "" || c.TLSCrtPath == "" {
+			return fmt.Errorf("tls-key and tls-crt options must be set to run on TLS")
+		}
+	}
 	return common.Validate(c)
 }
 
@@ -67,8 +76,14 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 
 	l.Infof("Start simple api server on %s", cfg.Addr)
 	http.HandleFunc("/commit", s.HandleFunc)
-	if err := http.ListenAndServe(cfg.Addr, nil); err != nil {
-		return err
+	var err error
+	if cfg.NoTLS {
+		err = http.ListenAndServe(cfg.Addr, nil)
+	} else {
+		err = http.ListenAndServeTLS(cfg.Addr, cfg.TLSCrtPath, cfg.TLSKeyPath, nil)
+	}
+	if err != nil {
+		return errors.WithStack(fmt.Errorf("run server: %w", err))
 	}
 	return nil
 }

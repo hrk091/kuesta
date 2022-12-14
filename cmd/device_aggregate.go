@@ -59,8 +59,11 @@ func newDeviceAggregateCfg(cmd *cobra.Command, args []string) (*kuesta.DeviceAgg
 		return nil, err
 	}
 	cfg := &kuesta.DeviceAggregateCfg{
-		RootCfg: *rootCfg,
-		Addr:    viper.GetString(FlagAggregateAddr),
+		RootCfg:    *rootCfg,
+		Addr:       viper.GetString(FlagAggregateAddr),
+		NoTLS:      viper.GetBool(FlagNoTLS),
+		TLSCrtPath: viper.GetString(FlagTLSCrt),
+		TLSKeyPath: viper.GetString(FlagTLSKey),
 	}
 	return cfg, cfg.Validate()
 }
