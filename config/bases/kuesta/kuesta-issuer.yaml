@@ -1,0 +1,35 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: kuesta-selfsigned-issuer
+  namespace: kuesta-system
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kuesta-server-cert
+  namespace: kuesta-system
+spec:
+  dnsNames:
+    - kuesta-server.kuesta-system.svc
+    - kuesta-server.kuesta-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: kuesta-selfsigned-issuer
+  secretName: kuesta-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kuesta-aggregator-cert
+  namespace: kuesta-system
+spec:
+  dnsNames:
+    - kuesta-aggregator.kuesta-system.svc
+    - kuesta-aggregator.kuesta-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: kuesta-selfsigned-issuer
+  secretName: kuesta-aggregator-cert

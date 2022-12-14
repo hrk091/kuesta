@@ -37,11 +37,18 @@ spec:
                 secretKeyRef:
                   name: kuesta-secrets
                   key: gitToken
+            - name: KUESTA_TLS_CRT
+              value: /tmp/cert/tls.crt
+            - name: KUESTA_TLS_KEY
+              value: /tmp/cert/tls.key
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
             - mountPath: /data
               name: kuesta-server-data
+            - mountPath: /tmp/cert
+              name: cert
+              readOnly: true
           ports:
             - name: grpc
               containerPort: 9339
@@ -50,3 +57,7 @@ spec:
         - name: kuesta-server-data
           persistentVolumeClaim:
             claimName: kuesta-server-data
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: kuesta-server-cert
