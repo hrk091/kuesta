@@ -232,7 +232,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "mismatched", "config.cue"), []byte("dummy")))
+				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)

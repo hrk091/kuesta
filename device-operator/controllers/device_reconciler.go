@@ -128,11 +128,11 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	dp, checksum, err := fetchArtifact(ctx, gr, device.Name, "")
-	defer os.RemoveAll(dp.RootDir)
 	if err != nil {
 		r.Error(ctx, err, "failed to fetch device config. re-check after 10 seconds")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
+	defer os.RemoveAll(dp.RootDir)
 	if checksum != next.Checksum {
 		err = fmt.Errorf("checksum is different: want=%s, got=%s", next.Checksum, checksum)
 		r.Error(ctx, err, "check checksum")
