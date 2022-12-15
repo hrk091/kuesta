@@ -61,14 +61,38 @@ func TestServeCfg_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{
-			"ok",
-			func(cfg *kuesta.ServeCfg) {},
+			"ok: no-tls",
+			func(cfg *kuesta.ServeCfg) {
+				cfg.NoTLS = true
+			},
+			false,
+		},
+		{
+			"ok: with-tls",
+			func(cfg *kuesta.ServeCfg) {
+				cfg.TLSKeyPath = "./tls.key"
+				cfg.TLSCrtPath = "./tls.crt"
+			},
 			false,
 		},
 		{
 			"err: addr is empty",
 			func(cfg *kuesta.ServeCfg) {
 				cfg.Addr = ""
+			},
+			true,
+		},
+		{
+			"err: tls-key not set on TLS-mode",
+			func(cfg *kuesta.ServeCfg) {
+				cfg.TLSCrtPath = "./tls.crt"
+			},
+			true,
+		},
+		{
+			"err: tls-crt not set on TLS-mode",
+			func(cfg *kuesta.ServeCfg) {
+				cfg.TLSKeyPath = "./tls.key"
 			},
 			true,
 		},
