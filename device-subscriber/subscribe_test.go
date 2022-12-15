@@ -243,7 +243,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}))
 		cfg.AggregatorURL = s.URL
 
-		err := PostDeviceConfig(cfg, []byte(deviceConfig))
+		err := PostDeviceConfig(context.Background(), cfg, []byte(deviceConfig))
 		assert.Nil(t, err)
 	})
 
@@ -256,7 +256,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}))
 		cfg.AggregatorURL = s.URL
 
-		err := PostDeviceConfig(cfg, []byte(deviceConfig))
+		err := PostDeviceConfig(context.Background(), cfg, []byte(deviceConfig))
 		assert.Error(t, err)
 	})
 
@@ -266,7 +266,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}
 		cfg.AggregatorURL = ":60000"
 
-		err := PostDeviceConfig(cfg, []byte(deviceConfig))
+		err := PostDeviceConfig(context.Background(), cfg, []byte(deviceConfig))
 		assert.Error(t, err)
 	})
 
@@ -276,7 +276,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}
 		cfg.AggregatorURL = "http://localhost:60000"
 
-		err := PostDeviceConfig(cfg, []byte(deviceConfig))
+		err := PostDeviceConfig(context.Background(), cfg, []byte(deviceConfig))
 		assert.Error(t, err)
 	})
 }

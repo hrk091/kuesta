@@ -48,6 +48,8 @@ import (
 
 func Run(cfg Config) error {
 	ctx := context.Background()
+	l := logger.FromContext(ctx)
+	l.Infow("start main run", "cfg", cfg)
 
 	c, err := gnmiclient.New(ctx, gclient.Destination{
 		Addrs:   []string{cfg.Addr},
@@ -64,6 +66,9 @@ func Run(cfg Config) error {
 
 	fn := func() error {
 		return Sync(ctx, cfg, c.(*gnmiclient.Client))
+	}
+	if err := fn(); err != nil {
+		logger.Error(ctx, err, "handle notification")
 	}
 	if err := Subscribe(ctx, c, fn); err != nil {
 		return err
@@ -137,7 +142,7 @@ func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {
 		return fmt.Errorf("encode cue.Value to bytes: %w", err)
 	}
 
-	if err := PostDeviceConfig(cfg, b); err != nil {
+	if err := PostDeviceConfig(ctx, cfg, b); err != nil {
 		return err
 	}
 
@@ -150,7 +155,9 @@ type SaveConfigRequest struct {
 }
 
 // PostDeviceConfig sends HTTP POST with supplied device config.
-func PostDeviceConfig(cfg Config, data []byte) error {
+func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
+	l := logger.FromContext(ctx)
+
 	u, err := url.Parse(cfg.AggregatorURL)
 	if err != nil {
 		return fmt.Errorf("url parse error: %w", errors.WithStack(err))
@@ -173,14 +180,19 @@ func PostDeviceConfig(cfg Config, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("post: %w", errors.WithStack(err))
 	}
-	if resp.StatusCode != 200 {
-		return errors.WithStack(fmt.Errorf("error response: %d", resp.StatusCode))
-	}
 	defer resp.Body.Close()
+	var bodyBuf []byte
+	if _, err := io.ReadFull(resp.Body, bodyBuf); err != nil {
+		l.Errorw("read body", "error", err)
+	}
+	if resp.StatusCode != 200 {
+		return errors.WithStack(fmt.Errorf("error code=%d: %s", resp.StatusCode, bodyBuf))
+	}
 	return nil
 }
 
 func httpClient(cfg Config) (*http.Client, error) {
+
 	c := &http.Client{}
 	if cfg.NoTLS {
 		return c, nil

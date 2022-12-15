@@ -41,7 +41,7 @@ import (
 )
 
 var (
-	UpdateCheckDuration = 5 * time.Second
+	UpdateCheckDuration = 5 * time.Second // TODO parameterize
 )
 
 type DeviceAggregateCfg struct {

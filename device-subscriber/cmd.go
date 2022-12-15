@@ -77,9 +77,9 @@ func NewRootCmd() *cobra.Command {
 	cmd.Flags().StringP("password", "p", "admin", "Password of the target device")
 	cmd.Flags().StringP("device", "d", "", "Name of the target device")
 	cmd.Flags().StringP("aggregator-url", "", "", "URL of the aggregator")
-	cmd.PersistentFlags().BoolP("notls", "", false, "Run server without TLS.")
-	cmd.PersistentFlags().BoolP("skip-verify", "", false, "Skip TLS verification and allow insecure transport.")
-	cmd.PersistentFlags().StringP("tls-ca-crt", "", "", "Path to the TLS server certificate file.")
+	cmd.Flags().BoolP("notls", "", false, "Run server without TLS.")
+	cmd.Flags().BoolP("skip-verify", "", false, "Skip TLS verification and allow insecure transport.")
+	cmd.Flags().StringP("tls-ca-crt", "", "", "Path to the TLS server certificate file.")
 
 	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
