@@ -23,6 +23,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
@@ -38,10 +39,16 @@ type Config struct {
 	Password      string
 	Device        string `validate:"required"`
 	AggregatorURL string `mapstructure:"aggregator-url" validate:"required"`
+	NoTLS         bool   `mapstructure:"notls"`
+	SkipVerifyTLS bool   `mapstructure:"skip-verify"`
+	TLSCaCrtPath  string `mapstructure:"tls-ca-crt"`
 }
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *Config) Validate() error {
+	if c.SkipVerifyTLS && c.TLSCaCrtPath != "" {
+		return fmt.Errorf("skip-verify and tls-ca-crt flags are mutually exclusive")
+	}
 	return common.Validate(c)
 }
 
@@ -70,6 +77,9 @@ func NewRootCmd() *cobra.Command {
 	cmd.Flags().StringP("password", "p", "admin", "Password of the target device")
 	cmd.Flags().StringP("device", "d", "", "Name of the target device")
 	cmd.Flags().StringP("aggregator-url", "", "", "URL of the aggregator")
+	cmd.PersistentFlags().BoolP("notls", "", false, "Run server without TLS.")
+	cmd.PersistentFlags().BoolP("skip-verify", "", false, "Skip TLS verification and allow insecure transport.")
+	cmd.PersistentFlags().StringP("tls-ca-crt", "", "", "Path to the TLS server certificate file.")
 
 	cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))

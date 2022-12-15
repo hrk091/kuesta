@@ -388,6 +388,7 @@ func newSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.P
 						{Name: "KUESTA_ADDR", Value: fmt.Sprintf("%s:%d", spec.Address, spec.Port)},
 						{Name: "KUESTA_DEVICE", Value: name.Name},
 						{Name: "KUESTA_AGGREGATOR_URL", Value: aggregatorUrl},
+						{Name: "KUESTA_SKIP_VERIFY", Value: "true"},
 					},
 					SecurityContext: &core.SecurityContext{
 						AllowPrivilegeEscalation: &allowPrivilegeEscalation,

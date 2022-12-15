@@ -73,7 +73,7 @@ const (
 func (c *ServeCfg) Validate() error {
 	if !c.NoTLS {
 		if c.TLSKeyPath == "" || c.TLSCrtPath == "" {
-			return fmt.Errorf("tls-key and tls-crt options must be set to run on TLS")
+			return fmt.Errorf("tls-key and tls-crt options must be set to use TLS")
 		}
 	}
 	return common.Validate(c)

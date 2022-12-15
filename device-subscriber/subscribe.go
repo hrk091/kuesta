@@ -25,6 +25,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
@@ -39,6 +41,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"time"
 )
@@ -162,7 +165,11 @@ func PostDeviceConfig(cfg Config, data []byte) error {
 		return fmt.Errorf("json encode error: %w", errors.WithStack(err))
 	}
 
-	resp, err := http.Post(u.String(), "application/json", &buf)
+	c, err := httpClient(cfg)
+	if err != nil {
+		return fmt.Errorf("create http client: %w", err)
+	}
+	resp, err := c.Post(u.String(), "application/json", &buf)
 	if err != nil {
 		return fmt.Errorf("post: %w", errors.WithStack(err))
 	}
@@ -171,6 +178,35 @@ func PostDeviceConfig(cfg Config, data []byte) error {
 	}
 	defer resp.Body.Close()
 	return nil
+}
+
+func httpClient(cfg Config) (*http.Client, error) {
+	c := &http.Client{}
+	if cfg.NoTLS {
+		return c, nil
+	}
+	if cfg.SkipVerifyTLS {
+		c.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		return c, nil
+	}
+	if cfg.TLSCaCrtPath != "" {
+		cert, err := os.ReadFile(cfg.TLSCaCrtPath)
+		if err != nil {
+			return nil, errors.WithStack(fmt.Errorf("load CA cert file: %w", err))
+		}
+		certPool := x509.NewCertPool()
+		certPool.AppendCertsFromPEM(cert)
+		c.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: certPool,
+			},
+		}
+	}
+	return c, nil
 }
 
 // ExtractJsonIetfVal extracts the JSON IETF field of the supplied TypedValue.
