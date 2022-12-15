@@ -68,7 +68,7 @@ func Run(cfg Config) error {
 		return Sync(ctx, cfg, c.(*gnmiclient.Client))
 	}
 	if err := fn(); err != nil {
-		logger.Error(ctx, err, "handle notification")
+		l.Errorw("initial sync", "err", err)
 	}
 	if err := Subscribe(ctx, c, fn); err != nil {
 		return err
@@ -90,11 +90,11 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 		},
 	}
 
-	l.Infow("starting subscribe...")
+	l.Infow("subscribe starting...")
 	if err := c.Subscribe(ctx, query); err != nil {
 		return fmt.Errorf("open subscribe channel: %w", errors.WithStack(err))
 	}
-	l.Infow("started subscribe")
+	l.Infow("subscribe started")
 
 	defer func() {
 		if err := c.Close(); err != nil {
@@ -106,7 +106,7 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 		recvErr := c.Recv()
 		l.Infow("recv hooked")
 		if err := fn(); err != nil {
-			logger.Error(ctx, err, "handle notification")
+			l.Errorw("handle notification", "err", err)
 		}
 
 		if recvErr == io.EOF {
@@ -119,6 +119,9 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 }
 
 func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {
+	l := logger.FromContext(ctx)
+	l.Infow("sync started")
+
 	buf, err := GetEntireConfig(ctx, client)
 	if err != nil {
 		return fmt.Errorf("get device config: %w", err)
@@ -146,6 +149,7 @@ func Sync(ctx context.Context, cfg Config, client *gnmiclient.Client) error {
 		return err
 	}
 
+	l.Infow("sync completed")
 	return nil
 }
 
