@@ -379,9 +379,10 @@ func newSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.P
 		Spec: core.PodSpec{
 			Containers: []core.Container{
 				{
-					Name:    "kuesta-subscriber",
-					Image:   subscriberImage + ":" + subscriberImageVersion,
-					Command: []string{"/bin/subscriber"},
+					Name:            "kuesta-subscriber",
+					Image:           subscriberImage + ":" + subscriberImageVersion,
+					ImagePullPolicy: core.PullAlways,
+					Command:         []string{"/bin/subscriber"},
 					Env: []core.EnvVar{
 						{Name: "KUESTA_DEVEL", Value: "true"},
 						{Name: "KUESTA_VERBOSE", Value: "2"},

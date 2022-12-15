@@ -15,6 +15,7 @@ spec:
       containers:
         - name: kuesta
           image: kuesta:latest
+          imagePullPolicy: Always
           command:
             - /bin/kuesta
           args:

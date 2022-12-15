@@ -39,10 +39,11 @@ spec:
         args:
         - --leader-elect
         image: controller:latest
+        imagePullPolicy: Always
         name: manager
         env:
           - name: KUESTA_AGGREGATOR_URL
-            value: http://kuesta-aggregator.kuesta-system:8000
+            value: https://kuesta-aggregator.kuesta-system:8000
           - name: KUESTA_SUBSCRIBER_IMAGE
             value: kuesta-subscriber
           - name: KUESTA_SUBSCRIBER_IMAGE_VERSION
