@@ -68,8 +68,10 @@ func newServeCfg(cmd *cobra.Command, args []string) (*kuesta.ServeCfg, error) {
 		SyncPeriod:      viper.GetInt(FlagSyncInterval),
 		PersistGitState: viper.GetBool(FlagPersistGitState),
 		NoTLS:           viper.GetBool(FlagNoTLS),
+		Insecure:        viper.GetBool(FlagInsecure),
 		TLSCrtPath:      viper.GetString(FlagTLSCrt),
 		TLSKeyPath:      viper.GetString(FlagTLSKey),
+		TLSCACrtPath:    viper.GetString(FlagTLSCACrt),
 	}
 	return cfg, cfg.Validate()
 }
