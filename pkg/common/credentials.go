@@ -25,7 +25,6 @@ package common
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -34,10 +33,19 @@ import (
 )
 
 type CredCfg struct {
-	NoTLS     bool
-	Insecure  bool
-	CrtPath   string
-	KeyPath   string
+	// Disable TLS
+	NoTLS bool
+
+	// Check remote client cert only when it is provided
+	Insecure bool
+
+	// Path to the cert file
+	CrtPath string
+
+	// Path to the private key file
+	KeyPath string
+
+	// Path to the CA cert file
 	CACrtPath string
 }
 
@@ -49,33 +57,48 @@ func (o *CredCfg) loadKeyPair() (*tls.Certificate, error) {
 	return &certificate, nil
 }
 
-func (o *CredCfg) parseCACert() (*x509.Certificate, error) {
+func (o *CredCfg) caCertPool() (*x509.CertPool, error) {
+	if o.CACrtPath == "" {
+		return nil, nil
+	}
 	caCrtFile, err := os.ReadFile(o.CACrtPath)
 	if err != nil {
 		return nil, errors.WithStack(fmt.Errorf("read CA cert file: %w", err))
 	}
-	block, _ := pem.Decode(caCrtFile)
-	caCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("parse ca certificate: %w", err))
-	}
-	return caCert, nil
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(caCrtFile)
+	return certPool, nil
 }
 
-// LoadCertificates loads certificates from files.
-func (o *CredCfg) LoadCertificates() ([]tls.Certificate, *x509.CertPool, error) {
+// TLSConfig returns tls.Config by loading certificates from files.
+func (o *CredCfg) TLSConfig() (*tls.Config, error) {
+	if o.NoTLS {
+		return nil, nil
+	}
 	cert, err := o.loadKeyPair()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	caBundle, err := o.parseCACert()
+	certPool, err := o.caCertPool()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	certPool := x509.NewCertPool()
-	certPool.AddCert(caBundle)
 
-	return []tls.Certificate{*cert}, certPool, nil
+	var tlsCfg tls.Config
+	if o.Insecure {
+		tlsCfg = tls.Config{
+			ClientAuth:   tls.VerifyClientCertIfGiven,
+			Certificates: []tls.Certificate{*cert},
+			ClientCAs:    certPool,
+		}
+	} else {
+		tlsCfg = tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			Certificates: []tls.Certificate{*cert},
+			ClientCAs:    certPool,
+		}
+	}
+	return &tlsCfg, nil
 }
 
 // GRPCServerCredentials returns grpc.ServerOption according to the given credential config.
@@ -84,26 +107,11 @@ func GRPCServerCredentials(o *CredCfg) ([]grpc.ServerOption, error) {
 		return []grpc.ServerOption{}, nil
 	}
 
-	certs, certPool, err := o.LoadCertificates()
+	tlsCfg, err := o.TLSConfig()
 	if err != nil {
-		return nil, fmt.Errorf("load certificates: %w", err)
+		return nil, fmt.Errorf("generate tls config: %w", err)
 	}
 
-	var tlsCfg tls.Config
-	if o.Insecure {
-		tlsCfg = tls.Config{
-			ClientAuth:   tls.VerifyClientCertIfGiven,
-			Certificates: certs,
-			ClientCAs:    certPool,
-		}
-	} else {
-		tlsCfg = tls.Config{
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-			Certificates: certs,
-			ClientCAs:    certPool,
-		}
-	}
-
-	tCred := credentials.NewTLS(&tlsCfg)
+	tCred := credentials.NewTLS(tlsCfg)
 	return []grpc.ServerOption{grpc.Creds(tCred)}, nil
 }
