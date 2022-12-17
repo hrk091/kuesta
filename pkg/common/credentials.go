@@ -62,6 +62,9 @@ type CredCfg struct {
 
 	// Path to the CA cert file
 	CACrtPath string
+
+	// To verify the server hostname
+	ServerName string
 }
 
 // Certificates sets certificate to tls.Config by loading cert key-pairs from files.
@@ -108,7 +111,9 @@ func (o *CredCfg) VerifyServer() TLSConfigOpts {
 			cfg.InsecureSkipVerify = true
 			return nil
 		}
-
+		if o.ServerName != "" {
+			cfg.ServerName = o.ServerName
+		}
 		if certPool, err := o.caCertPool(); err != nil {
 			return err
 		} else if certPool != nil {
