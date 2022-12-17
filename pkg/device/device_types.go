@@ -86,17 +86,22 @@ type DeviceSpec struct {
 }
 
 func (s *DeviceSpec) GnmiDestination(sData map[string][]byte) (gnmiclient.Destination, error) {
-	tlsCfg, err := common.NewTLSConfig(s.TLS.Certificates(sData), s.TLS.VerifyServer(sData))
-	if err != nil {
-		return gnmiclient.Destination{}, fmt.Errorf("new tls config: %w", err)
-	}
-	return gnmiclient.Destination{
+	dest := gnmiclient.Destination{
 		Addrs:       []string{fmt.Sprintf("%s:%d", s.Address, s.Port)},
 		Target:      "",
 		Timeout:     10 * time.Second,
 		Credentials: s.GnmiCredentials(),
-		TLS:         tlsCfg,
-	}, nil
+	}
+	if s.TLS.NoTLS {
+		return dest, nil
+	}
+	tlsCfg, err := common.NewTLSConfig(s.TLS.Certificates(sData), s.TLS.VerifyServer(sData))
+	if err != nil {
+		return gnmiclient.Destination{}, fmt.Errorf("new tls config: %w", err)
+	}
+	dest.TLS = tlsCfg
+
+	return dest, nil
 }
 
 // DeviceStatus defines the observed state of OcDemo

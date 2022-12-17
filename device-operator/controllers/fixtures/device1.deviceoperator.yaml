@@ -8,3 +8,5 @@ spec:
   baseRevision: 12345678deadbeef
   port: 59339
   rolloutRef: test-configrepo
+  tls:
+    notls: true

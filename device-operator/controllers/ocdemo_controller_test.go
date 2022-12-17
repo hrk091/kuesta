@@ -223,7 +223,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				Checksum:    hash(config2),
 				GitRevision: rev2nd,
 			}
-			fmt.Fprintf(GinkgoWriter, "device rollout status!!!, %+v", dr.Status)
+			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v", dr.Status)
 			if err := k8sClient.Status().Update(ctx, &dr); err != nil {
 				return err
 			}
