@@ -24,6 +24,7 @@ package kuesta
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/go-git/go-git/v5"
@@ -47,10 +48,28 @@ var (
 type DeviceAggregateCfg struct {
 	RootCfg
 
-	Addr       string
-	NoTLS      bool
-	TLSCrtPath string
-	TLSKeyPath string
+	Addr         string
+	NoTLS        bool
+	Insecure     bool
+	TLSCrtPath   string
+	TLSKeyPath   string
+	TLSCACrtPath string
+}
+
+func (c *DeviceAggregateCfg) CredCfg() *common.CredCfg {
+	cfg := &common.CredCfg{
+		NoTLS:     c.NoTLS,
+		CrtPath:   c.TLSCrtPath,
+		KeyPath:   c.TLSKeyPath,
+		CACrtPath: c.TLSCACrtPath,
+	}
+	if c.Insecure {
+		cfg.ClientAuth = tls.VerifyClientCertIfGiven
+	} else {
+		cfg.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	return cfg
 }
 
 // Validate validates exposed fields according to the `validate` tag.
@@ -76,13 +95,22 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 
 	l.Infof("Start simple api server on %s", cfg.Addr)
 	http.HandleFunc("/commit", s.HandleFunc)
-	var err error
 	if cfg.NoTLS {
-		err = http.ListenAndServe(cfg.Addr, nil)
-	} else {
-		err = http.ListenAndServeTLS(cfg.Addr, cfg.TLSCrtPath, cfg.TLSKeyPath, nil)
+		if err := http.ListenAndServe(cfg.Addr, nil); err != nil {
+			return errors.WithStack(fmt.Errorf("run server: %w", err))
+		}
+		return nil
 	}
+	credCfg := cfg.CredCfg()
+	tlsCfg, err := common.NewTLSConfig(credCfg.VerifyClient())
 	if err != nil {
+		return fmt.Errorf("new tls config: %w", err)
+	}
+	hs := &http.Server{
+		Addr:      cfg.Addr,
+		TLSConfig: tlsCfg,
+	}
+	if err := hs.ListenAndServeTLS(cfg.TLSCrtPath, cfg.TLSKeyPath); err != nil {
 		return errors.WithStack(fmt.Errorf("run server: %w", err))
 	}
 	return nil

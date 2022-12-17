@@ -32,21 +32,44 @@ import (
 )
 
 type Config struct {
-	Devel         bool
-	Verbose       uint8
-	Addr          string `validate:"required"`
-	Username      string
-	Password      string
-	Device        string `validate:"required"`
-	AggregatorURL string `mapstructure:"aggregator-url" validate:"required"`
-	NoTLS         bool   `mapstructure:"notls"`
-	SkipVerifyTLS bool   `mapstructure:"skip-verify"`
-	TLSCaCrtPath  string `mapstructure:"tls-ca-crt"`
+	Devel              bool
+	Verbose            uint8
+	Addr               string `validate:"required"`
+	Username           string
+	Password           string
+	Device             string `validate:"required"`
+	AggregatorURL      string `mapstructure:"aggregator-url" validate:"required"`
+	NoTLS              bool   `mapstructure:"notls"`
+	TLSSkipVerify      bool
+	TLSKeyPath         string `mapstructure:"tls-key"`
+	TLSCrtPath         string `mapstructure:"tls-crt"`
+	TLSCaCrtPath       string `mapstructure:"tls-ca"`
+	TLSDeviceCaCrtPath string `mapstructure:"tls-device-ca"`
+}
+
+func (c *Config) CredCfg() *common.CredCfg {
+	return &common.CredCfg{
+		NoTLS:            c.NoTLS,
+		SkipVerifyServer: c.TLSSkipVerify,
+		CrtPath:          c.TLSCrtPath,
+		KeyPath:          c.TLSKeyPath,
+		CACrtPath:        c.TLSCaCrtPath,
+	}
+}
+
+func (c *Config) DeviceCredCfg() *common.CredCfg {
+	return &common.CredCfg{
+		NoTLS:            c.NoTLS,
+		SkipVerifyServer: c.TLSSkipVerify,
+		CrtPath:          c.TLSCrtPath,
+		KeyPath:          c.TLSKeyPath,
+		CACrtPath:        c.TLSDeviceCaCrtPath,
+	}
 }
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *Config) Validate() error {
-	if c.SkipVerifyTLS && c.TLSCaCrtPath != "" {
+	if c.TLSSkipVerify && c.TLSCaCrtPath != "" {
 		return fmt.Errorf("skip-verify and tls-ca-crt flags are mutually exclusive")
 	}
 	return common.Validate(c)

@@ -25,13 +25,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"fmt"
 	"github.com/nttcom/kuesta/device-subscriber/pkg/model"
+	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/logger"
 	gclient "github.com/openconfig/gnmi/client"
@@ -41,7 +40,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"time"
 )
@@ -176,7 +174,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 		return fmt.Errorf("json encode error: %w", errors.WithStack(err))
 	}
 
-	c, err := httpClient(cfg)
+	c, err := httpClient(cfg.CredCfg())
 	if err != nil {
 		return fmt.Errorf("create http client: %w", err)
 	}
@@ -195,32 +193,17 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 	return nil
 }
 
-func httpClient(cfg Config) (*http.Client, error) {
-
+func httpClient(cfg *common.CredCfg) (*http.Client, error) {
 	c := &http.Client{}
 	if cfg.NoTLS {
 		return c, nil
 	}
-	if cfg.SkipVerifyTLS {
-		c.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		}
-		return c, nil
+	tlsCfg, err := common.NewTLSConfig(cfg.Certificates(), cfg.VerifyServer())
+	if err != nil {
+		return nil, fmt.Errorf("new tls config: %w", err)
 	}
-	if cfg.TLSCaCrtPath != "" {
-		cert, err := os.ReadFile(cfg.TLSCaCrtPath)
-		if err != nil {
-			return nil, errors.WithStack(fmt.Errorf("load CA cert file: %w", err))
-		}
-		certPool := x509.NewCertPool()
-		certPool.AppendCertsFromPEM(cert)
-		c.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: certPool,
-			},
-		}
+	c.Transport = &http.Transport{
+		TLSClientConfig: tlsCfg,
 	}
 	return c, nil
 }
