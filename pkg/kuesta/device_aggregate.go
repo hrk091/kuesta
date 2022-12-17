@@ -56,8 +56,8 @@ type DeviceAggregateCfg struct {
 	TLSCACrtPath string
 }
 
-func (c *DeviceAggregateCfg) CredCfg() *common.CredCfg {
-	cfg := &common.CredCfg{
+func (c *DeviceAggregateCfg) TLSParams() *common.TLSParams {
+	cfg := &common.TLSParams{
 		NoTLS:     c.NoTLS,
 		CrtPath:   c.TLSCrtPath,
 		KeyPath:   c.TLSKeyPath,
@@ -101,7 +101,7 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 		}
 		return nil
 	}
-	credCfg := cfg.CredCfg()
+	credCfg := cfg.TLSParams()
 	tlsCfg, err := common.NewTLSConfig(credCfg.VerifyClient())
 	if err != nil {
 		return fmt.Errorf("new tls config: %w", err)

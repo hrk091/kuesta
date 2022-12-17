@@ -174,7 +174,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 		return fmt.Errorf("json encode error: %w", errors.WithStack(err))
 	}
 
-	c, err := httpClient(cfg.CredCfg())
+	c, err := httpClient(cfg.TLSParams())
 	if err != nil {
 		return fmt.Errorf("create http client: %w", err)
 	}
@@ -193,7 +193,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 	return nil
 }
 
-func httpClient(cfg *common.CredCfg) (*http.Client, error) {
+func httpClient(cfg *common.TLSParams) (*http.Client, error) {
 	c := &http.Client{}
 	if cfg.NoTLS {
 		return c, nil

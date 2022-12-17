@@ -47,8 +47,8 @@ type Config struct {
 	TLSDeviceCaCrtPath string `mapstructure:"tls-device-ca"`
 }
 
-func (c *Config) CredCfg() *common.CredCfg {
-	return &common.CredCfg{
+func (c *Config) TLSParams() *common.TLSParams {
+	return &common.TLSParams{
 		NoTLS:            c.NoTLS,
 		SkipVerifyServer: c.TLSSkipVerify,
 		CrtPath:          c.TLSCrtPath,
@@ -57,8 +57,8 @@ func (c *Config) CredCfg() *common.CredCfg {
 	}
 }
 
-func (c *Config) DeviceCredCfg() *common.CredCfg {
-	return &common.CredCfg{
+func (c *Config) DeviceTLSParams() *common.TLSParams {
+	return &common.TLSParams{
 		NoTLS:            c.NoTLS,
 		SkipVerifyServer: c.TLSSkipVerify,
 		CrtPath:          c.TLSCrtPath,

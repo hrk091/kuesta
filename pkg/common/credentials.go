@@ -44,7 +44,7 @@ func NewTLSConfig(opts ...TLSConfigOpts) (*tls.Config, error) {
 
 type TLSConfigOpts func(c *tls.Config) error
 
-type CredCfg struct {
+type TLSParams struct {
 	// Disable TLS
 	NoTLS bool
 
@@ -68,7 +68,7 @@ type CredCfg struct {
 }
 
 // Certificates sets certificate to tls.Config by loading cert key-pairs from files.
-func (o *CredCfg) Certificates() TLSConfigOpts {
+func (o *TLSParams) Certificates() TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
@@ -86,7 +86,7 @@ func (o *CredCfg) Certificates() TLSConfigOpts {
 }
 
 // VerifyClient applies client certificate verification settings on tls.Config.
-func (o *CredCfg) VerifyClient() TLSConfigOpts {
+func (o *TLSParams) VerifyClient() TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
@@ -102,7 +102,7 @@ func (o *CredCfg) VerifyClient() TLSConfigOpts {
 }
 
 // VerifyServer applies server verification settings on tls.Config.
-func (o *CredCfg) VerifyServer() TLSConfigOpts {
+func (o *TLSParams) VerifyServer() TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
@@ -123,7 +123,7 @@ func (o *CredCfg) VerifyServer() TLSConfigOpts {
 	}
 }
 
-func (o *CredCfg) loadKeyPair() (*tls.Certificate, error) {
+func (o *TLSParams) loadKeyPair() (*tls.Certificate, error) {
 	if o.CrtPath == "" || o.KeyPath == "" {
 		return nil, nil
 	}
@@ -134,7 +134,7 @@ func (o *CredCfg) loadKeyPair() (*tls.Certificate, error) {
 	return &certificate, nil
 }
 
-func (o *CredCfg) caCertPool() (*x509.CertPool, error) {
+func (o *TLSParams) caCertPool() (*x509.CertPool, error) {
 	if o.CACrtPath == "" {
 		return nil, nil
 	}
@@ -148,7 +148,7 @@ func (o *CredCfg) caCertPool() (*x509.CertPool, error) {
 }
 
 // GRPCServerCredentials returns grpc.ServerOption according to the given credential config.
-func GRPCServerCredentials(o *CredCfg) ([]grpc.ServerOption, error) {
+func GRPCServerCredentials(o *TLSParams) ([]grpc.ServerOption, error) {
 	if o.NoTLS {
 		return []grpc.ServerOption{}, nil
 	}

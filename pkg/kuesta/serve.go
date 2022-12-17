@@ -60,8 +60,8 @@ type ServeCfg struct {
 	TLSCACrtPath    string
 }
 
-func (c *ServeCfg) CredCfg() *common.CredCfg {
-	cfg := &common.CredCfg{
+func (c *ServeCfg) TLSParams() *common.TLSParams {
+	cfg := &common.TLSParams{
 		NoTLS:     c.NoTLS,
 		CrtPath:   c.TLSCrtPath,
 		KeyPath:   c.TLSKeyPath,
@@ -104,7 +104,7 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	credOpts, err := common.GRPCServerCredentials(cfg.CredCfg())
+	credOpts, err := common.GRPCServerCredentials(cfg.TLSParams())
 	if err != nil {
 		return fmt.Errorf("setup credentials: %w", err)
 	}
