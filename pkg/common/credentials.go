@@ -32,6 +32,18 @@ import (
 	"os"
 )
 
+func NewTLSConfig(opts ...TLSConfigOpts) (*tls.Config, error) {
+	cfg := &tls.Config{}
+	for _, opt := range opts {
+		if err := opt(cfg); err != nil {
+			return nil, fmt.Errorf("new tls config: %w", err)
+		}
+	}
+	return cfg, nil
+}
+
+type TLSConfigOpts func(c *tls.Config) error
+
 type CredCfg struct {
 	// Disable TLS
 	NoTLS bool
@@ -39,8 +51,8 @@ type CredCfg struct {
 	// ClientAuth specifies how to handle client cert
 	ClientAuth tls.ClientAuthType
 
-	// Skip verifying server sert
-	SkipVerifyServerCert bool
+	// Skip verifying server cert
+	SkipVerifyServer bool
 
 	// Path to the cert file
 	CrtPath string
@@ -50,6 +62,60 @@ type CredCfg struct {
 
 	// Path to the CA cert file
 	CACrtPath string
+}
+
+// Certificates sets certificate to tls.Config by loading cert key-pairs from files.
+func (o *CredCfg) Certificates() TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if o.NoTLS {
+			return nil
+		}
+		if o.CrtPath == "" || o.KeyPath == "" {
+			return fmt.Errorf("TLS key-pair must be provided to enable TLS")
+		}
+		cert, err := o.loadKeyPair()
+		if err != nil {
+			return err
+		}
+		cfg.Certificates = []tls.Certificate{*cert}
+		return nil
+	}
+}
+
+// VerifyClient applies client certificate verification settings on tls.Config.
+func (o *CredCfg) VerifyClient() TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if o.NoTLS {
+			return nil
+		}
+		cfg.ClientAuth = o.ClientAuth
+		if certPool, err := o.caCertPool(); err != nil {
+			return err
+		} else {
+			cfg.ClientCAs = certPool
+		}
+		return nil
+	}
+}
+
+// VerifyServer applies server verification settings on tls.Config.
+func (o *CredCfg) VerifyServer() TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if o.NoTLS {
+			return nil
+		}
+		if o.SkipVerifyServer {
+			cfg.InsecureSkipVerify = true
+			return nil
+		}
+
+		if certPool, err := o.caCertPool(); err != nil {
+			return err
+		} else if certPool != nil {
+			cfg.RootCAs = certPool
+		}
+		return nil
+	}
 }
 
 func (o *CredCfg) loadKeyPair() (*tls.Certificate, error) {
@@ -76,67 +142,15 @@ func (o *CredCfg) caCertPool() (*x509.CertPool, error) {
 	return certPool, nil
 }
 
-// ServerTLSConfig returns tls.Config for server by loading certificates from files.
-func (o *CredCfg) ServerTLSConfig() (*tls.Config, error) {
-	if o.NoTLS {
-		return nil, nil
-	}
-	if o.CrtPath == "" || o.KeyPath == "" {
-		return nil, fmt.Errorf("TLS key-pair must be provided to enable TLS")
-	}
-	cert, err := o.loadKeyPair()
-	if err != nil {
-		return nil, err
-	}
-	certPool, err := o.caCertPool()
-	if err != nil {
-		return nil, err
-	}
-
-	tlsCfg := tls.Config{
-		Certificates: []tls.Certificate{*cert},
-		ClientCAs:    certPool,
-		ClientAuth:   o.ClientAuth,
-	}
-
-	return &tlsCfg, nil
-}
-
-func (o *CredCfg) ClientTLSConfig() (*tls.Config, error) {
-	if o.NoTLS {
-		return nil, nil
-	}
-
-	tlsCfg := tls.Config{}
-	if o.SkipVerifyServerCert {
-		tlsCfg.InsecureSkipVerify = true
-		return &tlsCfg, nil
-	}
-
-	if cert, err := o.loadKeyPair(); err != nil {
-		return nil, err
-	} else if cert != nil {
-		tlsCfg.Certificates = []tls.Certificate{*cert}
-	}
-
-	if certPool, err := o.caCertPool(); err != nil {
-		return nil, err
-	} else if certPool != nil {
-		tlsCfg.RootCAs = certPool
-	}
-
-	return &tlsCfg, nil
-}
-
 // GRPCServerCredentials returns grpc.ServerOption according to the given credential config.
 func GRPCServerCredentials(o *CredCfg) ([]grpc.ServerOption, error) {
 	if o.NoTLS {
 		return []grpc.ServerOption{}, nil
 	}
 
-	tlsCfg, err := o.ServerTLSConfig()
+	tlsCfg, err := NewTLSConfig(o.Certificates(), o.VerifyClient())
 	if err != nil {
-		return nil, fmt.Errorf("generate tls config: %w", err)
+		return nil, fmt.Errorf("new tls config: %w", err)
 	}
 
 	tCred := credentials.NewTLS(tlsCfg)
