@@ -24,6 +24,7 @@ package kuesta
 
 import (
 	"context"
+	"crypto/tls"
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
@@ -60,13 +61,19 @@ type ServeCfg struct {
 }
 
 func (c *ServeCfg) CredCfg() *common.CredCfg {
-	return &common.CredCfg{
+	cfg := &common.CredCfg{
 		NoTLS:     c.NoTLS,
-		Insecure:  c.Insecure,
 		CrtPath:   c.TLSCrtPath,
 		KeyPath:   c.TLSKeyPath,
 		CACrtPath: c.TLSCACrtPath,
 	}
+	if c.Insecure {
+		cfg.ClientAuth = tls.VerifyClientCertIfGiven
+	} else {
+		cfg.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	return cfg
 }
 
 type PathType string

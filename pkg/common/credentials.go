@@ -36,8 +36,11 @@ type CredCfg struct {
 	// Disable TLS
 	NoTLS bool
 
-	// Check remote client cert only when it is provided
-	Insecure bool
+	// ClientAuth specifies how to handle client cert
+	ClientAuth tls.ClientAuthType
+
+	// Skip verifying server sert
+	SkipVerifyServerCert bool
 
 	// Path to the cert file
 	CrtPath string
@@ -50,9 +53,12 @@ type CredCfg struct {
 }
 
 func (o *CredCfg) loadKeyPair() (*tls.Certificate, error) {
+	if o.CrtPath == "" || o.KeyPath == "" {
+		return nil, nil
+	}
 	certificate, err := tls.LoadX509KeyPair(o.CrtPath, o.KeyPath)
 	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("load cert key pair: %w", err))
+		return nil, errors.WithStack(fmt.Errorf("load cert key-pair: %w", err))
 	}
 	return &certificate, nil
 }
@@ -70,10 +76,13 @@ func (o *CredCfg) caCertPool() (*x509.CertPool, error) {
 	return certPool, nil
 }
 
-// TLSConfig returns tls.Config by loading certificates from files.
-func (o *CredCfg) TLSConfig() (*tls.Config, error) {
+// ServerTLSConfig returns tls.Config for server by loading certificates from files.
+func (o *CredCfg) ServerTLSConfig() (*tls.Config, error) {
 	if o.NoTLS {
 		return nil, nil
+	}
+	if o.CrtPath == "" || o.KeyPath == "" {
+		return nil, fmt.Errorf("TLS key-pair must be provided to enable TLS")
 	}
 	cert, err := o.loadKeyPair()
 	if err != nil {
@@ -84,20 +93,38 @@ func (o *CredCfg) TLSConfig() (*tls.Config, error) {
 		return nil, err
 	}
 
-	var tlsCfg tls.Config
-	if o.Insecure {
-		tlsCfg = tls.Config{
-			ClientAuth:   tls.VerifyClientCertIfGiven,
-			Certificates: []tls.Certificate{*cert},
-			ClientCAs:    certPool,
-		}
-	} else {
-		tlsCfg = tls.Config{
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-			Certificates: []tls.Certificate{*cert},
-			ClientCAs:    certPool,
-		}
+	tlsCfg := tls.Config{
+		Certificates: []tls.Certificate{*cert},
+		ClientCAs:    certPool,
+		ClientAuth:   o.ClientAuth,
 	}
+
+	return &tlsCfg, nil
+}
+
+func (o *CredCfg) ClientTLSConfig() (*tls.Config, error) {
+	if o.NoTLS {
+		return nil, nil
+	}
+
+	tlsCfg := tls.Config{}
+	if o.SkipVerifyServerCert {
+		tlsCfg.InsecureSkipVerify = true
+		return &tlsCfg, nil
+	}
+
+	if cert, err := o.loadKeyPair(); err != nil {
+		return nil, err
+	} else if cert != nil {
+		tlsCfg.Certificates = []tls.Certificate{*cert}
+	}
+
+	if certPool, err := o.caCertPool(); err != nil {
+		return nil, err
+	} else if certPool != nil {
+		tlsCfg.RootCAs = certPool
+	}
+
 	return &tlsCfg, nil
 }
 
@@ -107,7 +134,7 @@ func GRPCServerCredentials(o *CredCfg) ([]grpc.ServerOption, error) {
 		return []grpc.ServerOption{}, nil
 	}
 
-	tlsCfg, err := o.TLSConfig()
+	tlsCfg, err := o.ServerTLSConfig()
 	if err != nil {
 		return nil, fmt.Errorf("generate tls config: %w", err)
 	}
