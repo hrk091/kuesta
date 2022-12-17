@@ -154,9 +154,21 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	l.V(1).Info("gNMI notification", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
 
+	var secret core.Secret
+	var sData map[string][]byte
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: device.Namespace, Name: device.Spec.TLS.SecretName}, &secret); err == nil {
+		sData = secret.Data
+	}
+	dest, err := device.Spec.GnmiDestination(sData)
+	if err != nil {
+		r.Error(ctx, err, "make gnmi SetRequest")
+		return ctrl.Result{}, err
+	}
+
 	var c gclient.Impl
 	for i := 0; i < 3; i++ {
-		if c, err = gnmiclient.New(ctx, device.Spec.GnmiDestination()); err == nil {
+		if c, err = gnmiclient.New(ctx, dest); err == nil {
 			break
 		}
 	}

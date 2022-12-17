@@ -198,7 +198,7 @@ func httpClient(cfg *common.TLSParams) (*http.Client, error) {
 	if cfg.NoTLS {
 		return c, nil
 	}
-	tlsCfg, err := common.NewTLSConfig(cfg.Certificates(), cfg.VerifyServer())
+	tlsCfg, err := common.NewTLSConfig(cfg.Certificates(false), cfg.VerifyServer())
 	if err != nil {
 		return nil, fmt.Errorf("new tls config: %w", err)
 	}

@@ -50,6 +50,20 @@ spec:
                 description: RolloutRef is the name of DeviceRollout to which this
                   device belongs.
                 type: string
+              tls:
+                properties:
+                  notls:
+                    type: boolean
+                  secretName:
+                    description: Path to the cert file
+                    type: string
+                  serverName:
+                    description: To verify the server hostname
+                    type: string
+                  skipVerify:
+                    description: Skip verifying server cert
+                    type: boolean
+                type: object
               username:
                 type: string
             required:

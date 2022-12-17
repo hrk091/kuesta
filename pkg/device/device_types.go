@@ -23,8 +23,13 @@
 package v1alpha1
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"github.com/nttcom/kuesta/pkg/common"
 	gnmiclient "github.com/openconfig/gnmi/client"
+	"github.com/pkg/errors"
+	core "k8s.io/api/core/v1"
 	"time"
 )
 
@@ -76,15 +81,22 @@ type DeviceSpec struct {
 	BaseRevision string `json:"baseRevision,omitempty"`
 
 	ConnectionInfo `json:",inline"`
+
+	TLS TLSConfig `json:"tls,omitempty"`
 }
 
-func (s *DeviceSpec) GnmiDestination() gnmiclient.Destination {
+func (s *DeviceSpec) GnmiDestination(sData map[string][]byte) (gnmiclient.Destination, error) {
+	tlsCfg, err := common.NewTLSConfig(s.TLS.Certificates(sData), s.TLS.VerifyServer(sData))
+	if err != nil {
+		return gnmiclient.Destination{}, fmt.Errorf("new tls config: %w", err)
+	}
 	return gnmiclient.Destination{
 		Addrs:       []string{fmt.Sprintf("%s:%d", s.Address, s.Port)},
 		Target:      "",
 		Timeout:     10 * time.Second,
 		Credentials: s.GnmiCredentials(),
-	}
+		TLS:         tlsCfg,
+	}, nil
 }
 
 // DeviceStatus defines the observed state of OcDemo
@@ -116,5 +128,59 @@ func (d *ConnectionInfo) GnmiCredentials() *gnmiclient.Credentials {
 	return &gnmiclient.Credentials{
 		Username: d.Username,
 		Password: d.Password,
+	}
+}
+
+type TLSConfig struct {
+	NoTLS bool `json:"notls,omitempty"`
+
+	// Skip verifying server cert
+	SkipVerifyServer bool `json:"skipVerify,omitempty"`
+
+	// Path to the cert file
+	SecretName string `json:"secretName,omitempty"`
+
+	// To verify the server hostname
+	ServerName string `json:"serverName,omitempty"`
+}
+
+func (c *TLSConfig) Certificates(secretData map[string][]byte) common.TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if c.NoTLS {
+			return nil
+		}
+		crtFile := secretData[core.TLSCertKey]
+		keyFile := secretData[core.TLSPrivateKeyKey]
+		if crtFile != nil && keyFile != nil {
+			cert, err := tls.X509KeyPair(crtFile, keyFile)
+			if err != nil {
+				return errors.WithStack(fmt.Errorf("parse x509 key-pair: %w", err))
+			}
+			cfg.Certificates = []tls.Certificate{cert}
+		}
+		return nil
+	}
+}
+
+func (c *TLSConfig) VerifyServer(secretData map[string][]byte) common.TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if c.NoTLS {
+			return nil
+		}
+		if c.SkipVerifyServer {
+			cfg.InsecureSkipVerify = true
+			return nil
+		}
+		if c.ServerName != "" {
+			cfg.ServerName = c.ServerName
+		}
+		if caCrtFile, ok := secretData[core.ServiceAccountRootCAKey]; ok {
+			certPool := x509.NewCertPool()
+			if ok := certPool.AppendCertsFromPEM(caCrtFile); !ok {
+				return errors.WithStack(fmt.Errorf("append cert from PEM"))
+			}
+			cfg.RootCAs = certPool
+		}
+		return nil
 	}
 }

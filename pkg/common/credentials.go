@@ -68,13 +68,17 @@ type TLSParams struct {
 }
 
 // Certificates sets certificate to tls.Config by loading cert key-pairs from files.
-func (o *TLSParams) Certificates() TLSConfigOpts {
+func (o *TLSParams) Certificates(required bool) TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
 		}
 		if o.CrtPath == "" || o.KeyPath == "" {
-			return fmt.Errorf("TLS key-pair must be provided to enable TLS")
+			if required {
+				return errors.WithStack(fmt.Errorf("TLS key-pair must be provided to enable TLS"))
+			} else {
+				return nil
+			}
 		}
 		cert, err := o.loadKeyPair()
 		if err != nil {
@@ -129,7 +133,7 @@ func (o *TLSParams) loadKeyPair() (*tls.Certificate, error) {
 	}
 	certificate, err := tls.LoadX509KeyPair(o.CrtPath, o.KeyPath)
 	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("load cert key-pair: %w", err))
+		return nil, errors.WithStack(fmt.Errorf("load x509 key-pair: %w", err))
 	}
 	return &certificate, nil
 }
@@ -143,7 +147,9 @@ func (o *TLSParams) caCertPool() (*x509.CertPool, error) {
 		return nil, errors.WithStack(fmt.Errorf("read CA cert file: %w", err))
 	}
 	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caCrtFile)
+	if ok := certPool.AppendCertsFromPEM(caCrtFile); !ok {
+		return nil, errors.WithStack(fmt.Errorf("append ca cert from PEM"))
+	}
 	return certPool, nil
 }
 
@@ -153,7 +159,7 @@ func GRPCServerCredentials(o *TLSParams) ([]grpc.ServerOption, error) {
 		return []grpc.ServerOption{}, nil
 	}
 
-	tlsCfg, err := NewTLSConfig(o.Certificates(), o.VerifyClient())
+	tlsCfg, err := NewTLSConfig(o.Certificates(true), o.VerifyClient())
 	if err != nil {
 		return nil, fmt.Errorf("new tls config: %w", err)
 	}
