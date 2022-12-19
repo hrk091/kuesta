@@ -49,11 +49,7 @@ func Run(cfg Config) error {
 	l := logger.FromContext(ctx)
 	l.Infow("start main run", "cfg", cfg)
 
-	// TODO
-	// - get secret name
-	// - get secret using k8s client
-	// - add TLS struct
-	c, err := gnmiclient.New(ctx, gclient.Destination{
+	dest := gclient.Destination{
 		Addrs:   []string{cfg.Addr},
 		Target:  "",
 		Timeout: 60 * time.Second,
@@ -61,7 +57,15 @@ func Run(cfg Config) error {
 			Username: cfg.Username,
 			Password: cfg.Password,
 		},
-	})
+	}
+	tlsDeviceCfg := cfg.DeviceTLSClientConfig()
+	tlsCfg, err := common.NewTLSConfig(tlsDeviceCfg.Certificates(false), tlsDeviceCfg.VerifyServer())
+	if err != nil {
+		return fmt.Errorf("get tls config: %w", err)
+	}
+	dest.TLS = tlsCfg
+
+	c, err := gnmiclient.New(ctx, dest)
 	if err != nil {
 		return fmt.Errorf("create gNMI client: %w", errors.WithStack(err))
 	}

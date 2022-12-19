@@ -44,7 +44,7 @@ type Config struct {
 	TLSKeyPath         string `mapstructure:"tls-key"`
 	TLSCrtPath         string `mapstructure:"tls-crt"`
 	TLSCACrtPath       string `mapstructure:"tls-ca"`
-	TLSDeviceCaCrtPath string `mapstructure:"tls-device-ca"`
+	TLSDeviceCACrtPath string `mapstructure:"tls-device-ca"`
 }
 
 func (c *Config) TLSClientConfig() *common.TLSClientConfig {
@@ -65,7 +65,7 @@ func (c *Config) DeviceTLSClientConfig() *common.TLSClientConfig {
 			NoTLS:     c.NoTLS,
 			CrtPath:   c.TLSCrtPath,
 			KeyPath:   c.TLSKeyPath,
-			CACrtPath: c.TLSCACrtPath,
+			CACrtPath: c.TLSDeviceCACrtPath,
 		},
 		SkipVerifyServer: c.TLSSkipVerify,
 	}
