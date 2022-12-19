@@ -40,7 +40,7 @@ type Config struct {
 	Device             string `validate:"required"`
 	AggregatorURL      string `mapstructure:"aggregator-url" validate:"required"`
 	NoTLS              bool   `mapstructure:"notls"`
-	TLSSkipVerify      bool
+	TLSSkipVerify      bool   `mapstructure:"skip-verify"`
 	TLSKeyPath         string `mapstructure:"tls-key"`
 	TLSCrtPath         string `mapstructure:"tls-crt"`
 	TLSCACrtPath       string `mapstructure:"tls-ca"`
