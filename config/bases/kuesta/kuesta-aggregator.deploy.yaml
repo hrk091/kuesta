@@ -35,6 +35,8 @@ spec:
                 secretKeyRef:
                   name: kuesta-secrets
                   key: gitToken
+            - name: KUESTA_INSECURE
+              value: "true"
             - name: KUESTA_TLS_CRT
               value: /tmp/cert/tls.crt
             - name: KUESTA_TLS_KEY
