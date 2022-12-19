@@ -49,21 +49,10 @@ func Run(cfg Config) error {
 	l := logger.FromContext(ctx)
 	l.Infow("start main run", "cfg", cfg)
 
-	dest := gclient.Destination{
-		Addrs:   []string{cfg.Addr},
-		Target:  "",
-		Timeout: 60 * time.Second,
-		Credentials: &gclient.Credentials{
-			Username: cfg.Username,
-			Password: cfg.Password,
-		},
-	}
-	tlsDeviceCfg := cfg.DeviceTLSClientConfig()
-	tlsCfg, err := common.NewTLSConfig(tlsDeviceCfg.Certificates(false), tlsDeviceCfg.VerifyServer())
+	dest, err := gNMIDestination(cfg)
 	if err != nil {
-		return fmt.Errorf("get tls config: %w", err)
+		return fmt.Errorf("setup gnmi destination: %w", err)
 	}
-	dest.TLS = tlsCfg
 
 	c, err := gnmiclient.New(ctx, dest)
 	if err != nil {
@@ -199,6 +188,28 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 		return errors.WithStack(fmt.Errorf("error code=%d: %s", resp.StatusCode, bodyBuf))
 	}
 	return nil
+}
+
+func gNMIDestination(cfg Config) (gclient.Destination, error) {
+	dest := gclient.Destination{
+		Addrs:   []string{cfg.Addr},
+		Target:  "",
+		Timeout: 60 * time.Second,
+		Credentials: &gclient.Credentials{
+			Username: cfg.Username,
+			Password: cfg.Password,
+		},
+	}
+	if cfg.NoTLS {
+		return dest, nil
+	}
+	tlsDeviceCfg := cfg.DeviceTLSClientConfig()
+	tlsCfg, err := common.NewTLSConfig(tlsDeviceCfg.Certificates(false), tlsDeviceCfg.VerifyServer())
+	if err != nil {
+		return gclient.Destination{}, fmt.Errorf("get tls config: %w", err)
+	}
+	dest.TLS = tlsCfg
+	return dest, nil
 }
 
 func httpClient(cfg *common.TLSClientConfig) (*http.Client, error) {
