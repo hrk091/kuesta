@@ -49,6 +49,10 @@ func Run(cfg Config) error {
 	l := logger.FromContext(ctx)
 	l.Infow("start main run", "cfg", cfg)
 
+	// TODO
+	// - get secret name
+	// - get secret using k8s client
+	// - add TLS struct
 	c, err := gnmiclient.New(ctx, gclient.Destination{
 		Addrs:   []string{cfg.Addr},
 		Target:  "",
@@ -174,7 +178,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 		return fmt.Errorf("json encode error: %w", errors.WithStack(err))
 	}
 
-	c, err := httpClient(cfg.TLSParams())
+	c, err := httpClient(cfg.TLSClientConfig())
 	if err != nil {
 		return fmt.Errorf("create http client: %w", err)
 	}
@@ -193,7 +197,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 	return nil
 }
 
-func httpClient(cfg *common.TLSParams) (*http.Client, error) {
+func httpClient(cfg *common.TLSClientConfig) (*http.Client, error) {
 	c := &http.Client{}
 	if cfg.NoTLS {
 		return c, nil

@@ -43,33 +43,37 @@ type Config struct {
 	TLSSkipVerify      bool
 	TLSKeyPath         string `mapstructure:"tls-key"`
 	TLSCrtPath         string `mapstructure:"tls-crt"`
-	TLSCaCrtPath       string `mapstructure:"tls-ca"`
+	TLSCACrtPath       string `mapstructure:"tls-ca"`
 	TLSDeviceCaCrtPath string `mapstructure:"tls-device-ca"`
 }
 
-func (c *Config) TLSParams() *common.TLSParams {
-	return &common.TLSParams{
-		NoTLS:            c.NoTLS,
+func (c *Config) TLSClientConfig() *common.TLSClientConfig {
+	return &common.TLSClientConfig{
+		TLSConfigBase: common.TLSConfigBase{
+			NoTLS:     c.NoTLS,
+			CrtPath:   c.TLSCrtPath,
+			KeyPath:   c.TLSKeyPath,
+			CACrtPath: c.TLSCACrtPath,
+		},
 		SkipVerifyServer: c.TLSSkipVerify,
-		CrtPath:          c.TLSCrtPath,
-		KeyPath:          c.TLSKeyPath,
-		CACrtPath:        c.TLSCaCrtPath,
 	}
 }
 
-func (c *Config) DeviceTLSParams() *common.TLSParams {
-	return &common.TLSParams{
-		NoTLS:            c.NoTLS,
+func (c *Config) DeviceTLSClientConfig() *common.TLSClientConfig {
+	return &common.TLSClientConfig{
+		TLSConfigBase: common.TLSConfigBase{
+			NoTLS:     c.NoTLS,
+			CrtPath:   c.TLSCrtPath,
+			KeyPath:   c.TLSKeyPath,
+			CACrtPath: c.TLSCACrtPath,
+		},
 		SkipVerifyServer: c.TLSSkipVerify,
-		CrtPath:          c.TLSCrtPath,
-		KeyPath:          c.TLSKeyPath,
-		CACrtPath:        c.TLSDeviceCaCrtPath,
 	}
 }
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *Config) Validate() error {
-	if c.TLSSkipVerify && c.TLSCaCrtPath != "" {
+	if c.TLSSkipVerify && c.TLSCACrtPath != "" {
 		return fmt.Errorf("skip-verify and tls-ca-crt flags are mutually exclusive")
 	}
 	return common.Validate(c)

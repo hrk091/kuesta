@@ -60,12 +60,14 @@ type ServeCfg struct {
 	TLSCACrtPath    string
 }
 
-func (c *ServeCfg) TLSParams() *common.TLSParams {
-	cfg := &common.TLSParams{
-		NoTLS:     c.NoTLS,
-		CrtPath:   c.TLSCrtPath,
-		KeyPath:   c.TLSKeyPath,
-		CACrtPath: c.TLSCACrtPath,
+func (c *ServeCfg) TLSServerConfig() *common.TLSServerConfig {
+	cfg := &common.TLSServerConfig{
+		TLSConfigBase: common.TLSConfigBase{
+			NoTLS:     c.NoTLS,
+			CrtPath:   c.TLSCrtPath,
+			KeyPath:   c.TLSKeyPath,
+			CACrtPath: c.TLSCACrtPath,
+		},
 	}
 	if c.Insecure {
 		cfg.ClientAuth = tls.VerifyClientCertIfGiven
@@ -104,7 +106,7 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	credOpts, err := common.GRPCServerCredentials(cfg.TLSParams())
+	credOpts, err := common.GRPCServerCredentials(cfg.TLSServerConfig())
 	if err != nil {
 		return fmt.Errorf("setup credentials: %w", err)
 	}

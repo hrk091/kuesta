@@ -56,12 +56,14 @@ type DeviceAggregateCfg struct {
 	TLSCACrtPath string
 }
 
-func (c *DeviceAggregateCfg) TLSParams() *common.TLSParams {
-	cfg := &common.TLSParams{
-		NoTLS:     c.NoTLS,
-		CrtPath:   c.TLSCrtPath,
-		KeyPath:   c.TLSKeyPath,
-		CACrtPath: c.TLSCACrtPath,
+func (c *DeviceAggregateCfg) TLSServerConfig() *common.TLSServerConfig {
+	cfg := &common.TLSServerConfig{
+		TLSConfigBase: common.TLSConfigBase{
+			NoTLS:     c.NoTLS,
+			CrtPath:   c.TLSCrtPath,
+			KeyPath:   c.TLSKeyPath,
+			CACrtPath: c.TLSCACrtPath,
+		},
 	}
 	if c.Insecure {
 		cfg.ClientAuth = tls.VerifyClientCertIfGiven
@@ -101,7 +103,8 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 		}
 		return nil
 	}
-	credCfg := cfg.TLSParams()
+	credCfg := cfg.TLSServerConfig()
+	// NOTE server certificate is set inside ListenAndServeTLS
 	tlsCfg, err := common.NewTLSConfig(credCfg.VerifyClient())
 	if err != nil {
 		return fmt.Errorf("new tls config: %w", err)

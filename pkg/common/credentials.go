@@ -44,15 +44,9 @@ func NewTLSConfig(opts ...TLSConfigOpts) (*tls.Config, error) {
 
 type TLSConfigOpts func(c *tls.Config) error
 
-type TLSParams struct {
+type TLSConfigBase struct {
 	// Disable TLS
 	NoTLS bool
-
-	// ClientAuth specifies how to handle client cert
-	ClientAuth tls.ClientAuthType
-
-	// Skip verifying server cert
-	SkipVerifyServer bool
 
 	// Path to the cert file
 	CrtPath string
@@ -63,12 +57,21 @@ type TLSParams struct {
 	// Path to the CA cert file
 	CACrtPath string
 
-	// To verify the server hostname
-	ServerName string
+	// CertData holds PEM-encoded bytes (typically read from a client certificate file).
+	// CertData takes precedence over CrtPath
+	CrtData []byte
+
+	// KeyData holds PEM-encoded bytes (typically read from a client certificate key file).
+	// KeyData takes precedence over KeyPath
+	KeyData []byte
+
+	// CAData holds PEM-encoded bytes (typically read from a root certificates bundle).
+	// CAData takes precedence over CACrtPath
+	CAData []byte
 }
 
 // Certificates sets certificate to tls.Config by loading cert key-pairs from files.
-func (o *TLSParams) Certificates(required bool) TLSConfigOpts {
+func (o *TLSConfigBase) Certificates(required bool) TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
@@ -89,24 +92,44 @@ func (o *TLSParams) Certificates(required bool) TLSConfigOpts {
 	}
 }
 
-// VerifyClient applies client certificate verification settings on tls.Config.
-func (o *TLSParams) VerifyClient() TLSConfigOpts {
-	return func(cfg *tls.Config) error {
-		if o.NoTLS {
-			return nil
-		}
-		cfg.ClientAuth = o.ClientAuth
-		if certPool, err := o.caCertPool(); err != nil {
-			return err
-		} else {
-			cfg.ClientCAs = certPool
-		}
-		return nil
+func (o *TLSConfigBase) loadKeyPair() (*tls.Certificate, error) {
+	if o.CrtPath == "" || o.KeyPath == "" {
+		return nil, nil
 	}
+	certificate, err := tls.LoadX509KeyPair(o.CrtPath, o.KeyPath)
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("load x509 key-pair: %w", err))
+	}
+	return &certificate, nil
+}
+
+func (o *TLSConfigBase) caCertPool() (*x509.CertPool, error) {
+	if o.CACrtPath == "" {
+		return nil, nil
+	}
+	caCrtFile, err := os.ReadFile(o.CACrtPath)
+	if err != nil {
+		return nil, errors.WithStack(fmt.Errorf("read CA cert file: %w", err))
+	}
+	certPool := x509.NewCertPool()
+	if ok := certPool.AppendCertsFromPEM(caCrtFile); !ok {
+		return nil, errors.WithStack(fmt.Errorf("append ca cert from PEM"))
+	}
+	return certPool, nil
+}
+
+type TLSClientConfig struct {
+	TLSConfigBase
+
+	// Skip verifying server cert
+	SkipVerifyServer bool
+
+	// To verify the server hostname
+	ServerName string
 }
 
 // VerifyServer applies server verification settings on tls.Config.
-func (o *TLSParams) VerifyServer() TLSConfigOpts {
+func (o *TLSClientConfig) VerifyServer() TLSConfigOpts {
 	return func(cfg *tls.Config) error {
 		if o.NoTLS {
 			return nil
@@ -127,34 +150,31 @@ func (o *TLSParams) VerifyServer() TLSConfigOpts {
 	}
 }
 
-func (o *TLSParams) loadKeyPair() (*tls.Certificate, error) {
-	if o.CrtPath == "" || o.KeyPath == "" {
-		return nil, nil
-	}
-	certificate, err := tls.LoadX509KeyPair(o.CrtPath, o.KeyPath)
-	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("load x509 key-pair: %w", err))
-	}
-	return &certificate, nil
+type TLSServerConfig struct {
+	TLSConfigBase
+
+	// ClientAuth specifies how to handle client cert
+	ClientAuth tls.ClientAuthType
 }
 
-func (o *TLSParams) caCertPool() (*x509.CertPool, error) {
-	if o.CACrtPath == "" {
-		return nil, nil
+// VerifyClient applies client certificate verification settings on tls.Config.
+func (o *TLSServerConfig) VerifyClient() TLSConfigOpts {
+	return func(cfg *tls.Config) error {
+		if o.NoTLS {
+			return nil
+		}
+		cfg.ClientAuth = o.ClientAuth
+		if certPool, err := o.caCertPool(); err != nil {
+			return err
+		} else {
+			cfg.ClientCAs = certPool
+		}
+		return nil
 	}
-	caCrtFile, err := os.ReadFile(o.CACrtPath)
-	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("read CA cert file: %w", err))
-	}
-	certPool := x509.NewCertPool()
-	if ok := certPool.AppendCertsFromPEM(caCrtFile); !ok {
-		return nil, errors.WithStack(fmt.Errorf("append ca cert from PEM"))
-	}
-	return certPool, nil
 }
 
 // GRPCServerCredentials returns grpc.ServerOption according to the given credential config.
-func GRPCServerCredentials(o *TLSParams) ([]grpc.ServerOption, error) {
+func GRPCServerCredentials(o *TLSServerConfig) ([]grpc.ServerOption, error) {
 	if o.NoTLS {
 		return []grpc.ServerOption{}, nil
 	}
