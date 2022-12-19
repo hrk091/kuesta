@@ -65,9 +65,9 @@ type TLSConfigBase struct {
 	// KeyData takes precedence over KeyPath
 	KeyData []byte
 
-	// CAData holds PEM-encoded bytes (typically read from a root certificates bundle).
-	// CAData takes precedence over CACrtPath
-	CAData []byte
+	// CACrtData holds PEM-encoded bytes (typically read from a root certificates bundle).
+	// CACrtData takes precedence over CACrtPath
+	CACrtData []byte
 }
 
 // Certificates sets certificate to tls.Config by loading cert key-pairs from files.
@@ -76,43 +76,67 @@ func (o *TLSConfigBase) Certificates(required bool) TLSConfigOpts {
 		if o.NoTLS {
 			return nil
 		}
-		if o.CrtPath == "" || o.KeyPath == "" {
+		crtBlock, _ := o.loadCrt()
+		keyBlock, _ := o.loadKey()
+		if crtBlock == nil || keyBlock == nil {
 			if required {
 				return errors.WithStack(fmt.Errorf("TLS key-pair must be provided to enable TLS"))
 			} else {
 				return nil
 			}
 		}
-		cert, err := o.loadKeyPair()
+		cert, err := tls.X509KeyPair(crtBlock, keyBlock)
 		if err != nil {
 			return err
 		}
-		cfg.Certificates = []tls.Certificate{*cert}
+		cfg.Certificates = []tls.Certificate{cert}
 		return nil
 	}
 }
 
-func (o *TLSConfigBase) loadKeyPair() (*tls.Certificate, error) {
-	if o.CrtPath == "" || o.KeyPath == "" {
-		return nil, nil
+func (o *TLSConfigBase) loadCrt() ([]byte, error) {
+	if o.CrtData != nil {
+		return o.CrtData, nil
 	}
-	certificate, err := tls.LoadX509KeyPair(o.CrtPath, o.KeyPath)
+	block, err := os.ReadFile(o.CrtPath)
 	if err != nil {
-		return nil, errors.WithStack(fmt.Errorf("load x509 key-pair: %w", err))
+		return nil, err
 	}
-	return &certificate, nil
+	return block, nil
+}
+
+func (o *TLSConfigBase) loadKey() ([]byte, error) {
+	if o.KeyData != nil {
+		return o.KeyData, nil
+	}
+	block, err := os.ReadFile(o.KeyPath)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+func (o *TLSConfigBase) loadCACrt() ([]byte, error) {
+	if o.CACrtData != nil {
+		return o.CACrtData, nil
+	}
+	block, err := os.ReadFile(o.CACrtPath)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
 }
 
 func (o *TLSConfigBase) caCertPool() (*x509.CertPool, error) {
-	if o.CACrtPath == "" {
+	if o.CACrtPath == "" && o.CACrtData == nil {
 		return nil, nil
 	}
-	caCrtFile, err := os.ReadFile(o.CACrtPath)
-	if err != nil {
+	caData, err := o.loadCACrt()
+	if caData == nil {
 		return nil, errors.WithStack(fmt.Errorf("read CA cert file: %w", err))
 	}
 	certPool := x509.NewCertPool()
-	if ok := certPool.AppendCertsFromPEM(caCrtFile); !ok {
+	if ok := certPool.AppendCertsFromPEM(caData); !ok {
 		return nil, errors.WithStack(fmt.Errorf("append ca cert from PEM"))
 	}
 	return certPool, nil
