@@ -53,6 +53,7 @@ type OcDemoReconciler struct {
 //+kubebuilder:rbac:groups=kuesta.hrk091.dev,resources=devicerollouts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

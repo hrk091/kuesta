@@ -381,6 +381,7 @@ func makeSetRequest(newBuf, curBuf []byte) (*gnmiproto.SetRequest, error) {
 }
 
 func newSubscribePod(name types.NamespacedName, spec *device.DeviceSpec) *core.Pod {
+	// TODO mount tls secret and add path to PEM files to env vars
 	allowPrivilegeEscalation := false
 
 	return &core.Pod{

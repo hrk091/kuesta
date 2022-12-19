@@ -8,7 +8,7 @@ resources:
 - kuesta-server.deploy.yaml
 - kuesta-server.svc.yaml
 - kuesta-server.pvc.yaml
-- kuesta-issuer.yaml
+- kuesta-cert.yaml
 
 images:
 - name: kuesta

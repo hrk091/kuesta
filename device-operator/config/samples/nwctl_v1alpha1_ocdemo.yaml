@@ -3,4 +3,10 @@ kind: OcDemo
 metadata:
   name: ocdemo-sample
 spec:
-  # TODO(user): Add fields here
+  # TODO(user): Change following specs
+  address: test.example.com
+  port: 9339
+  baseRevision: CHANGEME - revision synced with actual device config
+  rolloutRef: CHANGEME - the name of DeviceRollout resource to which this resource belongs
+  tls:
+    skipVerify: true
