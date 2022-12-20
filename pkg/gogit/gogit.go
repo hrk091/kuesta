@@ -251,7 +251,8 @@ func (g *Git) Checkout(opts ...CheckoutOpts) (*extgogit.Worktree, error) {
 
 	o := &extgogit.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(g.opts.TrunkBranch),
-		Keep:   true,
+		// NOTE no option -> merge reset, keep -> soft reset, force -> hard reset
+		// Keep:   true,
 	}
 	for _, tr := range opts {
 		if tr != nil {
@@ -427,9 +428,7 @@ func ResetOptsHard() ResetOpts {
 
 // Reset runs git-reset with supplied options.
 func (g *Git) Reset(opts ...ResetOpts) error {
-	o := &extgogit.ResetOptions{
-		Mode: extgogit.HardReset,
-	}
+	o := &extgogit.ResetOptions{}
 	for _, tr := range opts {
 		if tr != nil {
 			tr(o)
