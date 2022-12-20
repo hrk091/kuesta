@@ -25,6 +25,7 @@ package controllers
 import (
 	"context"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -68,6 +69,7 @@ func (r *OcDemoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.SetupReconciler()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&deviceoperator.OcDemo{}).
+		Owns(&corev1.Pod{}).
 		Watches(
 			&source.Kind{Type: &provisioner.DeviceRollout{}},
 			handler.EnqueueRequestsFromMapFunc(r.impl.findObjectForDeviceRollout),
