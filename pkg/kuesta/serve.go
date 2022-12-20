@@ -237,14 +237,20 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 			if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
 				s.Error(l, err, "git reset")
 			}
+			if _, err := s.cGit.Checkout(); err != nil {
+				s.Error(l, err, "git checkout")
+			}
 		}
 		s.mu.Unlock()
 	}()
-
-	// TODO block when git worktree is dirty
-	_, err := s.cGit.Checkout()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to checkout to %s", s.cfg.GitTrunk)
+	if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to perform 'git reset --hard'")
+	}
+	if _, err := s.cGit.Checkout(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to perform 'git checkout' to %s", s.cfg.GitTrunk)
+	}
+	if err := s.cGit.Pull(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to perform 'git pull'")
 	}
 
 	prefix := req.GetPrefix()
