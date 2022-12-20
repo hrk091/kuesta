@@ -111,8 +111,9 @@ var _ = Describe("DeviceOperator controller", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
 				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
+			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				_, err := io.Copy(w, buf)
+				_, err := w.Write(data)
 				common.MustNil(err)
 			}))
 
