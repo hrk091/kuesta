@@ -38,6 +38,72 @@ changelog:
       - '^manifest:'
       - '^refactor:'
 
-# modelines, feel free to remove those if you don't want/use them:
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+dockers:
+  - id: kuesta
+    dockerfile: "build/Dockerfile"
+    image_templates:
+      - "{{ .Env.IMAGE_REGISTRY }}/kuesta:latest"
+      - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .Tag }}"
+      - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .Version }}"
+      - "kuesta/kuesta:latest"
+      - "kuesta/kuesta:{{ .Tag }}"
+      - "kuesta/kuesta:{{ .Version }}"
+    use: docker
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
+  - id: provisioner
+    dockerfile: "build/Dockerfile.provisioner"
+    image_templates:
+      - "{{ .Env.IMAGE_REGISTRY }}/provisioner:latest"
+      - "{{ .Env.IMAGE_REGISTRY }}/provisioner:{{ .Tag }}"
+      - "{{ .Env.IMAGE_REGISTRY }}/provisioner:{{ .FullCommit }}"
+      - "kuesta/provisioner:latest"
+      - "kuesta/provisioner:{{ .Tag }}"
+      - "kuesta/provisioner:{{ .FullCommit }}"
+    use: docker
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
+  - id: device-operator
+    dockerfile: "build/Dockerfile.device-operator"
+    image_templates:
+      - "{{ .Env.IMAGE_REGISTRY }}/device-operator:latest"
+      - "{{ .Env.IMAGE_REGISTRY }}/device-operator:{{ .Tag }}"
+      - "{{ .Env.IMAGE_REGISTRY }}/device-operator:{{ .FullCommit }}"
+      - "kuesta/device-operator:latest"
+      - "kuesta/device-operator:{{ .Tag }}"
+      - "kuesta/device-operator:{{ .FullCommit }}"
+    use: docker
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
+  - id: device-subscriber
+    dockerfile: "build/Dockerfile.subscriber"
+    image_templates:
+      - "{{ .Env.IMAGE_REGISTRY }}/device-subscriber:latest"
+      - "{{ .Env.IMAGE_REGISTRY }}/device-subscriber:{{ .Tag }}"
+      - "{{ .Env.IMAGE_REGISTRY }}/device-subscriber:{{ .FullCommit }}"
+      - "kuesta/device-subscriber:latest"
+      - "kuesta/device-subscriber:{{ .Tag }}"
+      - "kuesta/device-subscriber:{{ .FullCommit }}"
+    use: docker
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
