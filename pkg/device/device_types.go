@@ -32,6 +32,9 @@ import (
 
 const (
 	RefField = ".spec.rolloutRef"
+
+	KeyUsername = "username"
+	KeyPassword = "password"
 )
 
 type DeviceResource interface {
@@ -82,17 +85,17 @@ type DeviceSpec struct {
 	TLS TLSSpec `json:"tls,omitempty"`
 }
 
-func (s *DeviceSpec) GnmiDestination(sData map[string][]byte) (gnmiclient.Destination, error) {
+func (s *DeviceSpec) GnmiDestination(tlsData, credData map[string][]byte) (gnmiclient.Destination, error) {
 	dest := gnmiclient.Destination{
 		Addrs:       []string{fmt.Sprintf("%s:%d", s.Address, s.Port)},
 		Target:      "",
 		Timeout:     10 * time.Second,
-		Credentials: s.GnmiCredentials(),
+		Credentials: s.GnmiCredentials(credData),
 	}
 	if s.TLS.NoTLS {
 		return dest, nil
 	}
-	clientCfg := s.TLS.TLSClientConfig(sData)
+	clientCfg := s.TLS.TLSClientConfig(tlsData)
 	tlsCfg, err := common.NewTLSConfig(clientCfg.Certificates(false), clientCfg.VerifyServer())
 	if err != nil {
 		return gnmiclient.Destination{}, fmt.Errorf("new tls config: %w", err)
@@ -121,9 +124,20 @@ type ConnectionInfo struct {
 	Port     uint16 `json:"port,omitempty"`
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
+
+	// SecretName is the name of secret which has 'username' and 'password' keys.
+	// These written in this secret precedence over Username and Password.
+	SecretName string `json:"secretName,omitempty"`
 }
 
-func (d *ConnectionInfo) GnmiCredentials() *gnmiclient.Credentials {
+func (d *ConnectionInfo) GnmiCredentials(sData map[string][]byte) *gnmiclient.Credentials {
+	if sData != nil {
+		return &gnmiclient.Credentials{
+			Username: string(sData[KeyUsername]),
+			Password: string(sData[KeyPassword]),
+		}
+	}
+
 	if d.Username == "" || d.Password == "" {
 		return nil
 	}

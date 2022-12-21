@@ -155,12 +155,23 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 	l.V(1).Info("gNMI notification", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
 
 	var secret core.Secret
-	var sData map[string][]byte
+	var tlsData, credData map[string][]byte
 
-	if err := r.Get(ctx, types.NamespacedName{Namespace: device.Namespace, Name: device.Spec.TLS.SecretName}, &secret); err == nil {
-		sData = secret.Data
+	if device.Spec.TLS.SecretName != "" {
+		if err := r.Get(ctx, types.NamespacedName{Namespace: device.Namespace, Name: device.Spec.TLS.SecretName}, &secret); err != nil {
+			r.Error(ctx, err, "get secret for TLS", "secretName", device.Spec.TLS.SecretName)
+			return ctrl.Result{}, nil
+		}
+		tlsData = secret.Data
 	}
-	dest, err := device.Spec.GnmiDestination(sData)
+	if device.Spec.ConnectionInfo.SecretName != "" {
+		if err := r.Get(ctx, types.NamespacedName{Namespace: device.Namespace, Name: device.Spec.ConnectionInfo.SecretName}, &secret); err != nil {
+			r.Error(ctx, err, "get secret for credential", "secretName", device.Spec.ConnectionInfo.SecretName)
+			return ctrl.Result{}, nil
+		}
+		credData = secret.Data
+	}
+	dest, err := device.Spec.GnmiDestination(tlsData, credData)
 	if err != nil {
 		r.Error(ctx, err, "make gnmi SetRequest")
 		return ctrl.Result{}, err
