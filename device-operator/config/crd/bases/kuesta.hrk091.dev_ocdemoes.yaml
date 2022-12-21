@@ -50,6 +50,11 @@ spec:
                 description: RolloutRef is the name of DeviceRollout to which this
                   device belongs.
                 type: string
+              secretName:
+                description: SecretName is the name of secret which has 'username'
+                  and 'password' keys. These written in this secret precedence over
+                  Username and Password.
+                type: string
               tls:
                 properties:
                   notls:
