@@ -40,7 +40,7 @@ changelog:
 
 dockers:
   - id: kuesta
-    dockerfile: "build/Dockerfile"
+    dockerfile: "build/Dockerfile.kuesta"
     image_templates:
       - "{{ .Env.IMAGE_REGISTRY }}/kuesta:latest"
       - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .Tag }}"
