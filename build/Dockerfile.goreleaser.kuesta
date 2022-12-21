@@ -1,0 +1,6 @@
+FROM scratch
+WORKDIR /bin
+COPY kuesta .
+
+EXPOSE 9339
+ENTRYPOINT ["/bin/kuesta"]
