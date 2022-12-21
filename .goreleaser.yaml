@@ -47,10 +47,7 @@ dockers:
     image_templates:
       - "{{ .Env.IMAGE_REGISTRY }}/kuesta:latest"
       - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .Tag }}"
-      - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .Version }}"
-      - "kuesta/kuesta:latest"
-      - "kuesta/kuesta:{{ .Tag }}"
-      - "kuesta/kuesta:{{ .Version }}"
+      - "{{ .Env.IMAGE_REGISTRY }}/kuesta:{{ .FullCommit }}"
     use: docker
     build_flag_templates:
       - "--pull"
