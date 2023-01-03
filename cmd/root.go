@@ -106,6 +106,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(newGitCmd())
 	cmd.AddCommand(newServeCmd())
 	cmd.AddCommand(newCueCmd())
+	cmd.AddCommand(newVersionCmd())
 
 	return cmd
 }
