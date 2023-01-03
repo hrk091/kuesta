@@ -18,6 +18,10 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -w -s
+      - -X github.com/nttcom-ic/kuesta/cmd.version={{.Version}}
+      - -X github.com/nttcom-ic/kuesta/cmd.commit={{.FullCommit}}
   - id: kuesta-provisioner
     binary: provisioner
     dir: ./provisioner
