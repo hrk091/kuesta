@@ -2,10 +2,7 @@
 # Make sure to check the documentation at https://goreleaser.com
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
 builds:
   - id: kuesta
     binary: kuesta
@@ -20,8 +17,8 @@ builds:
       - arm64
     ldflags:
       - -w -s
-      - -X github.com/nttcom-ic/kuesta/cmd.version={{.Version}}
-      - -X github.com/nttcom-ic/kuesta/cmd.commit={{.FullCommit}}
+      - -X github.com/nttcom/kuesta/cmd.version={{.Version}}
+      - -X github.com/nttcom/kuesta/cmd.commit={{.FullCommit}}
   - id: kuesta-provisioner
     binary: provisioner
     dir: ./provisioner
