@@ -80,6 +80,7 @@ dockers:
     use: docker
     build_flag_templates:
       - "--pull"
+      - "--label=org.opencontainers.image.source=https://github.com/nttcom-ic/kuesta"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -93,6 +94,7 @@ dockers:
     use: docker
     build_flag_templates:
       - "--pull"
+      - "--label=org.opencontainers.image.source=https://github.com/nttcom-ic/kuesta"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -106,6 +108,7 @@ dockers:
     use: docker
     build_flag_templates:
       - "--pull"
+      - "--label=org.opencontainers.image.source=https://github.com/nttcom-ic/kuesta"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -119,6 +122,7 @@ dockers:
     use: docker
     build_flag_templates:
       - "--pull"
+      - "--label=org.opencontainers.image.source=https://github.com/nttcom-ic/kuesta"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
