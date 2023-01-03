@@ -17,6 +17,7 @@ builds:
       - arm64
     ldflags:
       - -w -s
+      - -X github.com/nttcom/kuesta/cmd.date={{.Date}}
       - -X github.com/nttcom/kuesta/cmd.version={{.Version}}
       - -X github.com/nttcom/kuesta/cmd.commit={{.FullCommit}}
   - id: kuesta-provisioner
