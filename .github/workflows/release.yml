@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GO_VERSION: 1.18
+      IMAGE_REGISTRY: ghcr.io/nttcom-ic/kuesta
     steps:
       - name: Checkout
         uses: actions/checkout@v3
