@@ -50,10 +50,7 @@ builds:
 release:
   prerelease: "true"
 archives:
-  - replacements:
-      386: i386
-      amd64: x86_64
-    builds:
+  - builds:
       - kuesta
 checksum:
   name_template: 'checksums.txt'
@@ -67,6 +64,7 @@ changelog:
       - '^test:'
       - '^misc:'
       - '^chore:'
+      - '^ci:'
       - '^manifest:'
       - '^refactor:'
 
