@@ -52,6 +52,10 @@ release:
 archives:
   - builds:
       - kuesta
+    files:
+      - LICENSE
+      - CREDITS
+      - README.md
 checksum:
   name_template: 'checksums.txt'
 snapshot:
