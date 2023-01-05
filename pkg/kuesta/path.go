@@ -193,6 +193,9 @@ func (p *ServicePath) ReadServiceMeta() (*ServiceMeta, error) {
 	if err != nil {
 		return nil, err
 	}
+	if meta == nil {
+		meta = &ServiceMeta{}
+	}
 	if meta.Kind == "" {
 		meta.Kind = p.Service
 	} else if meta.Kind != p.Service {

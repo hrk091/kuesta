@@ -327,6 +327,24 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		}
 	})
 
+	t.Run("ok: file not exist", func(t *testing.T) {
+		p := newValidServicePath()
+		p.RootDir = dir
+		want := &kuesta.ServiceMeta{
+			Kind: "bar",
+		}
+		p.Service = "bar"
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		common.ExitOnErr(t, err)
+
+		r, err := p.ReadServiceMeta()
+		if err != nil {
+			t.Error(err)
+		} else {
+			assert.Equal(t, want, r)
+		}
+	})
+
 	t.Run("err: invalid file format", func(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
@@ -337,40 +355,27 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		_, err = p.ReadServiceMeta()
 		assert.Error(t, err)
 	})
-
-	t.Run("err: file not exist", func(t *testing.T) {
-		p := newValidServicePath()
-		p.RootDir = dir
-		p.Service = "bar"
-		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
-		common.ExitOnErr(t, err)
-
-		_, err = p.ReadServiceMeta()
-		assert.Error(t, err)
-	})
-
-	t.Run("err: dir not exist", func(t *testing.T) {
-		p := newValidServicePath()
-		p.RootDir = dir
-		p.Service = "bar"
-		p.Keys = []string{"not", "exist"}
-
-		_, err := p.ReadServiceMeta()
-		assert.Error(t, err)
-	})
 }
 
 func TestServicePath_ReadServiceMetaAll(t *testing.T) {
-	dir := t.TempDir()
-	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
-	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
-	common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
+	t.Run("ok", func(t *testing.T) {
+		dir := t.TempDir()
+		common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
+		common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
 
-	mlist, err := kuesta.ReadServiceMetaAll(dir)
-	assert.Nil(t, err)
-	for _, m := range mlist {
-		assert.Contains(t, []string{"foo", "bar"}, m.Kind)
-	}
+		mlist, err := kuesta.ReadServiceMetaAll(dir)
+		assert.Nil(t, err)
+		for _, m := range mlist {
+			assert.Contains(t, []string{"foo", "bar", "baz"}, m.Kind)
+		}
+	})
+
+	t.Run("err: service dir not exist", func(t *testing.T) {
+		dir := t.TempDir()
+		_, err := kuesta.ReadServiceMetaAll(dir)
+		assert.Error(t, err)
+	})
 }
 
 func newValidDevicePath() *kuesta.DevicePath {

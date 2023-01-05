@@ -97,6 +97,12 @@ func TestReadServiceMeta(t *testing.T) {
 			false,
 		},
 		{
+			"ok: not found",
+			nil,
+			nil,
+			false,
+		},
+		{
 			"err: invalid format",
 			[]byte(`kind: "foo`),
 			nil,
@@ -107,8 +113,10 @@ func TestReadServiceMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "metadata.yaml")
-			err := kuesta.WriteFileWithMkdir(path, tt.given)
-			common.ExitOnErr(t, err)
+			if tt.given != nil {
+				err := kuesta.WriteFileWithMkdir(path, tt.given)
+				common.ExitOnErr(t, err)
+			}
 			got, err := kuesta.ReadServiceMeta(path)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -119,6 +127,7 @@ func TestReadServiceMeta(t *testing.T) {
 
 		})
 	}
+
 }
 
 func TestNewServiceTransformer(t *testing.T) {

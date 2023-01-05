@@ -64,6 +64,9 @@ func (m *ServiceMeta) ModelData() *pb.ModelData {
 func ReadServiceMeta(path string) (*ServiceMeta, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, errors.WithStack(err)
 	}
 	var meta ServiceMeta
