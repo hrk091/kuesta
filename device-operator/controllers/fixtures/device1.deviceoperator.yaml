@@ -5,7 +5,6 @@ metadata:
   namespace: test-ns
 spec:
   address: localhost
-  baseRevision: 12345678deadbeef
   port: 59339
   rolloutRef: test-configrepo
   tls:

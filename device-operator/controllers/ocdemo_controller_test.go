@@ -121,13 +121,97 @@ var _ = Describe("DeviceOperator controller", func() {
 				Checksum:    hash(config),
 				GitRevision: rev,
 			}
-			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v", dr.Status)
+			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v\n", dr.Status)
 			if err := k8sClient.Status().Update(ctx, &dr); err != nil {
 				return err
 			}
 			return nil
 		}
 	}
+
+	Context("when initializing without baseRevision", func() {
+
+		BeforeEach(func() {
+			checksum, buf := newGitRepoArtifact(func(dir string) {
+				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+			})
+			data, _ := io.ReadAll(buf)
+			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, err := w.Write(data)
+				common.MustNil(err)
+			}))
+
+			gr := testGr.DeepCopy()
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), gr)
+			}, timeout, interval).Should(Succeed())
+			gr.Status.Artifact = &source.Artifact{
+				URL:      h.URL,
+				Checksum: checksum,
+				Revision: rev1st,
+			}
+			Eventually(func() error {
+				return k8sClient.Status().Update(ctx, gr)
+			}, timeout, interval).Should(Succeed())
+
+		})
+
+		It("should create subscriber pod", func() {
+			Eventually(func() error {
+				var pod corev1.Pod
+				key := types.NamespacedName{
+					Name:      fmt.Sprintf("subscriber-%s", testOpe.Name),
+					Namespace: testOpe.Namespace,
+				}
+				if err := k8sClient.Get(ctx, key, &pod); err != nil {
+					return err
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("should initialize device resource with no base revision", func() {
+			var ope deviceoperator.OcDemo
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &ope)).NotTo(HaveOccurred())
+			Expect(ope.Status.BaseRevision).To(Equal(""))
+			Expect(ope.Status.LastApplied).To(BeNil())
+			Expect(ope.Status.Checksum).To(Equal(""))
+		})
+
+		Context("when device config updated", func() {
+
+			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
+				setCalled := false
+				m := &gnmi.GnmiMock{
+					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
+						setCalled = true
+						return &pb.SetResponse{}, nil
+					},
+				}
+				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
+				common.MustNil(err)
+				gs := gnmi.NewServerWithListener(m, lis)
+				defer gs.Stop()
+
+				Eventually(startRollout(config1, rev1st), timeout, interval).Should(Succeed())
+
+				var dr provisioner.DeviceRollout
+				Eventually(func() error {
+					if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+						return err
+					}
+					if dr.Status.GetDeviceStatus(testOpe.Name) == provisioner.DeviceStatusRunning {
+						return fmt.Errorf("status not changed yet")
+					}
+					return nil
+				}, timeout, interval).Should(Succeed())
+
+				Expect(setCalled).To(BeTrue())
+				Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusCompleted))
+			})
+
+		})
+	})
 
 	Context("when initializing with baseRevision", func() {
 
@@ -140,18 +224,6 @@ var _ = Describe("DeviceOperator controller", func() {
 				_, err := w.Write(data)
 				common.MustNil(err)
 			}))
-
-			Eventually(func() error {
-				var pod corev1.Pod
-				key := types.NamespacedName{
-					Name:      fmt.Sprintf("subscriber-%s", testOpe.Name),
-					Namespace: testOpe.Namespace,
-				}
-				if err := k8sClient.Get(ctx, key, &pod); err != nil {
-					return err
-				}
-				return nil
-			}, timeout, interval).Should(Succeed())
 
 			gr := testGr.DeepCopy()
 			Eventually(func() error {
@@ -184,6 +256,20 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				if ope.Status.BaseRevision != rev1st {
 					return fmt.Errorf("revision not updated yet: rev=%s", ope.Status.BaseRevision)
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("should create subscriber pod", func() {
+			Eventually(func() error {
+				var pod corev1.Pod
+				key := types.NamespacedName{
+					Name:      fmt.Sprintf("subscriber-%s", testOpe.Name),
+					Namespace: testOpe.Namespace,
+				}
+				if err := k8sClient.Get(ctx, key, &pod); err != nil {
+					return err
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
