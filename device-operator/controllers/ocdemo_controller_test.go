@@ -105,7 +105,31 @@ var _ = Describe("DeviceOperator controller", func() {
 		}, timeout, interval).Should(Succeed())
 	})
 
-	Context("when not initialized", func() {
+	startRollout := func(config []byte, rev string) func() error {
+		return func() error {
+			var dr provisioner.DeviceRollout
+			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
+				return err
+			}
+			dr.Status.Phase = provisioner.RolloutPhaseHealthy
+			dr.Status.Status = provisioner.RolloutStatusRunning
+			dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
+			if dr.Status.DesiredDeviceConfigMap == nil {
+				dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
+			}
+			dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
+				Checksum:    hash(config),
+				GitRevision: rev,
+			}
+			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v", dr.Status)
+			if err := k8sClient.Status().Update(ctx, &dr); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	Context("when initializing with baseRevision", func() {
 
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
@@ -174,27 +198,9 @@ var _ = Describe("DeviceOperator controller", func() {
 		})
 
 		It("should change rollout status to Completed when checksum is the same", func() {
-			var dr provisioner.DeviceRollout
-			Eventually(func() error {
-				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
-					return err
-				}
-				dr.Status.Phase = provisioner.RolloutPhaseHealthy
-				dr.Status.Status = provisioner.RolloutStatusRunning
-				dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
-				if dr.Status.DesiredDeviceConfigMap == nil {
-					dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
-				}
-				dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
-					Checksum:    hash(config1),
-					GitRevision: rev2nd,
-				}
-				if err := k8sClient.Status().Update(ctx, &dr); err != nil {
-					return err
-				}
-				return nil
-			}, timeout, interval).Should(Succeed())
+			Eventually(startRollout(config1, rev2nd), timeout, interval).Should(Succeed())
 
+			var dr provisioner.DeviceRollout
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
 					return err
@@ -206,30 +212,7 @@ var _ = Describe("DeviceOperator controller", func() {
 			}, timeout, interval).Should(Succeed())
 
 			Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusCompleted))
-
 		})
-
-		updateConfig := func() error {
-			var dr provisioner.DeviceRollout
-			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
-				return err
-			}
-			dr.Status.Phase = provisioner.RolloutPhaseHealthy
-			dr.Status.Status = provisioner.RolloutStatusRunning
-			dr.Status.SetDeviceStatus(testOpe.Name, provisioner.DeviceStatusRunning)
-			if dr.Status.DesiredDeviceConfigMap == nil {
-				dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
-			}
-			dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
-				Checksum:    hash(config2),
-				GitRevision: rev2nd,
-			}
-			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v", dr.Status)
-			if err := k8sClient.Status().Update(ctx, &dr); err != nil {
-				return err
-			}
-			return nil
-		}
 
 		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
@@ -253,7 +236,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				return k8sClient.Status().Update(ctx, gr)
 			}, timeout, interval).Should(Succeed())
 
-			Eventually(updateConfig, timeout, interval).Should(Succeed())
+			Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())
 
 			var dr provisioner.DeviceRollout
 			Eventually(func() error {
@@ -307,7 +290,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				gs := gnmi.NewServerWithListener(m, lis)
 				defer gs.Stop()
 
-				Eventually(updateConfig, timeout, interval).Should(Succeed())
+				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())
 
 				var dr provisioner.DeviceRollout
 				Eventually(func() error {
@@ -337,7 +320,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				gs := gnmi.NewServerWithListener(m, lis)
 				defer gs.Stop()
 
-				Eventually(updateConfig, timeout, interval).Should(Succeed())
+				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())
 
 				var dr provisioner.DeviceRollout
 				Eventually(func() error {
