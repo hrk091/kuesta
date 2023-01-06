@@ -80,6 +80,10 @@ type DeviceSpec struct {
 	// BaseRevision is the git revision to assume that the device config of the specified version has been already provisioned.
 	BaseRevision string `json:"baseRevision,omitempty"`
 
+	// DiffOnly is the option flag to restrict pushing all configs without purging deleted fields in the case that
+	// lastApplied config is not set. If true, provision will be stopped when lastApplied config is not set.
+	DiffOnly bool `json:"pushOnly,omitempty"`
+
 	ConnectionInfo `json:",inline"`
 
 	TLS TLSSpec `json:"tls,omitempty"`
@@ -130,6 +134,7 @@ type ConnectionInfo struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
+// GnmiCredentials returns gnmi.Credentials including username and password of remote device.
 func (d *ConnectionInfo) GnmiCredentials(sData map[string][]byte) *gnmiclient.Credentials {
 	if sData != nil {
 		return &gnmiclient.Credentials{
@@ -148,6 +153,7 @@ func (d *ConnectionInfo) GnmiCredentials(sData map[string][]byte) *gnmiclient.Cr
 	}
 }
 
+// TLSSpec defines TLS parameters to access the associated network device.
 type TLSSpec struct {
 	NoTLS bool `json:"notls,omitempty"`
 
@@ -161,6 +167,7 @@ type TLSSpec struct {
 	ServerName string `json:"serverName,omitempty"`
 }
 
+// TLSClientConfig returns common.TLSClientConfig generated from tls-type k8s Secret resource.
 func (c *TLSSpec) TLSClientConfig(secretData map[string][]byte) *common.TLSClientConfig {
 	crtData := secretData[core.TLSCertKey]
 	keyData := secretData[core.TLSPrivateKeyKey]

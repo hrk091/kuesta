@@ -86,15 +86,18 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 
 	// force set checksum and lastApplied config when baseRevision updated
 	if device.Spec.BaseRevision != device.Status.BaseRevision {
-		if err := r.forceSet(ctx, req); err != nil {
+		if err := r.forceReplaceLastApplied(ctx, req); err != nil {
 			r.Error(ctx, err, "force update status to the one given by baseRevision")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
 	}
 	if device.Status.LastApplied == nil {
-		l.Info("reconcile stopped: lastApplied config is not set. you must initialize lastApplied config to update device config automatically")
-		return ctrl.Result{}, nil
+		if device.Spec.DiffOnly {
+			l.Info("reconcile stopped: lastApplied config is not set. you must initialize lastApplied config to update device config automatically")
+			return ctrl.Result{}, nil
+		}
+		l.Info("since lastApplied config is not set, all configs will be pushed without purging deleted fields. To stop this behaviour, set spec.DiffOnly to true.")
 	}
 
 	var dr provisioner.DeviceRollout
@@ -236,7 +239,7 @@ func (r *DeviceReconciler) updateRolloutStatus(ctx context.Context, dr provision
 	return nil
 }
 
-func (r *DeviceReconciler) forceSet(ctx context.Context, req ctrl.Request) error {
+func (r *DeviceReconciler) forceReplaceLastApplied(ctx context.Context, req ctrl.Request) error {
 	device, err := r.getDevice(ctx, req.NamespacedName)
 	if err != nil {
 		return client.IgnoreNotFound(err)
@@ -370,9 +373,12 @@ func makeSetRequest(newBuf, curBuf []byte) (*gnmiproto.SetRequest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("load new device config: %w", err)
 	}
-	curObj, err := decodeCueBytes(cctx, curBuf)
-	if err != nil {
-		return nil, fmt.Errorf("load current device config: %w", err)
+	curObj := &model.Device{}
+	if curBuf != nil {
+		curObj, err = decodeCueBytes(cctx, curBuf)
+		if err != nil {
+			return nil, fmt.Errorf("load current device config: %w", err)
+		}
 	}
 
 	// TODO enhance performance

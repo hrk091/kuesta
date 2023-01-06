@@ -46,6 +46,12 @@ spec:
                 type: string
               port:
                 type: integer
+              pushOnly:
+                description: DiffOnly is the option flag to restrict pushing all configs
+                  without purging deleted fields in the case that lastApplied config
+                  is not set. If true, provision will be stopped when lastApplied
+                  config is not set.
+                type: boolean
               rolloutRef:
                 description: RolloutRef is the name of DeviceRollout to which this
                   device belongs.
@@ -56,6 +62,8 @@ spec:
                   Username and Password.
                 type: string
               tls:
+                description: TLSSpec defines TLS parameters to access the associated
+                  network device.
                 properties:
                   notls:
                     type: boolean
