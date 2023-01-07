@@ -12,5 +12,5 @@ resources:
 
 images:
 - name: kuesta
-  newName: kuesta
+  newName: ghcr.io/nttcom/kuesta/kuesta
   newTag: latest

@@ -10,6 +10,11 @@ spec:
           env:
             - name: KUESTA_STATUS_REPO_URL
               value: https://github.com/kuesta-example/kuesta-status
+            - name: KUESTA_GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kuesta-secrets
+                  key: gitToken
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,3 +30,8 @@ spec:
               value: https://github.com/kuesta-example/kuesta-config
             - name: KUESTA_STATUS_REPO_URL
               value: https://github.com/kuesta-example/kuesta-status
+            - name: KUESTA_GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kuesta-secrets
+                  key: gitToken

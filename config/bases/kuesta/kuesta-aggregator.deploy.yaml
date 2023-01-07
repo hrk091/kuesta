@@ -30,11 +30,6 @@ spec:
               value: /data/repo_status
             - name: KUESTA_STATUS_REPO_URL
               value: https://path/to/repo-status
-            - name: KUESTA_GIT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: kuesta-secrets
-                  key: gitToken
             - name: KUESTA_INSECURE
               value: "true"
             - name: KUESTA_TLS_CRT
