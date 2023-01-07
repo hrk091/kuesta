@@ -14,26 +14,26 @@ command: install: {
 	$short: "Install kuesta to Kubernetes cluster with kubectl/kustomize."
 
 	configRepo: cli.Ask & {
-		prompt:   "Github repository for config: "
+		prompt:   "Github repository for config:"
 		response: string
 	}
 
 	statusRepo: cli.Ask & {
 		$dep:     configRepo
-		prompt:   "Github repository for status: "
+		prompt:   "Github repository for status:"
 		response: string
 	}
 
 	usePrivateRepo: cli.Ask & {
 		$dep:     statusRepo
-		prompt:   "Are these repositories private? (yes|no): "
+		prompt:   "Are these repositories private? (yes|no):"
 		response: bool | *false
 	}
 
 	gitToken: {
 		if usePrivateRepo.response {
 			cli.Ask & {
-				prompt:   "Github private access token: "
+				prompt:   "Github private access token:"
 				response: string
 			}
 		}
@@ -51,6 +51,7 @@ command: install: {
 				"Github Access Token: ***"
 			},
 			"---",
+			"",
 		], "\n")
 	}
 
@@ -58,6 +59,16 @@ command: install: {
 		$dep:     printInputs.$done
 		prompt:   "Continue? (yes|no)"
 		response: bool | *false
+	}
+
+	printConfirmResult: cli.Print & {
+		$dep: confirm.$done
+		if confirm.response {
+			text: "\nApplying kustomize manifests...\n"
+		}
+		if !confirm.response {
+			text: "\nCancelled.\n"
+		}
 	}
 
 	apply: {
@@ -72,6 +83,7 @@ command: install: {
 					}
 				}
 			}
+			provisioner: deployProvisioner
 		}
 	}
 }
@@ -83,6 +95,8 @@ deployKuesta: {
 		statusRepo:     string
 		usePrivateRepo: bool
 		gitToken:       string | *""
+		version:        string | *"latest"
+		image:          string | *"ghcr.io/nttcom/kuesta/kuesta"
 	}
 
 	// private variables
@@ -101,6 +115,7 @@ deployKuesta: {
 	_patchFile:         strings.Join([_k.path, "patch.yaml"], "/")
 	_secretEnvFile:     strings.Join([_k.path, _secretEnvFileName], "/")
 
+	// tasks
 	mkdir: file.MkdirAll & {
 		path: _k.path
 	}
@@ -127,9 +142,30 @@ deployKuesta: {
 		$dep: writePatch.$done
 		dir:  "../.."
 		cmd: ["bash", "-c", """
-					IMG="ghcr.io/nttcom/kuesta/kuesta:latest"
-					KUSTOMIZE_ROOT=\(_k.kustomizeRoot)
-					make deploy-preview
-					"""]
+			export IMG='\(var.image):\(var.version)'
+			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
+			make deploy-preview
+			"""]
+	}
+}
+
+deployProvisioner: {
+	// input
+	var: {
+		version: string | *"latest"
+		image:   string | *"ghcr.io/nttcom/kuesta/kuesta-provisioner"
+	}
+
+	// private variables
+	_k: kustomizations.provisioner
+
+	// tasks
+	deploy: exec.Run & {
+		dir: "../../provisioner"
+		cmd: ["bash", "-c", """
+			export IMG='\(var.image):\(var.version)'
+			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
+			make deploy-preview
+			"""]
 	}
 }
