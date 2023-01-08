@@ -127,7 +127,10 @@ deployVendor: {
 	deploy: exec.Run & {
 		$dep: start.$done
 		dir:  "../.."
-		cmd: ["bash", "-c", "kubectl apply -f ./config/vendor --dry-run=client"]
+		cmd: ["bash", "-c", """
+		kubectl apply -f ./config/vendor
+		kubectl apply -f ./config/privateCA
+		"""]
 	}
 
 	$done: deploy.$done
@@ -206,7 +209,7 @@ deployKuesta: {
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
-			make deploy-preview
+			make deploy
 			"""]
 	}
 
@@ -247,7 +250,7 @@ deployProvisioner: {
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
-			make deploy-preview
+			make deploy
 			"""]
 	}
 
@@ -315,7 +318,7 @@ deployDeviceOperator: {
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
-			make deploy-preview
+			make deploy
 			"""]
 	}
 
