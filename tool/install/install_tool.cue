@@ -39,8 +39,16 @@ command: install: {
 		}
 	}
 
-	printInputs: cli.Print & {
+	wantEmulator: {
 		$dep: gitToken.$done
+		cli.Ask & {
+			prompt:   "Do you need sample driver and emulator for trial?: (yes|no)"
+			response: bool
+		}
+	}
+
+	printInputs: cli.Print & {
+		$dep: wantEmulator.$done
 		text: strings.Join([
 			"",
 			"---",
@@ -50,6 +58,7 @@ command: install: {
 			if usePrivateRepo.response {
 				"Github Access Token: ***"
 			},
+			"Deploy sample driver and emulator: \(wantEmulator.response)",
 			"---",
 			"",
 		], "\n")
@@ -84,6 +93,13 @@ command: install: {
 				}
 			}
 			provisioner: deployProvisioner
+			if wantEmulator.response {
+				deviceOperator: deployDeviceOperator & {
+					var: {
+						"statusRepo": statusRepo.response
+					}
+				}
+			}
 		}
 	}
 }
@@ -96,7 +112,7 @@ deployKuesta: {
 		usePrivateRepo: bool
 		gitToken:       string | *""
 		version:        string | *"latest"
-		image:          string | *"ghcr.io/nttcom/kuesta/kuesta"
+		image:          string | *"ghcr.io/nttcom-ic/kuesta/kuesta"
 	}
 
 	// private variables
@@ -140,7 +156,7 @@ deployKuesta: {
 
 	deploy: exec.Run & {
 		$dep: writePatch.$done
-		dir:  "../.."
+		dir:  _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
@@ -153,7 +169,7 @@ deployProvisioner: {
 	// input
 	var: {
 		version: string | *"latest"
-		image:   string | *"ghcr.io/nttcom/kuesta/kuesta-provisioner"
+		image:   string | *"ghcr.io/nttcom-ic/kuesta/provisioner"
 	}
 
 	// private variables
@@ -161,7 +177,55 @@ deployProvisioner: {
 
 	// tasks
 	deploy: exec.Run & {
-		dir: "../../provisioner"
+		dir: _k.baseDir
+		cmd: ["bash", "-c", """
+			export IMG='\(var.image):\(var.version)'
+			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
+			make deploy-preview
+			"""]
+	}
+}
+
+deployDeviceOperator: {
+	// inputs
+	var: {
+		statusRepo:      string
+		version:         string | *"latest"
+		image:           string | *"ghcr.io/nttcom-ic/kuesta/device-operator"
+		subscriberImage: string | *"ghcr.io/nttcom-ic/kuesta/device-subscriber"
+	}
+
+	// private variables
+	_k: kustomizations.deviceoperator & {
+		"var": {
+			statusRepo:      var.statusRepo
+			version:         var.version
+			subscriberImage: var.subscriberImage
+		}
+	}
+	_kustomizationFile: strings.Join([_k.path, "kustomization.yaml"], "/")
+	_patchFile:         strings.Join([_k.path, "patch.yaml"], "/")
+
+	// tasks
+	mkdir: file.MkdirAll & {
+		path: _k.path
+	}
+
+	writeKustomization: file.Create & {
+		$dep:     mkdir.$done
+		filename: _kustomizationFile
+		contents: yaml.Marshal(_k.kustomization)
+	}
+
+	writePatch: file.Create & {
+		$dep:     mkdir.$done
+		filename: _patchFile
+		contents: yaml.MarshalStream([ for _, v in _k.patches {v}])
+	}
+
+	deploy: exec.Run & {
+		$dep: writePatch.$done
+		dir:  _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
