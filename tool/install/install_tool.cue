@@ -148,14 +148,19 @@ deployKuesta: {
 		contents: yaml.MarshalStream([ for _, v in _k.patches {v}])
 	}
 
-	writeSecret: file.Create & {
+	writeSecret: {
 		$dep:     mkdir.$done
-		filename: _secretEnvFile
-		contents: "\(_secretKeyGitToken)=\(var.gitToken)"
+		if var.usePrivateRepo {
+			file.Create & {
+				$dep:     writePatch.$done
+				filename: _secretEnvFile
+				contents: "\(_secretKeyGitToken)=\(var.gitToken)"
+			}
+		}
 	}
 
 	deploy: exec.Run & {
-		$dep: writePatch.$done
+		$dep: [writeKustomization.$done, writePatch.$done, writeSecret.$done]
 		dir:  _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
@@ -176,7 +181,13 @@ deployProvisioner: {
 	_k: kustomizations.provisioner
 
 	// tasks
+	installCRD: exec.Run & {
+		dir:  _k.baseDir
+		cmd: ["bash", "-c", "make install"]
+	}
+
 	deploy: exec.Run & {
+		$dep: installCRD.$done
 		dir: _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
@@ -223,8 +234,14 @@ deployDeviceOperator: {
 		contents: yaml.MarshalStream([ for _, v in _k.patches {v}])
 	}
 
+	installCRD: exec.Run & {
+		$dep: [writeKustomization.$done, writePatch.$done]
+		dir:  _k.baseDir
+		cmd: ["bash", "-c", "make install"]
+	}
+
 	deploy: exec.Run & {
-		$dep: writePatch.$done
+		$dep: installCRD.$done
 		dir:  _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
