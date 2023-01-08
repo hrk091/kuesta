@@ -1,6 +1,6 @@
 FROM gcr.io/distroless/static:nonroot
-WORKDIR /bin
-COPY device-operator .
+WORKDIR /
+COPY device-operator /manager
 USER 65532:65532
 
-ENTRYPOINT ["/bin/device-operator"]
+ENTRYPOINT ["/manager]
