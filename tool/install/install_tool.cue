@@ -58,6 +58,7 @@ command: install: {
 			if usePrivateRepo.response {
 				"Github Access Token: ***"
 			},
+			"",
 			"Deploy sample driver and emulator: \(wantEmulator.response)",
 			"---",
 			"",
@@ -82,7 +83,11 @@ command: install: {
 
 	apply: {
 		if confirm.response {
+			vendor: deployVendor & {
+				$dep: confirm.$done
+			}
 			kuesta: deployKuesta & {
+				$dep: vendor.$done
 				var: {
 					"configRepo":     configRepo.response
 					"statusRepo":     statusRepo.response
@@ -92,9 +97,12 @@ command: install: {
 					}
 				}
 			}
-			provisioner: deployProvisioner
+			provisioner: deployProvisioner & {
+				$dep: kuesta.$done
+			}
 			if wantEmulator.response {
 				deviceOperator: deployDeviceOperator & {
+					$dep: provisioner.$done
 					var: {
 						"statusRepo": statusRepo.response
 					}
@@ -104,7 +112,30 @@ command: install: {
 	}
 }
 
+deployVendor: {
+	_dep="$dep": _
+
+	start: cli.Print & {
+		$dep: _dep
+		text: """
+			\n\n
+			==============================
+			Deploy vendor dependencies\n
+			"""
+	}
+
+	deploy: exec.Run & {
+		$dep: start.$done
+		dir:  "../.."
+		cmd: ["bash", "-c", "kubectl apply -f ./config/vendor --dry-run=client"]
+	}
+
+	$done: deploy.$done
+}
+
 deployKuesta: {
+	_dep="$dep": _
+
 	// inputs
 	var: {
 		configRepo:     string
@@ -132,7 +163,17 @@ deployKuesta: {
 	_secretEnvFile:     strings.Join([_k.path, _secretEnvFileName], "/")
 
 	// tasks
+	start: cli.Print & {
+		$dep: _dep
+		text: """
+			\n\n
+			==============================
+			Deploy kuesta\n
+			"""
+	}
+
 	mkdir: file.MkdirAll & {
+		$dep: start.$done
 		path: _k.path
 	}
 
@@ -149,7 +190,7 @@ deployKuesta: {
 	}
 
 	writeSecret: {
-		$dep:     mkdir.$done
+		$dep: mkdir.$done
 		if var.usePrivateRepo {
 			file.Create & {
 				$dep:     writePatch.$done
@@ -161,16 +202,20 @@ deployKuesta: {
 
 	deploy: exec.Run & {
 		$dep: [writeKustomization.$done, writePatch.$done, writeSecret.$done]
-		dir:  _k.baseDir
+		dir: _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
 			make deploy-preview
 			"""]
 	}
+
+	$done: deploy.$done
 }
 
 deployProvisioner: {
+	_dep="$dep": _
+
 	// input
 	var: {
 		version: string | *"latest"
@@ -181,23 +226,37 @@ deployProvisioner: {
 	_k: kustomizations.provisioner
 
 	// tasks
+	start: cli.Print & {
+		$dep: _dep
+		text: """
+			\n\n
+			==============================
+			Deploy kuesta-provisioner\n
+			"""
+	}
+
 	installCRD: exec.Run & {
+		$dep: start.$done
 		dir:  _k.baseDir
 		cmd: ["bash", "-c", "make install"]
 	}
 
 	deploy: exec.Run & {
 		$dep: installCRD.$done
-		dir: _k.baseDir
+		dir:  _k.baseDir
 		cmd: ["bash", "-c", """
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
 			make deploy-preview
 			"""]
 	}
+
+	$done: deploy.$done
 }
 
 deployDeviceOperator: {
+	_dep="$dep": _
+
 	// inputs
 	var: {
 		statusRepo:      string
@@ -218,7 +277,17 @@ deployDeviceOperator: {
 	_patchFile:         strings.Join([_k.path, "patch.yaml"], "/")
 
 	// tasks
+	start: cli.Print & {
+		$dep: _dep
+		text: """
+			\n\n
+			==============================
+			Deploy device-operator\n
+			"""
+	}
+
 	mkdir: file.MkdirAll & {
+		$dep: start.$done
 		path: _k.path
 	}
 
@@ -236,7 +305,7 @@ deployDeviceOperator: {
 
 	installCRD: exec.Run & {
 		$dep: [writeKustomization.$done, writePatch.$done]
-		dir:  _k.baseDir
+		dir: _k.baseDir
 		cmd: ["bash", "-c", "make install"]
 	}
 
@@ -249,4 +318,6 @@ deployDeviceOperator: {
 			make deploy-preview
 			"""]
 	}
+
+	$done: deploy.$done
 }
