@@ -87,8 +87,14 @@ command: install: {
 			vendor: deployVendor & {
 				$dep: confirm.$done
 			}
-			kuesta: deployKuesta & {
+
+			wait: exec.Run & {
 				$dep: vendor.$done
+				cmd: ["sleep", "3"]
+			}
+
+			kuesta: deployKuesta & {
+				$dep: wait.$done
 				var: {
 					"configRepo":     configRepo.response
 					"statusRepo":     statusRepo.response
@@ -109,6 +115,7 @@ command: install: {
 					}
 				}
 				gettingStartedResources: deployGettingStartedResources & {
+					$dep: deviceOperator.$done
 					var: {
 						"configRepo":     configRepo.response
 						"usePrivateRepo": usePrivateRepo.response
