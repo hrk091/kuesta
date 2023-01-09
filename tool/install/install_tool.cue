@@ -2,6 +2,7 @@ package install
 
 import (
 	"encoding/yaml"
+	"list"
 	"strings"
 	"tool/file"
 	"tool/exec"
@@ -107,6 +108,15 @@ command: install: {
 						"statusRepo": statusRepo.response
 					}
 				}
+				gettingStartedResources: deployGettingStartedResources & {
+					var: {
+						"configRepo":     configRepo.response
+						"usePrivateRepo": usePrivateRepo.response
+						if usePrivateRepo.response {
+							"gitToken": gitToken.response
+						}
+					}
+				}
 			}
 		}
 	}
@@ -128,9 +138,9 @@ deployVendor: {
 		$dep: start.$done
 		dir:  "../.."
 		cmd: ["bash", "-c", """
-		kubectl apply -f ./config/vendor
-		kubectl apply -f ./config/privateCA
-		"""]
+			kubectl apply -f ./config/vendor
+			kubectl apply -f ./config/privateCA
+			"""]
 	}
 
 	$done: deploy.$done
@@ -319,6 +329,91 @@ deployDeviceOperator: {
 			export IMG='\(var.image):\(var.version)'
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
 			make deploy
+			"""]
+	}
+
+	$done: deploy.$done
+}
+
+deployGettingStartedResources: {
+	_dep="$dep": _
+
+	// inputs
+	var: {
+		namespace:      string | *"kuesta-getting-started"
+		configRepo:     string
+		usePrivateRepo: bool
+		gitToken:       string | *""
+		gnmiFakeImage:  string | *"ghcr.io/nttcom-ic/kuesta/gnmi-fake:latest"
+	}
+
+	// private variables
+	let _manifestFile = "getting-started.yaml"
+	let _resources = [
+		resources.namespace & {
+			"var": namespace: var.namespace
+		},
+		resources.gitRepository & {
+			"var": {
+				namespace:      var.namespace
+				configRepo:     var.configRepo
+				usePrivateRepo: var.usePrivateRepo
+				if var.usePrivateRepo {
+					gitRepoSecretRef: "TBD"
+				}
+			}
+		},
+		resources.deviceOcDemo & {
+			"var": {
+				name:       "oc01"
+				namespace:  var.namespace
+				configRepo: var.configRepo
+			}
+		},
+		resources.deviceOcDemo & {
+			"var": {
+				name:       "oc02"
+				namespace:  var.namespace
+				configRepo: var.configRepo
+			}
+		},
+		resources.gnmiFake & {
+			"var": {
+				name:      "oc01"
+				namespace: var.namespace
+				image:     var.gnmiFakeImage
+			}
+		},
+		resources.gnmiFake & {
+			"var": {
+				name:      "oc02"
+				namespace: var.namespace
+				image:     var.gnmiFakeImage
+			}
+		},
+	]
+
+	// tasks
+	start: cli.Print & {
+		$dep: _dep
+		text: """
+			\n\n
+			==============================
+			Deploy getting-started resources\n
+			"""
+	}
+
+	writeManifest: file.Create & {
+		$dep:     start.$done
+		filename: _manifestFile
+		contents: yaml.MarshalStream(list.Concat([ for _, v in _resources {v.out}]))
+	}
+
+	deploy: exec.Run & {
+		$dep: writeManifest.$done
+		cmd: ["bash", "-c", """
+			kubectl apply -f \(_manifestFile)
+			rm -f \(_manifestFile)
 			"""]
 	}
 
