@@ -142,6 +142,7 @@ resources: {
 									"/tmp/cert/ca.crt",
 								]
 								image: var.image
+								imagePullPolicy: "IfNotPresent"
 								name:  "gnmi-fake"
 								ports: [{
 									containerPort: 9339

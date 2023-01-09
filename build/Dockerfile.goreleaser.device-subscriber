@@ -1,6 +1,6 @@
 FROM scratch
 WORKDIR /bin
-COPY device-subscriber .
+COPY device-subscriber /bin/subscriber
 
 EXPOSE 9339
-ENTRYPOINT ["/bin/device-subscriber"]
+ENTRYPOINT ["/bin/subscriber"]
