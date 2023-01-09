@@ -31,7 +31,17 @@ command: install: {
 		response: bool | *false
 	}
 
+	gitUsername: {
+		if usePrivateRepo.response {
+			cli.Ask & {
+				prompt:   "Github username:"
+				response: string
+			}
+		}
+	}
+
 	gitToken: {
+		$dep: gitUsername.$done
 		if usePrivateRepo.response {
 			cli.Ask & {
 				prompt:   "Github private access token:"
@@ -56,6 +66,9 @@ command: install: {
 			"Github Config Repository: \(configRepo.response)",
 			"Github Status Repository: \(statusRepo.response)",
 			"Use Private Repo: \(usePrivateRepo.response)",
+			if usePrivateRepo.response {
+				"Github Username: \(gitUsername.response)"
+			},
 			if usePrivateRepo.response {
 				"Github Access Token: ***"
 			},
@@ -90,7 +103,7 @@ command: install: {
 
 			wait: exec.Run & {
 				$dep: vendor.$done
-				cmd: ["sleep", "3"]
+				cmd: ["sleep", "10"]
 			}
 
 			kuesta: deployKuesta & {
@@ -120,7 +133,8 @@ command: install: {
 						"configRepo":     configRepo.response
 						"usePrivateRepo": usePrivateRepo.response
 						if usePrivateRepo.response {
-							"gitToken": gitToken.response
+							"gitUsername": gitUsername.response
+							"gitToken":    gitToken.response
 						}
 					}
 				}
@@ -350,12 +364,17 @@ deployGettingStartedResources: {
 		namespace:      string | *"kuesta-getting-started"
 		configRepo:     string
 		usePrivateRepo: bool
+		gitUsername:    string | *""
 		gitToken:       string | *""
 		gnmiFakeImage:  string | *"ghcr.io/nttcom-ic/kuesta/gnmi-fake:latest"
 	}
 
 	// private variables
 	let _manifestFile = "getting-started.yaml"
+	let _splited = strings.Split(var.configRepo, "/")
+	let _repoName = _splited[len(_splited)-1]
+
+	let _gitTokenSecretName = "\(_repoName)-secret"
 	let _resources = [
 		resources.namespace & {
 			"var": namespace: var.namespace
@@ -366,7 +385,7 @@ deployGettingStartedResources: {
 				configRepo:     var.configRepo
 				usePrivateRepo: var.usePrivateRepo
 				if var.usePrivateRepo {
-					gitRepoSecretRef: "TBD"
+					gitRepoSecretRef: _gitTokenSecretName
 				}
 			}
 		},
@@ -408,6 +427,16 @@ deployGettingStartedResources: {
 			==============================
 			Deploy getting-started resources\n
 			"""
+	}
+
+	if var.usePrivateRepo {
+		createSecret: exec.Run & {
+			$dep: start.$done
+			cmd: ["bash", "-c", """
+				kubectl create secret generic \(_gitTokenSecretName) -n \(var.namespace) \\
+				--from-literal=username=\(var.gitUsername) --from-literal=password=\(var.gitToken)
+				"""]
+		}
 	}
 
 	writeManifest: file.Create & {
