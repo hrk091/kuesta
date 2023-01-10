@@ -14,7 +14,7 @@ command: install: {
 	args: {
 		// TODO replace to nttcom
 		imageRegistry: string | *"ghcr.io/nttcom-ic/kuesta" @tag(imageRegistry)
-		version: string | *"latest" @tag(version)
+		version:       string | *"latest"                   @tag(version)
 	}
 
 	$usage: "cue install"
@@ -118,14 +118,14 @@ command: install: {
 					if usePrivateRepo.response {
 						"gitToken": gitToken.response
 					}
-					image: "\(args.imageRegistry)/kuesta"
+					image:   "\(args.imageRegistry)/kuesta"
 					version: args.version
 				}
 			}
 			provisioner: deployProvisioner & {
 				$dep: kuesta.$done
 				var: {
-					image: "\(args.imageRegistry)/provisioner"
+					image:   "\(args.imageRegistry)/provisioner"
 					version: args.version
 				}
 			}
@@ -133,10 +133,10 @@ command: install: {
 				deviceOperator: deployDeviceOperator & {
 					$dep: provisioner.$done
 					var: {
-						"statusRepo": statusRepo.response
-						image: "\(args.imageRegistry)/device-operator"
+						"statusRepo":    statusRepo.response
+						image:           "\(args.imageRegistry)/device-operator"
 						subscriberImage: "\(args.imageRegistry)/device-subscriber"
-						version: args.version
+						version:         args.version
 					}
 				}
 				gettingStartedResources: deployGettingStartedResources & {
@@ -179,11 +179,11 @@ deployVendor: {
 	wait: exec.Run & {
 		$dep: deployVendor.$done
 		cmd: ["bash", "-c", """
-			echo
-			echo 'Waiting for cert-manager-webhook ready...'
-			kubectl -n cert-manager wait deploy/cert-manager-webhook --for=condition=Available --timeout=120s
-			echo
-		"""]
+				echo
+				echo 'Waiting for cert-manager-webhook ready...'
+				kubectl -n cert-manager wait deploy/cert-manager-webhook --for=condition=Available --timeout=120s
+				echo
+			"""]
 	}
 
 	deployPrivateCA: exec.Run & {
@@ -391,13 +391,13 @@ deployGettingStartedResources: {
 
 	// inputs
 	var: {
-		namespace:      string | *"kuesta-getting-started"
-		configRepo:     string
-		usePrivateRepo: bool
-		gitUsername:    string | *""
-		gitToken:       string | *""
-		gnmiFakeImage:  string
-		gnmiFakeVersion:  string | *"latest"
+		namespace:       string | *"kuesta-getting-started"
+		configRepo:      string
+		usePrivateRepo:  bool
+		gitUsername:     string | *""
+		gitToken:        string | *""
+		gnmiFakeImage:   string
+		gnmiFakeVersion: string | *"latest"
 	}
 
 	// private variables
