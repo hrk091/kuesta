@@ -11,7 +11,13 @@ import (
 
 command: install: {
 
-	$usage: "cue cmd install"
+	args: {
+		// TODO replace to nttcom
+		imageRegistry: string | *"ghcr.io/nttcom-ic/kuesta" @tag(imageRegistry)
+		version: string | *"latest" @tag(version)
+	}
+
+	$usage: "cue install"
 	$short: "Install kuesta to Kubernetes cluster with kubectl/kustomize."
 
 	configRepo: cli.Ask & {
@@ -73,6 +79,8 @@ command: install: {
 				"Github Access Token: ***"
 			},
 			"",
+			"Image Registry: \(args.imageRegistry)",
+			"Version: \(args.version)",
 			"Deploy sample driver and emulator: \(wantEmulator.response)",
 			"---",
 			"",
@@ -101,13 +109,8 @@ command: install: {
 				$dep: confirm.$done
 			}
 
-			wait: exec.Run & {
-				$dep: vendor.$done
-				cmd: ["sleep", "10"]
-			}
-
 			kuesta: deployKuesta & {
-				$dep: wait.$done
+				$dep: vendor.$done
 				var: {
 					"configRepo":     configRepo.response
 					"statusRepo":     statusRepo.response
@@ -115,16 +118,25 @@ command: install: {
 					if usePrivateRepo.response {
 						"gitToken": gitToken.response
 					}
+					image: "\(args.imageRegistry)/kuesta"
+					version: args.version
 				}
 			}
 			provisioner: deployProvisioner & {
 				$dep: kuesta.$done
+				var: {
+					image: "\(args.imageRegistry)/provisioner"
+					version: args.version
+				}
 			}
 			if wantEmulator.response {
 				deviceOperator: deployDeviceOperator & {
 					$dep: provisioner.$done
 					var: {
 						"statusRepo": statusRepo.response
+						image: "\(args.imageRegistry)/device-operator"
+						subscriberImage: "\(args.imageRegistry)/device-subscriber"
+						version: args.version
 					}
 				}
 				gettingStartedResources: deployGettingStartedResources & {
@@ -136,6 +148,7 @@ command: install: {
 							"gitUsername": gitUsername.response
 							"gitToken":    gitToken.response
 						}
+						gnmiFakeImage: "\(args.imageRegistry)/gnmi-fake"
 					}
 				}
 			}
@@ -155,16 +168,28 @@ deployVendor: {
 			"""
 	}
 
-	deploy: exec.Run & {
+	deployVendor: exec.Run & {
 		$dep: start.$done
 		dir:  "../.."
 		cmd: ["bash", "-c", """
 			kubectl apply -f ./config/vendor
+			"""]
+	}
+
+	wait: exec.Run & {
+		$dep: deployVendor.$done
+		cmd: ["sleep", "5"]
+	}
+
+	deployPrivateCA: exec.Run & {
+		$dep: wait.$done
+		dir:  "../.."
+		cmd: ["bash", "-c", """
 			kubectl apply -f ./config/privateCA
 			"""]
 	}
 
-	$done: deploy.$done
+	$done: deployPrivateCA.$done
 }
 
 deployKuesta: {
@@ -176,7 +201,7 @@ deployKuesta: {
 		statusRepo:     string
 		usePrivateRepo: bool
 		gitToken:       string | *""
-		image:          string | *"ghcr.io/nttcom-ic/kuesta/kuesta"
+		image:          string
 		version:        string | *"latest"
 	}
 
@@ -252,7 +277,7 @@ deployProvisioner: {
 
 	// input
 	var: {
-		image:   string | *"ghcr.io/nttcom-ic/kuesta/provisioner"
+		image:   string
 		version: string | *"latest"
 	}
 
@@ -294,8 +319,8 @@ deployDeviceOperator: {
 	// inputs
 	var: {
 		statusRepo:      string
-		image:           string | *"ghcr.io/nttcom-ic/kuesta/device-operator"
-		subscriberImage: string | *"ghcr.io/nttcom-ic/kuesta/device-subscriber"
+		image:           string
+		subscriberImage: string
 		version:         string | *"latest"
 	}
 
@@ -366,7 +391,8 @@ deployGettingStartedResources: {
 		usePrivateRepo: bool
 		gitUsername:    string | *""
 		gitToken:       string | *""
-		gnmiFakeImage:  string | *"ghcr.io/nttcom-ic/kuesta/gnmi-fake:latest"
+		gnmiFakeImage:  string
+		gnmiFakeVersion:  string | *"latest"
 	}
 
 	// private variables
@@ -407,14 +433,14 @@ deployGettingStartedResources: {
 			"var": {
 				name:      "oc01"
 				namespace: var.namespace
-				image:     var.gnmiFakeImage
+				image:     "\(var.gnmiFakeImage):\(var.gnmiFakeVersion)"
 			}
 		},
 		resources.gnmiFake & {
 			"var": {
 				name:      "oc02"
 				namespace: var.namespace
-				image:     var.gnmiFakeImage
+				image:     "\(var.gnmiFakeImage):\(var.gnmiFakeVersion)"
 			}
 		},
 	]
