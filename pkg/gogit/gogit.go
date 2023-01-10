@@ -281,6 +281,12 @@ func CheckoutOptsCreateNew() CheckoutOpts {
 	}
 }
 
+func CheckoutOptsSoftReset() CheckoutOpts {
+	return func(o *extgogit.CheckoutOptions) {
+		o.Keep = true
+	}
+}
+
 func CheckoutOptsTo(branch string) CheckoutOpts {
 	return func(o *extgogit.CheckoutOptions) {
 		o.Branch = plumbing.NewBranchReferenceName(branch)

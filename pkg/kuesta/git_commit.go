@@ -77,7 +77,7 @@ func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	branchName := cfg.GitTrunk
 	if !cfg.PushToMain {
 		branchName = fmt.Sprintf("REV-%d", t.Unix())
-		if w, err = git.Checkout(gogit.CheckoutOptsTo(branchName), gogit.CheckoutOptsCreateNew()); err != nil {
+		if w, err = git.Checkout(gogit.CheckoutOptsTo(branchName), gogit.CheckoutOptsCreateNew(), gogit.CheckoutOptsSoftReset()); err != nil {
 			return fmt.Errorf("create new branch: %w", err)
 		}
 	}
