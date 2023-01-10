@@ -178,7 +178,12 @@ deployVendor: {
 
 	wait: exec.Run & {
 		$dep: deployVendor.$done
-		cmd: ["sleep", "5"]
+		cmd: ["bash", "-c", """
+			echo
+			echo 'Waiting for cert-manager-webhook ready...'
+			kubectl -n cert-manager wait deploy/cert-manager-webhook --for=condition=Available --timeout=120s
+			echo
+		"""]
 	}
 
 	deployPrivateCA: exec.Run & {

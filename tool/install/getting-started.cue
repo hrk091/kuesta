@@ -56,7 +56,7 @@ resources: {
 				metadata: namespace: var.namespace
 				spec: {
 					rolloutRef: repoName
-					address:    "gnmi-fake-\(var.name)"
+					address:    "gnmi-fake-\(var.name).\(var.namespace)"
 					port:       9339
 					tls: {
 						secretName: "\(var.name)-cert"
