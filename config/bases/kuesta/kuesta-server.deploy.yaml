@@ -39,6 +39,8 @@ spec:
               value: /tmp/cert/tls.key
             - name: KUESTA_TLS_CA_CRT
               value: /tmp/cert/ca.crt
+            - name: KUESTA_NOTLS
+              value: "true"
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
