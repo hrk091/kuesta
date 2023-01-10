@@ -96,6 +96,9 @@ func (c *ServeCfg) Validate() error {
 			return fmt.Errorf("tls-key and tls-crt options must be set to use TLS")
 		}
 	}
+	if c.SyncPeriod < 10 {
+		c.SyncPeriod = 10
+	}
 	return common.Validate(c)
 }
 
@@ -125,7 +128,9 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	pb.RegisterGNMIServer(g, s)
 	reflection.Register(g)
 
-	RunSyncLoop(ctx, s.sGit, time.Duration(cfg.SyncPeriod)*time.Second)
+	dur := time.Duration(s.cfg.SyncPeriod) * time.Second
+	s.RunConfigSyncLoop(ctx, dur)
+	s.RunStatusSyncLoop(ctx, dur)
 
 	l.Infow("starting to listen", "address", cfg.Addr)
 	listen, err := net.Listen("tcp", cfg.Addr)
@@ -139,21 +144,11 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	return nil
 }
 
-func RunSyncLoop(ctx context.Context, sGit *gogit.Git, dur time.Duration) {
-	common.SetInterval(ctx, func() {
-		if _, err := sGit.Checkout(); err != nil {
-			logger.Error(ctx, err, "git checkout")
-		}
-		if err := sGit.Pull(); err != nil {
-			logger.Error(ctx, err, "git pull")
-		}
-	}, dur, "sync from status repo")
-}
-
 type NorthboundServer struct {
 	pb.UnimplementedGNMIServer
 
 	mu   sync.RWMutex // mu is the RW lock to protect the access to config
+	smu  sync.Mutex   // smu is the lock to avoid git operation conflicts
 	cfg  *ServeCfg
 	cGit *gogit.Git
 	sGit *gogit.Git
@@ -163,6 +158,9 @@ type NorthboundServer struct {
 // NewNorthboundServer creates new NorthboundServer with supplied ServeCfg.
 func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
 	cGit, err := gogit.NewGit(cfg.ConfigGitOptions().ShouldCloneIfNotExist())
+	if err != nil {
+		return nil, err
+	}
 	sGit, err := gogit.NewGit(cfg.StatusGitOptions().ShouldCloneIfNotExist())
 	if err != nil {
 		return nil, err
@@ -170,11 +168,49 @@ func NewNorthboundServer(cfg *ServeCfg) (*NorthboundServer, error) {
 	s := &NorthboundServer{
 		cfg:  cfg,
 		mu:   sync.RWMutex{},
+		smu:  sync.Mutex{},
 		cGit: cGit,
 		sGit: sGit,
 		impl: NewNorthboundServerImpl(cfg),
 	}
 	return s, nil
+}
+
+func NewNorthboundServerWithGit(cfg *ServeCfg, cGit, sGit *gogit.Git) *NorthboundServer {
+	return &NorthboundServer{
+		cfg:  cfg,
+		mu:   sync.RWMutex{},
+		smu:  sync.Mutex{},
+		cGit: cGit,
+		sGit: sGit,
+		impl: NewNorthboundServerImpl(cfg),
+	}
+}
+
+func (s *NorthboundServer) RunStatusSyncLoop(ctx context.Context, dur time.Duration) {
+	syncStatusFunc := func() {
+		if _, err := s.sGit.Checkout(); err != nil {
+			logger.Error(ctx, err, "git checkout")
+		}
+		if err := s.sGit.Pull(); err != nil {
+			logger.Error(ctx, err, "git pull")
+		}
+	}
+	common.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
+}
+
+func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Duration) {
+	syncConfigFunc := func() {
+		s.smu.Lock()
+		defer s.smu.Unlock()
+		if _, err := s.cGit.Checkout(); err != nil {
+			logger.Error(ctx, err, "git checkout")
+		}
+		if err := s.cGit.Pull(); err != nil {
+			logger.Error(ctx, err, "git pull")
+		}
+	}
+	common.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
 }
 
 // Error shows an error with stacktrace if attached.
@@ -232,6 +268,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	if !s.mu.TryLock() {
 		return nil, status.Error(codes.Unavailable, "locked")
 	}
+	s.smu.Lock()
 	defer func() {
 		if !s.cfg.PersistGitState {
 			if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
@@ -241,6 +278,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 				s.Error(l, err, "git checkout")
 			}
 		}
+		s.smu.Unlock()
 		s.mu.Unlock()
 	}()
 	if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {

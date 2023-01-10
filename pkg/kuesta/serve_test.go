@@ -110,7 +110,7 @@ func TestServeCfg_Validate(t *testing.T) {
 	}
 }
 
-func TestRunSyncLoop(t *testing.T) {
+func TestNorthboundServer_RunStatusSyncLoop(t *testing.T) {
 	repo, _, dirBare := setupGitRepoWithRemote(t, "origin")
 	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
 		URL:           dirBare,
@@ -122,12 +122,46 @@ func TestRunSyncLoop(t *testing.T) {
 	common.ExitOnErr(t, err)
 	common.ExitOnErr(t, push(repo, "main", "origin"))
 
-	git, err := gogit.NewGit(&gogit.GitOptions{
+	sGit, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dirPuller,
 	})
+	common.ExitOnErr(t, err)
+	s := kuesta.NewNorthboundServerWithGit(&kuesta.ServeCfg{}, nil, sGit)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	kuesta.RunSyncLoop(ctx, git, 100*time.Millisecond)
+	s.RunStatusSyncLoop(ctx, 100*time.Millisecond)
+
+	assert.Eventually(t, func() bool {
+		ref, err := repoPuller.Head()
+		if err != nil {
+			return false
+		}
+		return wantHash.String() == ref.Hash().String()
+	}, time.Second, 100*time.Millisecond)
+}
+
+func TestNorthboundServer_RunConfigSyncLoop(t *testing.T) {
+	repo, _, dirBare := setupGitRepoWithRemote(t, "origin")
+	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+		URL:           dirBare,
+		RemoteName:    "origin",
+		ReferenceName: plumbing.NewBranchReferenceName("main"),
+	})
+
+	wantHash, err := commit(repo, time.Now())
+	common.ExitOnErr(t, err)
+	common.ExitOnErr(t, push(repo, "main", "origin"))
+
+	cGit, err := gogit.NewGit(&gogit.GitOptions{
+		Path: dirPuller,
+	})
+	common.ExitOnErr(t, err)
+	s := kuesta.NewNorthboundServerWithGit(&kuesta.ServeCfg{}, cGit, nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s.RunConfigSyncLoop(ctx, 100*time.Millisecond)
 
 	assert.Eventually(t, func() bool {
 		ref, err := repoPuller.Head()
