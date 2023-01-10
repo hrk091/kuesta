@@ -176,8 +176,8 @@ deployKuesta: {
 		statusRepo:     string
 		usePrivateRepo: bool
 		gitToken:       string | *""
-		version:        string | *"latest"
 		image:          string | *"ghcr.io/nttcom-ic/kuesta/kuesta"
+		version:        string | *"latest"
 	}
 
 	// private variables
@@ -252,8 +252,8 @@ deployProvisioner: {
 
 	// input
 	var: {
-		version: string | *"latest"
 		image:   string | *"ghcr.io/nttcom-ic/kuesta/provisioner"
+		version: string | *"latest"
 	}
 
 	// private variables
@@ -294,9 +294,9 @@ deployDeviceOperator: {
 	// inputs
 	var: {
 		statusRepo:      string
-		version:         string | *"latest"
 		image:           string | *"ghcr.io/nttcom-ic/kuesta/device-operator"
 		subscriberImage: string | *"ghcr.io/nttcom-ic/kuesta/device-subscriber"
+		version:         string | *"latest"
 	}
 
 	// private variables
@@ -433,6 +433,7 @@ deployGettingStartedResources: {
 		createSecret: exec.Run & {
 			$dep: start.$done
 			cmd: ["bash", "-c", """
+				kubectl create ns \(var.namespace)
 				kubectl create secret generic \(_gitTokenSecretName) -n \(var.namespace) \\
 				--from-literal=username=\(var.gitUsername) --from-literal=password=\(var.gitToken)
 				"""]
