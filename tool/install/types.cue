@@ -30,7 +30,6 @@ import (
 	kind:       "Deployment"
 }
 
-
 // TODO cue-get type def and conjunct
 #GitRepository: {
 	apiVersion: "source.toolkit.fluxcd.io/v1beta2"

@@ -23,7 +23,7 @@ kustomizations: {
 		baseDir:       "../.."
 		configDir:     "config"
 		kustomizeRoot: "overlays/getting-started"
-    path: strings.Join([baseDir, configDir, kustomizeRoot], "/")
+		path:          strings.Join([baseDir, configDir, kustomizeRoot], "/")
 
 		// kustomization
 		kustomization: {

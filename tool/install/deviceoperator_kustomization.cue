@@ -9,8 +9,8 @@ kustomizations: {
 	deviceoperator: {
 		// input
 		var: {
-			statusRepo: string
-			version:    string
+			statusRepo:      string
+			version:         string
 			subscriberImage: string
 		}
 

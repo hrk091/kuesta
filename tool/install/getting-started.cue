@@ -21,11 +21,11 @@ resources: {
 			gitRepoSecretRef: string | *""
 		}
 
-		let splited = strings.Split(var.configRepo, "/")
-		let repoName = splited[len(splited)-1]
+		let _splited = strings.Split(var.configRepo, "/")
+		let _repoName = _splited[len(_splited)-1]
 
 		out: [#GitRepository & {
-			metadata: name:      repoName
+			metadata: name:      _repoName
 			metadata: namespace: var.namespace
 			spec: {
 				url: var.configRepo
@@ -47,15 +47,15 @@ resources: {
 			configRepo: string
 		}
 
-		let splited = strings.Split(var.configRepo, "/")
-		let repoName = splited[len(splited)-1]
+		let _splited = strings.Split(var.configRepo, "/")
+		let _repoName = _splited[len(_splited)-1]
 
 		out: [
 			#OcDemo & {
 				metadata: name:      var.name
 				metadata: namespace: var.namespace
 				spec: {
-					rolloutRef: repoName
+					rolloutRef: _repoName
 					address:    "gnmi-fake-\(var.name).\(var.namespace)"
 					port:       9339
 					tls: {
@@ -141,9 +141,9 @@ resources: {
 									"-ca",
 									"/tmp/cert/ca.crt",
 								]
-								image: var.image
+								image:           var.image
 								imagePullPolicy: "IfNotPresent"
-								name:  "gnmi-fake"
+								name:            "gnmi-fake"
 								ports: [{
 									containerPort: 9339
 								}]
@@ -189,10 +189,10 @@ resources: {
 				}
 			},
 			#ConfigMap & {
-				metadata: name: _name
-				metadata: namespace: var.namespace
+				metadata: name:       _name
+				metadata: namespace:  var.namespace
 				data: "default.json": json.Marshal(_initialConfig)
-			}
+			},
 		]
 
 		_initialConfig: {

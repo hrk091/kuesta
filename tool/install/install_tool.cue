@@ -211,9 +211,9 @@ deployKuesta: {
 	}
 
 	// private variables
-	_secretEnvFileName: ".env.secret"
-	_secretKeyGitToken: "gitToken"
-	_k:                 kustomizations.kuesta & {
+	let _secretEnvFileName = ".env.secret"
+	let _secretKeyGitToken = "gitToken"
+	let _k = kustomizations.kuesta & {
 		"var": {
 			configRepo:        var.configRepo
 			statusRepo:        var.statusRepo
@@ -222,9 +222,9 @@ deployKuesta: {
 			secretKeyGitToken: _secretKeyGitToken
 		}
 	}
-	_kustomizationFile: strings.Join([_k.path, "kustomization.yaml"], "/")
-	_patchFile:         strings.Join([_k.path, "patch.yaml"], "/")
-	_secretEnvFile:     strings.Join([_k.path, _secretEnvFileName], "/")
+	let _kustomizationFile = strings.Join([_k.path, "kustomization.yaml"], "/")
+	let _patchFile = strings.Join([_k.path, "patch.yaml"], "/")
+	let _secretEnvFile = strings.Join([_k.path, _secretEnvFileName], "/")
 
 	// tasks
 	start: cli.Print & {
@@ -287,7 +287,7 @@ deployProvisioner: {
 	}
 
 	// private variables
-	_k: kustomizations.provisioner
+	let _k = kustomizations.provisioner
 
 	// tasks
 	start: cli.Print & {
@@ -330,15 +330,15 @@ deployDeviceOperator: {
 	}
 
 	// private variables
-	_k: kustomizations.deviceoperator & {
+	let _k = kustomizations.deviceoperator & {
 		"var": {
 			statusRepo:      var.statusRepo
 			version:         var.version
 			subscriberImage: var.subscriberImage
 		}
 	}
-	_kustomizationFile: strings.Join([_k.path, "kustomization.yaml"], "/")
-	_patchFile:         strings.Join([_k.path, "patch.yaml"], "/")
+	let _kustomizationFile = strings.Join([_k.path, "kustomization.yaml"], "/")
+	let _patchFile = strings.Join([_k.path, "patch.yaml"], "/")
 
 	// tasks
 	start: cli.Print & {

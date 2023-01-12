@@ -10,6 +10,6 @@ kustomizations: {
 		baseDir:       "../../provisioner"
 		configDir:     "config"
 		kustomizeRoot: "default"
-    path: strings.Join([baseDir, configDir, kustomizeRoot], "/")
+		path:          strings.Join([baseDir, configDir, kustomizeRoot], "/")
 	}
 }
