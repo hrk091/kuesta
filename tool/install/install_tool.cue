@@ -254,7 +254,6 @@ deployKuesta: {
 	}
 
 	writeSecret: {
-		$dep: mkdir.$done
 		if var.usePrivateRepo {
 			file.Create & {
 				$dep:     writePatch.$done
@@ -272,6 +271,15 @@ deployKuesta: {
 			export KUSTOMIZE_ROOT='\(_k.kustomizeRoot)'
 			make deploy
 			"""]
+	}
+
+	deleteSecret: {
+		if var.usePrivateRepo {
+			file.RemoveAll & {
+				$dep: deploy.$done
+				path: _secretEnvFile
+			}
+		}
 	}
 
 	$done: deploy.$done
@@ -479,10 +487,12 @@ deployGettingStartedResources: {
 
 	deploy: exec.Run & {
 		$dep: writeManifest.$done
-		cmd: ["bash", "-c", """
-			kubectl apply -f \(_manifestFile)
-			rm -f \(_manifestFile)
-			"""]
+		cmd: ["bash", "-c", "kubectl apply -f \(_manifestFile)"]
+	}
+
+	deleteManifest: file.RemoveAll & {
+		$dep: deploy.$done
+		path: _manifestFile
 	}
 
 	$done: deploy.$done
