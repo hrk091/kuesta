@@ -6,6 +6,7 @@ linters:
     - exportloopref
     - gci
     - goconst
+    - gocritic
     - godot
     - gofumpt
     - gosec

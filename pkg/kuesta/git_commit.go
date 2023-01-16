@@ -153,7 +153,9 @@ func MakeCommitMessage(stmap extgogit.Status) string {
 		sort.Slice(v, func(i, j int) bool { return v[i] < v[j] })
 	}
 
-	services := append(servicesAdded, servicesDeleted...)
+	var services []string
+	services = append(services, servicesAdded...)
+	services = append(services, servicesDeleted...)
 	services = append(services, servicesModified...)
 
 	title := fmt.Sprintf("Updated: %s", strings.Join(services, " "))

@@ -309,7 +309,9 @@ func MakeSyncCommitMessage(stmap git.Status) string {
 		sort.Slice(v, func(i, j int) bool { return v[i] < v[j] })
 	}
 
-	devices := append(devicesAdded, devicesDeleted...)
+	var devices []string
+	devices = append(devices, devicesAdded...)
+	devices = append(devices, devicesDeleted...)
 	devices = append(devices, devicesModified...)
 
 	title := fmt.Sprintf("Updated: %s", strings.Join(devices, " "))

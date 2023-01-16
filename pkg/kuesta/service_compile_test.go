@@ -110,7 +110,7 @@ func TestRunServiceCompile(t *testing.T) {
 }
 `)
 	err := kuesta.RunServiceCompile(context.Background(), &kuesta.ServiceCompileCfg{
-		RootCfg: kuesta.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
+		RootCfg: kuesta.RootCfg{ConfigRootPath: "./testdata"},
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})

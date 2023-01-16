@@ -105,7 +105,7 @@ func TestRunDeviceComposite(t *testing.T) {
 }
 `)
 	err := kuesta.RunDeviceComposite(context.Background(), &kuesta.DeviceCompositeCfg{
-		RootCfg: kuesta.RootCfg{ConfigRootPath: filepath.Join("./testdata")},
+		RootCfg: kuesta.RootCfg{ConfigRootPath: "./testdata"},
 		Device:  "oc01",
 	})
 	common.ExitOnErr(t, err)
