@@ -9,22 +9,24 @@ linters:
     - goconst
     - godot
     - gofumpt
-    - gomnd
     - makezero
     - nakedret
     - nestif
     - noctx
     - predeclared
-    - testpackage
 linters-settings:
   gocognit:
     # Minimal code complexity to report.
     # Default: 30 (but we recommend 10-20)
     min-complexity: 20
+  exhaustive:
+    default-signifies-exhaustive: true
 issues:
   exclude-rules:
     - path: _test\.go
       linters:
+        - errcheck
         - gocognit
         - goconst
-        - gomnd
+        - unused
+        - bodyclose
