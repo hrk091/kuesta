@@ -27,6 +27,7 @@ package gitrepo
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
 )
 

@@ -27,23 +27,22 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gogit"
-	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/gogit"
+	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
-var (
-	UpdateCheckDuration = 5 * time.Second // TODO parameterize
-)
+var UpdateCheckDuration = 5 * time.Second // TODO parameterize
 
 type DeviceAggregateCfg struct {
 	RootCfg

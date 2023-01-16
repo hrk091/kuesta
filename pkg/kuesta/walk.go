@@ -25,10 +25,11 @@ package kuesta
 import (
 	"errors"
 	"fmt"
-	errs "github.com/pkg/errors"
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	errs "github.com/pkg/errors"
 )
 
 // CollectPartialDeviceConfig returns list of partial device configs for the given device.

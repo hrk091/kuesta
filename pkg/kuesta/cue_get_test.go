@@ -25,17 +25,18 @@ package kuesta_test
 import (
 	"bytes"
 	"context"
+	"os"
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestRunCueGetImpl(t *testing.T) {
 	common.Chdir(t, "./testdata")
 	called := false
-	var getter = kuesta.CueGetFunc(func(modPath, outDir string) error {
+	getter := kuesta.CueGetFunc(func(modPath, outDir string) error {
 		assert.Equal(t, "github.com/nttcom/kuesta/testdata", modPath)
 		assert.Equal(t, "types/pkg/model", outDir)
 		called = true
@@ -50,7 +51,6 @@ func TestRunCueGetImpl(t *testing.T) {
 }
 
 func TestConvertMapKeyToString(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		given   []byte
@@ -111,5 +111,4 @@ type TestDevice struct {`),
 			}
 		})
 	}
-
 }

@@ -23,23 +23,24 @@
 package gogit_test
 
 import (
+	"io/ioutil"
+	"os"
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gogit"
-	"io/ioutil"
-	"os"
-	"testing"
-	"time"
 )
 
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
 
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
 	common.ExitOnErr(t, err)
 
@@ -53,7 +54,7 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
 	common.ExitOnErr(t, err)
 	return repo, dir
@@ -86,7 +87,7 @@ func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *go
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
 	common.ExitOnErr(t, err)
 	return repo, dir
@@ -105,7 +106,7 @@ func createFile(wt *extgogit.Worktree, path, content string) error {
 }
 
 func modifyFile(wt *extgogit.Worktree, path, content string) error {
-	f, err := wt.Filesystem.OpenFile(path, os.O_WRONLY, 0666)
+	f, err := wt.Filesystem.OpenFile(path, os.O_WRONLY, 0o666)
 	if err != nil {
 		return err
 	}

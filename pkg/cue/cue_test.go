@@ -23,16 +23,17 @@
 package cue_test
 
 import (
+	"fmt"
+	"path/filepath"
+	"testing"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
-	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"path/filepath"
-	"testing"
 )
 
 // testdata: input
@@ -289,7 +290,7 @@ func TestCueCommentOf(t *testing.T) {
 }
 
 func TestGetKuestaTag(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		given   []byte
 		want    string
@@ -374,7 +375,6 @@ func TestGetKuestaTag(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestStringConverter(t *testing.T) {

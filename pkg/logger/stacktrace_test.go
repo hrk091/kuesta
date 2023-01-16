@@ -24,11 +24,12 @@ package logger_test
 
 import (
 	"bytes"
+	"regexp"
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"regexp"
-	"testing"
 )
 
 func TestShowStackTrace(t *testing.T) {

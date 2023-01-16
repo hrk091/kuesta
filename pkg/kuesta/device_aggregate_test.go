@@ -26,10 +26,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	extgogit "github.com/go-git/go-git/v5"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -37,6 +33,11 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	extgogit "github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDecodeSaveConfigRequest(t *testing.T) {

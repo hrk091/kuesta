@@ -24,17 +24,17 @@ package kuesta_test
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func TestServiceCompileCfg_Validate(t *testing.T) {
-
 	newValidStruct := func(t func(cfg *kuesta.ServiceCompileCfg)) *kuesta.ServiceCompileCfg {
 		cfg := &kuesta.ServiceCompileCfg{
 			RootCfg: kuesta.RootCfg{

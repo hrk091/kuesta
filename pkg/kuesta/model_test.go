@@ -23,12 +23,13 @@
 package kuesta_test
 
 import (
+	"path/filepath"
+	"testing"
+
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"path/filepath"
-	"testing"
 )
 
 // testdata: transform
@@ -81,7 +82,6 @@ package foo
 )
 
 func TestReadServiceMeta(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		given   []byte
@@ -124,14 +124,11 @@ func TestReadServiceMeta(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, tt.want, got)
 			}
-
 		})
 	}
-
 }
 
 func TestNewServiceTransformer(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		given   []byte
@@ -165,7 +162,6 @@ func TestNewServiceTransformer(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestServerTransformer_Apply(t *testing.T) {
@@ -295,8 +291,7 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 }
 
 func TestServiceTransformer_InputKeys(t *testing.T) {
-
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		given   []byte
 		want    []string
@@ -420,7 +415,6 @@ func TestServiceTransformer_InputKeys(t *testing.T) {
 }
 
 func TestNewDeviceFromBytes(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		given   []byte
@@ -458,7 +452,6 @@ func TestNewDeviceFromBytes(t *testing.T) {
 }
 
 func TestDevice_Config(t *testing.T) {
-
 	t.Run("ok", func(t *testing.T) {
 		cctx := cuecontext.New()
 		given := []byte(`
@@ -495,5 +488,4 @@ config: {
 		assert.Nil(t, got)
 		assert.Error(t, err)
 	})
-
 }

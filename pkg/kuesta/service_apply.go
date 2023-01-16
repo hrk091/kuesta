@@ -25,13 +25,14 @@ package kuesta
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
-	"path/filepath"
-	"strings"
 )
 
 type ServiceApplyCfg struct {
@@ -158,8 +159,10 @@ func CheckGitFileStatus(path string, st extgogit.FileStatus) error {
 	return nil
 }
 
-type ServiceFunc func(ctx context.Context, sp ServicePath) error
-type DeviceFunc func(ctx context.Context, sp DevicePath) error
+type (
+	ServiceFunc func(ctx context.Context, sp ServicePath) error
+	DeviceFunc  func(ctx context.Context, sp DevicePath) error
+)
 
 type ServiceCompilePlan struct {
 	update []ServicePath

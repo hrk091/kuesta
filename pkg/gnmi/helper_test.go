@@ -24,14 +24,15 @@ package gnmi_test
 
 import (
 	"context"
+	"regexp"
+	"testing"
+	"time"
+
 	"github.com/nttcom/kuesta/pkg/gnmi"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
-	"regexp"
-	"testing"
-	"time"
 )
 
 func TestGetGNMIServiceVersion(t *testing.T) {

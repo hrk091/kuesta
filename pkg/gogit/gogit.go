@@ -24,6 +24,11 @@ package gogit
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -32,10 +37,6 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 const (
@@ -125,7 +126,7 @@ func NewGit(o *GitOptions) (*Git, error) {
 		return nil, errors.WithStack(fmt.Errorf("open git repo %s: %w", g.opts.Path, err))
 	}
 
-	if err := os.MkdirAll(g.opts.Path, 0755); err != nil {
+	if err := os.MkdirAll(g.opts.Path, 0o755); err != nil {
 		return nil, errors.WithStack(fmt.Errorf("make dir %s: %w", g.opts.Path, err))
 	}
 	repo, err = g.Clone()

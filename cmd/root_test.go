@@ -23,12 +23,13 @@
 package cmd_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/nttcom/kuesta/cmd"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestNewRootCmd(t *testing.T) {

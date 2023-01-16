@@ -24,13 +24,13 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
 func newCueGetCmd() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get cue type from the given go file",

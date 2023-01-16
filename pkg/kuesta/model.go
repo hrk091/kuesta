@@ -23,16 +23,17 @@
 package kuesta
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
-	"fmt"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
-	"os"
-	"strconv"
-	"strings"
 )
 
 var (

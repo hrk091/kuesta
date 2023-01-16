@@ -24,10 +24,11 @@ package v1alpha1
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	gnmiclient "github.com/openconfig/gnmi/client"
 	core "k8s.io/api/core/v1"
-	"time"
 )
 
 const (
@@ -73,7 +74,6 @@ func (d *Device) UpdateStatus(fn func(*DeviceStatus) error) error {
 
 // DeviceSpec defines the basic specs required to manage target device.
 type DeviceSpec struct {
-
 	// RolloutRef is the name of DeviceRollout to which this device belongs.
 	RolloutRef string `json:"rolloutRef"`
 
@@ -109,9 +109,8 @@ func (s *DeviceSpec) GnmiDestination(tlsData, credData map[string][]byte) (gnmic
 	return dest, nil
 }
 
-// DeviceStatus defines the observed state of OcDemo
+// DeviceStatus defines the observed state of OcDemo.
 type DeviceStatus struct {
-
 	// Checksum is a hash to uniquely identify the entire device config.
 	Checksum string `json:"checksum,omitempty"`
 

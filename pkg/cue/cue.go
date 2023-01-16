@@ -23,22 +23,21 @@
 package cue
 
 import (
+	"fmt"
+	"regexp"
+	"strconv"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/format"
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/token"
 	cuejson "cuelang.org/go/encoding/json"
-	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
-	"regexp"
-	"strconv"
 )
 
-var (
-	reKuestaTag = regexp.MustCompile(`kuesta:"([A-Za-z0-9\-_=]+)"`)
-)
+var reKuestaTag = regexp.MustCompile(`kuesta:"([A-Za-z0-9\-_=]+)"`)
 
 // NewValueFromBytes creates cue.Value from given []byte.
 func NewValueFromBytes(cctx *cue.Context, buf []byte) (cue.Value, error) {

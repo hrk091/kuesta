@@ -83,7 +83,7 @@ spec:
             - rolloutRef
             type: object
           status:
-            description: DeviceStatus defines the observed state of OcDemo
+            description: DeviceStatus defines the observed state of OcDemo.
             properties:
               baseRevision:
                 description: BaseRevision is the git revision to assume that the device

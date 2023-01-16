@@ -51,7 +51,7 @@ func (s *Set[T]) Has(v T) bool {
 
 func (s *Set[T]) List() []T {
 	var items []T
-	for k, _ := range s.m {
+	for k := range s.m {
 		items = append(items, k)
 	}
 	return items

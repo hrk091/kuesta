@@ -23,6 +23,12 @@
 package kuesta_test
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -30,11 +36,6 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 func TestWriteFileWithMkdir(t *testing.T) {
@@ -78,7 +79,6 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, buf, got)
 	})
-
 }
 
 // test helpers
@@ -87,7 +87,7 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
 
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
 	common.ExitOnErr(t, err)
 
@@ -101,7 +101,7 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
 	common.ExitOnErr(t, err)
 	return repo, dir
@@ -267,7 +267,7 @@ func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, 
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
 	dir, err := ioutil.TempDir("", "gittest-*")
 	common.ExitOnErr(t, err)
-	//dir := t.TempDir()
+	// dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
 	common.ExitOnErr(t, err)
 	return repo, dir

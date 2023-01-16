@@ -23,18 +23,18 @@
 package kuesta_test
 
 import (
+	"regexp"
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"regexp"
-	"testing"
-	"time"
 )
 
 func TestServiceApplyCfg_Validate(t *testing.T) {
-
 	newValidStruct := func(t func(cfg *kuesta.ServiceApplyCfg)) *kuesta.ServiceApplyCfg {
 		cfg := &kuesta.ServiceApplyCfg{
 			RootCfg: kuesta.RootCfg{

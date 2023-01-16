@@ -23,12 +23,13 @@
 package kuesta_test
 
 import (
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
 	"io/fs"
 	"path/filepath"
 	"testing"
+
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollectPartialDeviceConfig(t *testing.T) {

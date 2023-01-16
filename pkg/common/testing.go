@@ -47,6 +47,6 @@ func Chdir(t *testing.T, path string) {
 	MustNil(err)
 	ExitOnErr(t, os.Chdir(path))
 	t.Cleanup(func() {
-		os.Chdir(cd)
+		ExitOnErr(t, os.Chdir(cd))
 	})
 }

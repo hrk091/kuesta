@@ -24,14 +24,13 @@ package common
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var (
-	_validator = validator.New()
-)
+var _validator = validator.New()
 
 func Validate(v any) error {
 	return errors.WithStack(handleError(_validator.Struct(v)))

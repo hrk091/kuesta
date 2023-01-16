@@ -25,16 +25,17 @@ package kuesta
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gitrepo"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
-	"path/filepath"
-	"sort"
-	"strings"
-	"time"
 )
 
 type GitCommitCfg struct {

@@ -24,6 +24,11 @@ package kuesta_test
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/nttcom/kuesta/pkg/common"
@@ -34,14 +39,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 func TestServeCfg_Validate(t *testing.T) {
-
 	newValidStruct := func(t func(cfg *kuesta.ServeCfg)) *kuesta.ServeCfg {
 		cfg := &kuesta.ServeCfg{
 			RootCfg: kuesta.RootCfg{
@@ -183,7 +183,7 @@ version: 0.1.0`)
 
 	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), fooMeta))
 	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
-	common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
+	common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
 	s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
 		RootCfg: kuesta.RootCfg{
@@ -492,7 +492,6 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)

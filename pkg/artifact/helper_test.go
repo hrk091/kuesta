@@ -28,8 +28,9 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/common"
 	"io"
+
+	"github.com/nttcom/kuesta/pkg/common"
 )
 
 func mustGenTgzArchive(path, content string) (string, io.Reader) {
@@ -37,7 +38,7 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
-	if err := tw.WriteHeader(&tar.Header{Name: path, Mode: 0600, Size: int64(len(content))}); err != nil {
+	if err := tw.WriteHeader(&tar.Header{Name: path, Mode: 0o600, Size: int64(len(content))}); err != nil {
 		panic(err)
 	}
 	if _, err := tw.Write([]byte(content)); err != nil {

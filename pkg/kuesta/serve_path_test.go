@@ -23,12 +23,13 @@
 package kuesta_test
 
 import (
+	"path/filepath"
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
-	"path/filepath"
-	"testing"
 )
 
 func TestGnmiPathConverter_Convert(t *testing.T) {

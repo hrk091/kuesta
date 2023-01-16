@@ -23,9 +23,10 @@
 package common_test
 
 import (
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMergeMap(t *testing.T) {

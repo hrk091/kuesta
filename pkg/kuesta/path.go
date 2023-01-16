@@ -24,14 +24,15 @@ package kuesta
 
 import (
 	"crypto/sha256"
-	"cuelang.org/go/cue"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"cuelang.org/go/cue"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -52,9 +53,7 @@ const (
 	IncludeRoot PathOpt = "INCLUDE_ROOT"
 )
 
-var (
-	_sep = string(filepath.Separator)
-)
+var _sep = string(filepath.Separator)
 
 type ServicePath struct {
 	RootDir string `validate:"required"`

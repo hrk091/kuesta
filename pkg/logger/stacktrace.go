@@ -24,8 +24,9 @@ package logger
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 // ShowStackTrace shows the stacktrace of the original error only.

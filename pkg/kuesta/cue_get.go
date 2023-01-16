@@ -26,10 +26,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/pkg/errors"
-	"github.com/rogpeppe/go-internal/modfile"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -39,6 +35,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/pkg/errors"
+	"github.com/rogpeppe/go-internal/modfile"
 )
 
 type CueGetCfg struct {
@@ -163,10 +164,10 @@ func loadInput(path string) (io.Reader, error) {
 
 func setupOutput(path string) (*os.File, error) {
 	outDir, outFile := getOutFilePath(path)
-	if err := os.MkdirAll(outDir, 0750); err != nil {
+	if err := os.MkdirAll(outDir, 0o750); err != nil {
 		return nil, errors.WithStack(err)
 	}
-	out, err := os.OpenFile(filepath.Join(outDir, outFile), os.O_CREATE|os.O_RDWR, 0666)
+	out, err := os.OpenFile(filepath.Join(outDir, outFile), os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -184,7 +185,6 @@ func (fn CueGetFunc) Exec(modPath, outDir string) error {
 }
 
 var execCueGet = CueGetFunc(func(modPath, outDir string) error {
-
 	script := fmt.Sprintf(`
 # Init cue.mod if not setup yet
 if [[ ! -d cue.mod ]]; then

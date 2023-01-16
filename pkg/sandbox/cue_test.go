@@ -23,13 +23,14 @@
 package sandbox_test
 
 import (
+	"testing"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/encoding/json"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCueExtract(t *testing.T) {

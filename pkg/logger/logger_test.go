@@ -24,11 +24,11 @@ package logger_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
 	"testing"
 
 	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestConvertLevel(t *testing.T) {

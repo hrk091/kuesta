@@ -23,8 +23,9 @@
 package kuesta
 
 import (
-	"cuelang.org/go/cue/cuecontext"
 	"fmt"
+
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 )

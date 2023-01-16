@@ -26,9 +26,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"runtime/debug"
 )
 
 var (

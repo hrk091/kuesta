@@ -24,8 +24,9 @@ package common
 
 import (
 	"fmt"
-	"go.uber.org/multierr"
 	"strings"
+
+	"go.uber.org/multierr"
 )
 
 func JoinErr(msg string, err error) error {

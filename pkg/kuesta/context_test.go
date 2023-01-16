@@ -25,10 +25,11 @@ package kuesta_test
 import (
 	"bytes"
 	"context"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWriterFromContext(t *testing.T) {

@@ -23,12 +23,12 @@
 package common
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidate(t *testing.T) {
-
 	type WithValidateTag struct {
 		Required string `validate:"required"`
 		Limited  uint8  `validate:"max=1"`

@@ -29,6 +29,11 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"fmt"
+	"net"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/gnmi"
@@ -41,10 +46,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"net"
-	"os"
-	"sync"
-	"time"
 )
 
 type ServeCfg struct {

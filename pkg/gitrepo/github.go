@@ -25,12 +25,12 @@ package gitrepo
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"golang.org/x/oauth2"
 	"net/url"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
+	"golang.org/x/oauth2"
 )
 
 // NewRepoRef returns GitRepoRef from the remote hostname.

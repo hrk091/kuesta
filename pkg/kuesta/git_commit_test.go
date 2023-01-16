@@ -24,6 +24,11 @@ package kuesta_test
 
 import (
 	"context"
+	"regexp"
+	"strings"
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/golang/mock/gomock"
@@ -33,10 +38,6 @@ import (
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"regexp"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestRunGitCommit(t *testing.T) {
@@ -124,7 +125,6 @@ Devices:
 		common.ExitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
-
 }
 
 func TestMakeCommitMessage(t *testing.T) {
@@ -219,5 +219,4 @@ func TestCheckGitIsStagedOrUnmodified(t *testing.T) {
 			assert.Nil(t, err)
 		}
 	}
-
 }

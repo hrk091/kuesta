@@ -24,17 +24,18 @@ package artifact_test
 
 import (
 	"context"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/nttcom/kuesta/pkg/artifact"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
 	"io"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
+
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/nttcom/kuesta/pkg/artifact"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestFetchArtifact(t *testing.T) {
@@ -114,7 +115,6 @@ func TestFetchArtifact(t *testing.T) {
 				common.ExitOnErr(t, err)
 				assert.Equal(t, want, got)
 			}
-
 		})
 	}
 
@@ -134,7 +134,6 @@ func TestFetchArtifact(t *testing.T) {
 		_, err := artifact.FetchArtifact(context.Background(), repo, dir)
 		assert.Error(t, err)
 	})
-
 }
 
 func TestReplaceRevision(t *testing.T) {

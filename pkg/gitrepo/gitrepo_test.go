@@ -23,22 +23,22 @@
 package gitrepo_test
 
 import (
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/gitrepo"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
-//func NewMockClientFunc(t *testing.T) gitrepo.NewGitClientFunc {
-//	mockCtrl := gomock.NewController(t)
-//	return func(repoURL string, token string) gitrepo.GitRepoClient {
-//		return NewMockGitRepoClient(mockCtrl)
+//	func NewMockClientFunc(t *testing.T) gitrepo.NewGitClientFunc {
+//		mockCtrl := gomock.NewController(t)
+//		return func(repoURL string, token string) gitrepo.GitRepoClient {
+//			return NewMockGitRepoClient(mockCtrl)
+//		}
 //	}
-//}
-//
 func TestNewGitRepoClient(t *testing.T) {
 	token := ""
 
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		given    string
 		wantKind string

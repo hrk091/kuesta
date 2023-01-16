@@ -23,6 +23,9 @@
 package gogit_test
 
 import (
+	"testing"
+	"time"
+
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -30,8 +33,6 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestGitOptions_Validate(t *testing.T) {
@@ -125,11 +126,9 @@ func TestNewGit(t *testing.T) {
 		_, err := gogit.NewGit(opt)
 		assert.Error(t, err)
 	})
-
 }
 
 func TestGit_Clone(t *testing.T) {
-
 	t.Run("ok", func(t *testing.T) {
 		repoPusher, _, remoteUrl := initRepoWithRemote(t, "main")
 		common.ExitOnErr(t, push(repoPusher, "main", "origin"))
@@ -349,7 +348,6 @@ func TestGit_Commit(t *testing.T) {
 }
 
 func TestGit_Add(t *testing.T) {
-
 	t.Run("ok: create new", func(t *testing.T) {
 		repo, dir := initRepo(t, "main")
 		wt, err := repo.Worktree()
@@ -654,7 +652,6 @@ func TestGit_Pull(t *testing.T) {
 		err = git.Pull()
 		assert.Error(t, err)
 	})
-
 }
 
 func TestGit_Reset(t *testing.T) {
@@ -842,7 +839,6 @@ func TestGitRemote_Branches(t *testing.T) {
 		_, err := remote.Branches()
 		assert.Error(t, err)
 	})
-
 }
 
 func TestGitRemote_RemoveBranch(t *testing.T) {

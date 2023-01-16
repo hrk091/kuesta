@@ -26,10 +26,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"os"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"os"
 )
 
 func NewTLSConfig(opts ...TLSConfigOpts) (*tls.Config, error) {

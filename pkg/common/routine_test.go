@@ -24,10 +24,11 @@ package common_test
 
 import (
 	"context"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetInterval(t *testing.T) {

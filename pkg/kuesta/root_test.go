@@ -23,13 +23,13 @@
 package kuesta_test
 
 import (
+	"testing"
+
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestRootCfg_Validate(t *testing.T) {
-
 	newValidStruct := func(t func(*kuesta.RootCfg)) *kuesta.RootCfg {
 		cfg := &kuesta.RootCfg{
 			Verbose:        0,

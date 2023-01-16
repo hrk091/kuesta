@@ -27,15 +27,16 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
+
 	"github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	"io/ioutil"
-	"log"
-	"net"
 )
 
 const bufSize = 1024 * 1024

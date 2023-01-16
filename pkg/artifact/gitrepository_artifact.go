@@ -27,14 +27,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/fluxcd/pkg/untar"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/fluxcd/pkg/untar"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/pkg/errors"
 )
 
 const (

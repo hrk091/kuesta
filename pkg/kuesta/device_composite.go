@@ -24,9 +24,10 @@ package kuesta
 
 import (
 	"context"
+	"fmt"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"fmt"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/logger"

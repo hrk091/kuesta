@@ -23,9 +23,10 @@
 package cmd
 
 import (
+	"runtime/debug"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"runtime/debug"
 )
 
 // mustBindToViper binds given cobra flags to viper.

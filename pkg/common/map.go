@@ -36,7 +36,7 @@ func MergeMap[T any](maps ...map[string]T) map[string]T {
 
 func SortedMapKeys[T any](m map[string]T) []string {
 	var keys []string
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool {

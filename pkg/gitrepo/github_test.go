@@ -32,7 +32,7 @@ import (
 func TestNewGitHubClient(t *testing.T) {
 	token := ""
 
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		given   string
 		wantRet bool
@@ -62,7 +62,7 @@ func TestNewGitHubClient(t *testing.T) {
 }
 
 func TestNewRepoRef(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		given   string
 		want    gitrepo.GitRepoRef

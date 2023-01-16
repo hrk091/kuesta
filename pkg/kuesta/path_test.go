@@ -24,15 +24,16 @@ package kuesta_test
 
 import (
 	"crypto/sha256"
-	"cuelang.org/go/cue/ast"
-	"cuelang.org/go/cue/cuecontext"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/stretchr/testify/assert"
 )
 
 func newValidServicePath() *kuesta.ServicePath {
@@ -149,7 +150,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
-		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two"), 0o750)
 		common.ExitOnErr(t, err)
 
 		_, err = p.ReadServiceInput()
@@ -215,7 +216,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
-		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0o750)
 		common.ExitOnErr(t, err)
 
 		_, err = p.ReadServiceTransform(cuecontext.New())
@@ -267,7 +268,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		p.Service = "bar"
-		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two", "computed"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar", "one", "two", "computed"), 0o750)
 		common.ExitOnErr(t, err)
 
 		_, err = p.ReadServiceComputedFile("device1")
@@ -334,7 +335,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 			Kind: "bar",
 		}
 		p.Service = "bar"
-		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "services", "bar"), 0o750)
 		common.ExitOnErr(t, err)
 
 		r, err := p.ReadServiceMeta()
@@ -362,7 +363,7 @@ func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 		dir := t.TempDir()
 		common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
 		common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
-		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0750))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
 		mlist, err := kuesta.ReadServiceMetaAll(dir)
 		assert.Nil(t, err)
@@ -476,7 +477,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		p.Device = "device2"
-		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0o750)
 		common.ExitOnErr(t, err)
 
 		_, err = p.ReadDeviceConfigFile()
@@ -527,13 +528,12 @@ func TestDevicePath_CheckSum(t *testing.T) {
 
 	t.Run("err: config not found", func(t *testing.T) {
 		dir := t.TempDir()
-		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0755))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0o755))
 
 		dp := kuesta.DevicePath{RootDir: dir, Device: "device1"}
 		_, err := dp.CheckSum()
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
-
 }
 
 func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
@@ -558,7 +558,7 @@ func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		p.Device = "device2"
-		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750)
+		err := os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0o750)
 		common.ExitOnErr(t, err)
 
 		_, err = p.ReadActualDeviceConfigFile()
@@ -672,11 +672,10 @@ func TestParseServiceComputedFilePath(t *testing.T) {
 }
 
 func TestNewDevicePathList(t *testing.T) {
-
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0750))
-		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0750))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0o750))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0o750))
 		common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
 
 		paths, err := kuesta.NewDevicePathList(dir)
@@ -689,7 +688,7 @@ func TestNewDevicePathList(t *testing.T) {
 
 	t.Run("ok: no item", func(t *testing.T) {
 		dir := t.TempDir()
-		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0750))
+		common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices"), 0o750))
 
 		paths, err := kuesta.NewDevicePathList(dir)
 		assert.Nil(t, err)

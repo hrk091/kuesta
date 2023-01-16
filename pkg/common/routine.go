@@ -25,9 +25,10 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/logger"
 	"strings"
 	"time"
+
+	"github.com/nttcom/kuesta/pkg/logger"
 )
 
 func SetInterval(ctx context.Context, fn func(), dur time.Duration, msgs ...string) {
