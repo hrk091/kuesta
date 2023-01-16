@@ -44,7 +44,7 @@ const (
 
 func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir string) (string, error) {
 	if repository.Status.Artifact == nil {
-		return "", fmt.Errorf("respository %s does not contain an artifact", repository.Name)
+		return "", fmt.Errorf("repository %s does not contain an artifact", repository.Name)
 	}
 
 	url := repository.Status.Artifact.URL
@@ -95,7 +95,7 @@ func FetchArtifact(ctx context.Context, repository sourcev1.GitRepository, dir s
 
 func FetchArtifactAt(ctx context.Context, repository sourcev1.GitRepository, dir, revision string) (string, error) {
 	if repository.Status.Artifact == nil {
-		return "", fmt.Errorf("respository %s does not contain an artifact", repository.Name)
+		return "", fmt.Errorf("repository %s does not contain an artifact", repository.Name)
 	}
 
 	url := repository.Status.Artifact.URL

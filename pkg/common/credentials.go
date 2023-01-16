@@ -34,7 +34,9 @@ import (
 )
 
 func NewTLSConfig(opts ...TLSConfigOpts) (*tls.Config, error) {
-	cfg := &tls.Config{}
+	cfg := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
 			return nil, fmt.Errorf("new tls config: %w", err)

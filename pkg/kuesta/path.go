@@ -139,7 +139,7 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 	return buf, nil
 }
 
-// WriteServiceInputFile writes the supplied service's input file..
+// WriteServiceInputFile writes the supplied service's input file.
 func (p *ServicePath) WriteServiceInputFile(buf []byte) error {
 	return WriteFileWithMkdir(p.ServiceInputPath(IncludeRoot), buf)
 }

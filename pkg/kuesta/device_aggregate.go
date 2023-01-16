@@ -97,7 +97,11 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	l.Infof("Start simple api server on %s", cfg.Addr)
 	http.HandleFunc("/commit", s.HandleFunc)
 	if cfg.NoTLS {
-		if err := http.ListenAndServe(cfg.Addr, nil); err != nil {
+		hs := &http.Server{
+			Addr:              cfg.Addr,
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+		if err := hs.ListenAndServe(); err != nil {
 			return errors.WithStack(fmt.Errorf("run server: %w", err))
 		}
 		return nil
@@ -109,8 +113,9 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 		return fmt.Errorf("new tls config: %w", err)
 	}
 	hs := &http.Server{
-		Addr:      cfg.Addr,
-		TLSConfig: tlsCfg,
+		Addr:              cfg.Addr,
+		ReadHeaderTimeout: 5 * time.Second,
+		TLSConfig:         tlsCfg,
 	}
 	if err := hs.ListenAndServeTLS(cfg.TLSCrtPath, cfg.TLSKeyPath); err != nil {
 		return errors.WithStack(fmt.Errorf("run server: %w", err))
@@ -251,7 +256,7 @@ func (s *DeviceAggregateServer) GitPushDeviceConfig(ctx context.Context) error {
 	if _, err := g.Commit(commitMsg); err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}
-	l.Infof("commited: %s\n", commitMsg)
+	l.Infof("committed: %s\n", commitMsg)
 	if err := g.Push(); err != nil {
 		return fmt.Errorf("git push: %w", err)
 	}

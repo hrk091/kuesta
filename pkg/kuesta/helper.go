@@ -37,7 +37,7 @@ func WriteFileWithMkdir(path string, buf []byte) error {
 			return errors.WithStack(err)
 		}
 	}
-	if err := os.WriteFile(path, buf, 0o644); err != nil {
+	if err := os.WriteFile(path, buf, 0o644); err != nil { // nolint: gosec
 		return errors.WithStack(err)
 	}
 	return nil
