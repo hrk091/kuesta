@@ -23,21 +23,22 @@ jobs:
         with:
           version: latest
           working-directory: .
+          args: --timeout 3m0s
       - name: golangci-lint-provisioner
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
           working-directory: ./provisioner
-          args: -c ../.golangci.yml
+          args: -c ../.golangci.yml --timeout 3m0s
       - name: golangci-lint-device-operator
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
           working-directory: ./device-operator
-          args: -c ../.golangci.yml
+          args: -c ../.golangci.yml --timeout 3m0s
       - name: golangci-lint-device-subscriber
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
           working-directory: ./device-subscriber
-          args: -c ../.golangci.yml
+          args: -c ../.golangci.yml --timeout 3m0s
