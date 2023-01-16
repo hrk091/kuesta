@@ -24,11 +24,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 type Config struct {

@@ -23,12 +23,12 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConfig_Validate(t *testing.T) {
-
 	newValidStruct := func(t func(*Config)) *Config {
 		cfg := &Config{
 			Device:        "device1",

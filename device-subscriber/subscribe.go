@@ -25,10 +25,16 @@ package main
 import (
 	"bytes"
 	"context"
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
+	"time"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/device-subscriber/pkg/model"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
@@ -37,11 +43,6 @@ import (
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
-	"io"
-	"net/http"
-	"net/url"
-	"path"
-	"time"
 )
 
 func Run(cfg Config) error {
@@ -104,7 +105,7 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 			l.Errorw("handle notification", "err", err)
 		}
 
-		if recvErr == io.EOF {
+		if errors.Is(recvErr, io.EOF) {
 			l.Infow("EOF")
 			return nil
 		} else if recvErr != nil {
@@ -236,7 +237,7 @@ func ExtractJsonIetfVal(tv *gnmi.TypedValue) ([]byte, error) {
 	return v.JsonIetfVal, nil
 }
 
-// GetEntireConfig requests gNMI GetRequest and returns entire device config as
+// GetEntireConfig requests gNMI GetRequest and returns entire device config as.
 func GetEntireConfig(ctx context.Context, client *gnmiclient.Client) ([]byte, error) {
 	req := gnmi.GetRequest{
 		Path: []*gnmi.Path{

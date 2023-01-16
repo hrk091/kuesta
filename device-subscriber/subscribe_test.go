@@ -25,6 +25,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	kuestagnmi "github.com/nttcom/kuesta/pkg/gnmi"
 	gclient "github.com/openconfig/gnmi/client"
@@ -34,10 +39,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestSubscribe(t *testing.T) {
@@ -217,6 +218,7 @@ func TestGetEntireConfig(t *testing.T) {
 			defer s.Stop()
 
 			c, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
+			common.ExitOnErr(t, err)
 			got, err := GetEntireConfig(ctx, c)
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -23,8 +23,9 @@
 package main
 
 import (
-	"github.com/nttcom/kuesta/pkg/logger"
 	"os"
+
+	"github.com/nttcom/kuesta/pkg/logger"
 )
 
 func main() {
