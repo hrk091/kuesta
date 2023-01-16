@@ -23,10 +23,9 @@
 package controllers
 
 import (
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 )
 
 // GitRepositoryRevisionChangePredicate triggers an update event

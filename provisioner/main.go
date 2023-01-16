@@ -24,27 +24,22 @@ package main
 
 import (
 	"flag"
-	"go.uber.org/zap/zapcore"
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	"github.com/nttcom/kuesta/provisioner/controllers"
+	origzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-
-	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
-	"github.com/nttcom/kuesta/provisioner/controllers"
-	//+kubebuilder:scaffold:imports
-
-	origzap "go.uber.org/zap"
 )
 
 var (

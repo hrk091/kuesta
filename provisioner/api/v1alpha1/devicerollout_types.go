@@ -23,8 +23,9 @@
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -37,7 +38,7 @@ const (
 //+kubebuilder:printcolumn:name="PHASE",type="string",JSONPath=`.status.phase`
 //+kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=`.status.status`
 
-// DeviceRollout is the Schema for the devicerollouts API
+// DeviceRollout is the Schema for the devicerollouts API.
 type DeviceRollout struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -48,7 +49,7 @@ type DeviceRollout struct {
 
 //+kubebuilder:object:root=true
 
-// DeviceRolloutList contains a list of DeviceRollout
+// DeviceRolloutList contains a list of DeviceRollout.
 type DeviceRolloutList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -59,14 +60,13 @@ func init() {
 	SchemeBuilder.Register(&DeviceRollout{}, &DeviceRolloutList{})
 }
 
-// DeviceRolloutSpec defines the desired state of DeviceRollout
+// DeviceRolloutSpec defines the desired state of DeviceRollout.
 type DeviceRolloutSpec struct {
-
 	// DeviceConfigMap is a map to bind device name and DeviceConfig to be provisioned
 	DeviceConfigMap DeviceConfigMap `json:"deviceConfigMap"`
 }
 
-// DeviceConfig provides a digest and other required info of the device config to be provisioned
+// DeviceConfig provides a digest and other required info of the device config to be provisioned.
 type DeviceConfig struct {
 	// Digest is a digest to uniquely identify the overall device config
 	Checksum string `json:"checksum"`
@@ -81,9 +81,8 @@ func (m DeviceConfigMap) Equal(o DeviceConfigMap) bool {
 	return reflect.DeepEqual(m, o)
 }
 
-// DeviceRolloutStatus defines the observed state of DeviceRollout
+// DeviceRolloutStatus defines the observed state of DeviceRollout.
 type DeviceRolloutStatus struct {
-
 	// Phase is the rollout phase
 	// +optional
 	Phase RolloutPhase `json:"phase,omitempty"`
@@ -105,32 +104,32 @@ type DeviceRolloutStatus struct {
 	DesiredDeviceConfigMap DeviceConfigMap `json:"desiredDeviceConfigMap,omitempty"`
 }
 
-// RolloutPhase are a set of rollout phases
+// RolloutPhase are a set of rollout phases.
 type RolloutPhase string
 
 const (
-	// RolloutPhaseHealthy indicates a rollout is healthy
+	// RolloutPhaseHealthy indicates a rollout is healthy.
 	RolloutPhaseHealthy RolloutPhase = "Healthy"
-	// RolloutPhaseRollback indicates a rollout is degraded and under rollback
+	// RolloutPhaseRollback indicates a rollout is degraded and under rollback.
 	RolloutPhaseRollback RolloutPhase = "Rollback"
 )
 
-// RolloutStatus are a set of rollout progress
+// RolloutStatus are a set of rollout progress.
 type RolloutStatus string
 
 const (
-	// RolloutStatusCompleted indicates a transaction is completed
+	// RolloutStatusCompleted indicates a transaction is completed.
 	RolloutStatusCompleted RolloutStatus = "Completed"
 
-	// RolloutStatusRunning indicates that a transaction is in progress
+	// RolloutStatusRunning indicates that a transaction is in progress.
 	RolloutStatusRunning RolloutStatus = "Running"
 
 	// RolloutStatusFailed indicates that a transaction is failed and stopped.
-	// Manual recover is needed to start next transaction
+	// Manual recover is needed to start next transaction.
 	RolloutStatusFailed RolloutStatus = "Failed"
 )
 
-// DeviceStatus are a set of rollout progress
+// DeviceStatus are a set of rollout progress.
 type DeviceStatus string
 
 const (
@@ -231,11 +230,11 @@ func (s *DeviceRolloutStatus) StartTx() {
 	if s.DeviceStatusMap == nil {
 		s.DeviceStatusMap = map[string]DeviceStatus{}
 	}
-	for k, _ := range s.DesiredDeviceConfigMap {
+	for k := range s.DesiredDeviceConfigMap {
 		s.DeviceStatusMap[k] = DeviceStatusRunning
 	}
 	// purge devices not included in desired device config
-	for k, _ := range s.DeviceStatusMap {
+	for k := range s.DeviceStatusMap {
 		if _, ok := s.DesiredDeviceConfigMap[k]; !ok {
 			s.DeviceStatusMap[k] = DeviceStatusPurged
 		}

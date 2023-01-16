@@ -24,16 +24,16 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/nttcom/kuesta/pkg/logger"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 )
 
-// DeviceRolloutReconciler reconciles a DeviceRollout object
+// DeviceRolloutReconciler reconciles a DeviceRollout object.
 type DeviceRolloutReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme

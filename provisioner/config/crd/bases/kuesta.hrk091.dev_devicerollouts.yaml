@@ -27,7 +27,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: DeviceRollout is the Schema for the devicerollouts API
+        description: DeviceRollout is the Schema for the devicerollouts API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -42,12 +42,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: DeviceRolloutSpec defines the desired state of DeviceRollout
+            description: DeviceRolloutSpec defines the desired state of DeviceRollout.
             properties:
               deviceConfigMap:
                 additionalProperties:
                   description: DeviceConfig provides a digest and other required info
-                    of the device config to be provisioned
+                    of the device config to be provisioned.
                   properties:
                     checksum:
                       description: Digest is a digest to uniquely identify the overall
@@ -68,12 +68,12 @@ spec:
             - deviceConfigMap
             type: object
           status:
-            description: DeviceRolloutStatus defines the observed state of DeviceRollout
+            description: DeviceRolloutStatus defines the observed state of DeviceRollout.
             properties:
               desiredDeviceConfigMap:
                 additionalProperties:
                   description: DeviceConfig provides a digest and other required info
-                    of the device config to be provisioned
+                    of the device config to be provisioned.
                   properties:
                     checksum:
                       description: Digest is a digest to uniquely identify the overall
@@ -92,7 +92,7 @@ spec:
                 type: object
               deviceStatusMap:
                 additionalProperties:
-                  description: DeviceStatus are a set of rollout progress
+                  description: DeviceStatus are a set of rollout progress.
                   type: string
                 description: DeviceStatusMap is the rollout status
                 type: object
@@ -102,7 +102,7 @@ spec:
               prevDeviceConfigMap:
                 additionalProperties:
                   description: DeviceConfig provides a digest and other required info
-                    of the device config to be provisioned
+                    of the device config to be provisioned.
                   properties:
                     checksum:
                       description: Digest is a digest to uniquely identify the overall

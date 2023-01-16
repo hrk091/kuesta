@@ -25,18 +25,19 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -110,7 +111,6 @@ var _ = Describe("GitRepository watcher", func() {
 	})
 
 	Context("when device config updated", func() {
-
 		config1 := []byte("foo-updated")
 		config2 := []byte("bar-updated")
 		revision := "test-rev-updated"
@@ -172,7 +172,5 @@ var _ = Describe("GitRepository watcher", func() {
 			}
 			Expect(dr.Spec.DeviceConfigMap).To(Equal(want))
 		})
-
 	})
-
 })

@@ -25,24 +25,23 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/nttcom/kuesta/provisioner/api/v1alpha1"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// GitRepositoryWatcher watches GitRepository objects for revision changes
+// GitRepositoryWatcher watches GitRepository objects for revision changes.
 type GitRepositoryWatcher struct {
 	client.Client
 	Scheme *runtime.Scheme

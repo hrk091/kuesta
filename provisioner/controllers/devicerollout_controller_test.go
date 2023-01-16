@@ -25,6 +25,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/nttcom/kuesta/pkg/common"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
@@ -75,12 +76,11 @@ var _ = Describe("DeviceRollout controller", func() {
 	})
 
 	Context("when devices update succeeded", func() {
-
 		BeforeEach(func() {
 			var dr provisioner.DeviceRollout
 			Eventually(func() error {
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-				for k, _ := range dr.Status.DeviceStatusMap {
+				for k := range dr.Status.DeviceStatusMap {
 					dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusCompleted
 				}
 				return k8sClient.Status().Update(ctx, &dr)
@@ -103,7 +103,6 @@ var _ = Describe("DeviceRollout controller", func() {
 		})
 
 		Context("when new config provisioned", func() {
-
 			BeforeEach(func() {
 				var dr provisioner.DeviceRollout
 				Eventually(func() error {
@@ -134,12 +133,11 @@ var _ = Describe("DeviceRollout controller", func() {
 			})
 
 			Context("when device update failed", func() {
-
 				BeforeEach(func() {
 					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						for k, _ := range dr.Status.DeviceStatusMap {
+						for k := range dr.Status.DeviceStatusMap {
 							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusFailed
 							break
 						}
@@ -171,7 +169,7 @@ var _ = Describe("DeviceRollout controller", func() {
 					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						for k, _ := range dr.Status.DeviceStatusMap {
+						for k := range dr.Status.DeviceStatusMap {
 							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusCompleted
 						}
 						return k8sClient.Status().Update(ctx, &dr)
@@ -192,7 +190,7 @@ var _ = Describe("DeviceRollout controller", func() {
 					var dr provisioner.DeviceRollout
 					Eventually(func() error {
 						Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
-						for k, _ := range dr.Status.DeviceStatusMap {
+						for k := range dr.Status.DeviceStatusMap {
 							dr.Status.DeviceStatusMap[k] = provisioner.DeviceStatusFailed
 							break
 						}

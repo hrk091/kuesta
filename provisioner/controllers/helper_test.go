@@ -28,17 +28,18 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	"github.com/nttcom/kuesta/pkg/common"
-	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/nttcom/kuesta/pkg/common"
+	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func newTestDataFromFixture(name string, o metav1.Object) error {
@@ -113,7 +114,6 @@ func hash(buf []byte) string {
 }
 
 func TestNewTestDataFromFixture(t *testing.T) {
-
 	t.Run("ok", func(t *testing.T) {
 		var dr kuestav1alpha1.DeviceRollout
 		err := newTestDataFromFixture("devicerollout", &dr)

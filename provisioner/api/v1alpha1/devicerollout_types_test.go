@@ -23,9 +23,10 @@
 package v1alpha1_test
 
 import (
+	"testing"
+
 	apiv1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestDeviceConfigMap_Equal(t *testing.T) {
@@ -39,7 +40,7 @@ func TestDeviceConfigMap_Equal(t *testing.T) {
 			GitRevision: "rev2",
 		},
 	}
-	var testcases = []struct {
+	testcases := []struct {
 		name  string
 		given apiv1alpha1.DeviceConfigMap
 		want  bool
@@ -81,7 +82,6 @@ func TestDeviceConfigMap_Equal(t *testing.T) {
 	for _, tc := range testcases {
 		assert.Equal(t, tc.want, m.Equal(tc.given))
 	}
-
 }
 
 func TestDeviceRolloutStatus_IsRunning(t *testing.T) {
@@ -318,7 +318,6 @@ func TestDeviceRolloutStatus_GetDeviceStatus(t *testing.T) {
 		s.SetDeviceStatus("test", apiv1alpha1.DeviceStatusRunning)
 		assert.Equal(t, apiv1alpha1.DeviceStatusRunning, s.GetDeviceStatus("test"))
 	})
-
 }
 
 func TestDeviceRollout_UpdateStatus(t *testing.T) {
@@ -461,7 +460,6 @@ func TestDeviceRollout_UpdateStatus(t *testing.T) {
 	})
 
 	t.Run("idle", func(t *testing.T) {
-
 		t.Run("spec not updated", func(t *testing.T) {
 			oldDr := apiv1alpha1.DeviceRollout{
 				Spec: apiv1alpha1.DeviceRolloutSpec{
@@ -578,5 +576,4 @@ func TestDeviceRollout_UpdateStatus(t *testing.T) {
 			})
 		}
 	})
-
 }
