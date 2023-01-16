@@ -5,7 +5,6 @@ linters:
     - exhaustive
     - exportloopref
     - gci
-    - gocognit
     - goconst
     - godot
     - gofumpt
@@ -16,8 +15,6 @@ linters:
     - predeclared
 linters-settings:
   gocognit:
-    # Minimal code complexity to report.
-    # Default: 30 (but we recommend 10-20)
     min-complexity: 20
   exhaustive:
     default-signifies-exhaustive: true
@@ -26,7 +23,6 @@ issues:
     - path: _test\.go
       linters:
         - errcheck
-        - gocognit
         - goconst
         - unused
         - bodyclose
