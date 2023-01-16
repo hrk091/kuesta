@@ -29,8 +29,9 @@ import (
 )
 
 func ExitOnErr(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
-		t.Log(string(debug.Stack()))
+		t.Error(string(debug.Stack()))
 		t.Fatal(err)
 	}
 }
@@ -42,6 +43,7 @@ func MustNil(err error) {
 }
 
 func Chdir(t *testing.T, path string) {
+	t.Helper()
 	cd, err := os.Getwd()
 	t.Log(cd)
 	MustNil(err)

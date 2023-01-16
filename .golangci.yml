@@ -16,6 +16,8 @@ linters:
     - nestif
     - noctx
     - predeclared
+    - unconvert
+    - whitespace
 linters-settings:
   gci:
     skip-generated: true
