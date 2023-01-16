@@ -24,9 +24,13 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"fmt"
 	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
 	"github.com/nttcom/kuesta/device-operator/pkg/model"
@@ -43,18 +47,15 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/prototext"
-	"io/ioutil"
 	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
 )
 
 var (

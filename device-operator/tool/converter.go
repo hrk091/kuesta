@@ -23,18 +23,19 @@
 package main
 
 import (
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/device-operator/pkg/model"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/pkg/errors"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 func main() {

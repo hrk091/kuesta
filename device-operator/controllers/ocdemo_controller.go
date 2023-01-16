@@ -24,6 +24,9 @@ package controllers
 
 import (
 	"context"
+
+	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,12 +38,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
-	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 )
 
-// OcDemoReconciler reconciles a OcDemo object
+// OcDemoReconciler reconciles a OcDemo object.
 type OcDemoReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
@@ -82,7 +82,7 @@ func (r *OcDemoReconciler) SetupReconciler() {
 	r.impl = &DeviceReconciler{r}
 }
 
-// DeviceReconciler reconciles a OcDemo object
+// DeviceReconciler reconciles a OcDemo object.
 type DeviceReconciler struct {
 	*OcDemoReconciler
 }

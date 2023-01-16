@@ -18,7 +18,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OcDemo is the Schema for the ocdemoes API
+        description: OcDemo is the Schema for the ocdemoes API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

@@ -30,7 +30,7 @@ import (
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OcDemo is the Schema for the ocdemoes API
+// OcDemo is the Schema for the ocdemoes API.
 type OcDemo struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -40,7 +40,7 @@ type OcDemo struct {
 
 //+kubebuilder:object:root=true
 
-// OcDemoList contains a list of OcDemo
+// OcDemoList contains a list of OcDemo.
 type OcDemoList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

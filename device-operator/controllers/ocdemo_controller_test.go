@@ -25,28 +25,23 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+
 	source "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gnmi"
-	pb "github.com/openconfig/gnmi/proto/gnmi"
-	"net"
-
-	//"github.com/nttcom/kuesta/pkg/gnmi"
-	//pb "github.com/openconfig/gnmi/proto/gnmi"
-
-	//"github.com/nttcom/kuesta/pkg/gnmi"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	//pb "github.com/openconfig/gnmi/proto/gnmi"
-	"io"
+	pb "github.com/openconfig/gnmi/proto/gnmi"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"net/http"
-	"net/http/httptest"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -130,7 +125,6 @@ var _ = Describe("DeviceOperator controller", func() {
 	}
 
 	Context("when initializing without baseRevision", func() {
-
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
 				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
@@ -153,7 +147,6 @@ var _ = Describe("DeviceOperator controller", func() {
 			Eventually(func() error {
 				return k8sClient.Status().Update(ctx, gr)
 			}, timeout, interval).Should(Succeed())
-
 		})
 
 		It("should create subscriber pod", func() {
@@ -179,7 +172,6 @@ var _ = Describe("DeviceOperator controller", func() {
 		})
 
 		Context("when device config updated", func() {
-
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false
 				m := &gnmi.GnmiMock{
@@ -209,12 +201,10 @@ var _ = Describe("DeviceOperator controller", func() {
 				Expect(setCalled).To(BeTrue())
 				Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusCompleted))
 			})
-
 		})
 	})
 
 	Context("when initializing with baseRevision", func() {
-
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
 				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
@@ -339,7 +329,6 @@ var _ = Describe("DeviceOperator controller", func() {
 		})
 
 		Context("when device config updated", func() {
-
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
 					common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
@@ -422,9 +411,6 @@ var _ = Describe("DeviceOperator controller", func() {
 				Expect(setCalled).To(BeTrue())
 				Expect(dr.Status.GetDeviceStatus(testOpe.Name)).To(Equal(provisioner.DeviceStatusFailed))
 			})
-
 		})
-
 	})
-
 })
