@@ -57,7 +57,7 @@ func bottomStackTrace(err error) stackTracer {
 			return st
 		}
 	}
-	if e, ok := err.(stackTracer); ok {
+	if e, ok := err.(stackTracer); ok { // nolint
 		return e
 	}
 	return nil

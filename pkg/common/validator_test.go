@@ -20,11 +20,12 @@
  THE SOFTWARE.
 */
 
-package common
+package common_test
 
 import (
 	"testing"
 
+	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,7 +60,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Validate(tt.given)
+			err := common.Validate(tt.given)
 			t.Log(err)
 			if tt.wantErr {
 				assert.Error(t, err)

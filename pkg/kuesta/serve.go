@@ -25,8 +25,6 @@ package kuesta
 import (
 	"context"
 	"crypto/tls"
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -34,6 +32,8 @@ import (
 	"sync"
 	"time"
 
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/gnmi"
@@ -408,7 +408,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 	return &pb.CapabilityResponse{
 		SupportedModels:    models,
 		SupportedEncodings: supportedEncodings,
-		GNMIVersion:        *ver,
+		GNMIVersion:        ver,
 	}, nil
 }
 

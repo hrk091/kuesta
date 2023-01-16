@@ -27,16 +27,16 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 
-	"github.com/golang/protobuf/proto"
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 )
 
 const bufSize = 1024 * 1024
@@ -113,24 +113,21 @@ func NewServerWithListener(s pb.GNMIServer, lis net.Listener) *grpc.Server {
 
 // GetGNMIServiceVersion returns a pointer to the gNMI service version string.
 // The method is non-trivial because of the way it is defined in the proto file.
-func GetGNMIServiceVersion() (*string, error) {
-	gzB, _ := (&pb.Update{}).Descriptor()
+func GetGNMIServiceVersion() (string, error) {
+	gzB, _ := (&pb.Update{}).Descriptor() // nolint
 	r, err := gzip.NewReader(bytes.NewReader(gzB))
 	if err != nil {
-		return nil, fmt.Errorf("error in initializing gzip reader: %v", err)
+		return "", fmt.Errorf("error in initializing gzip reader: %w", err)
 	}
 	defer r.Close()
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("error in reading gzip data: %v", err)
+		return "", fmt.Errorf("error in reading gzip data: %w", err)
 	}
 	desc := &dpb.FileDescriptorProto{}
 	if err := proto.Unmarshal(b, desc); err != nil {
-		return nil, fmt.Errorf("error in unmarshaling proto: %v", err)
+		return "", fmt.Errorf("error in unmarshaling proto: %w", err)
 	}
-	ver, err := proto.GetExtension(desc.Options, pb.E_GnmiService)
-	if err != nil {
-		return nil, fmt.Errorf("error in getting version from proto extension: %v", err)
-	}
-	return ver.(*string), nil
+	ver := proto.GetExtension(desc.Options, pb.E_GnmiService)
+	return (ver).(string), nil
 }

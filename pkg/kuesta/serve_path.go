@@ -131,7 +131,7 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 
 	keys := map[string]string{}
 	for _, k := range uniqKeys {
-		if v, ok := elemKey[k]; ok == true {
+		if v, ok := elemKey[k]; ok {
 			keys[k] = v
 			p.Keys = append(p.Keys, v)
 		} else {

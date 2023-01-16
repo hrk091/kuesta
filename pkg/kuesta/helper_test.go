@@ -23,7 +23,6 @@
 package kuesta_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,7 +52,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	})
 
 	t.Run("ok: existing dir", func(t *testing.T) {
-		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
+		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
 		common.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
@@ -66,7 +65,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	})
 
 	t.Run("ok: write multiple times", func(t *testing.T) {
-		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 750)
+		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
 		common.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
@@ -84,7 +83,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 // test helpers
 
 func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
-	dir, err := ioutil.TempDir("", "gittest-*")
+	dir, err := os.MkdirTemp("", "gittest-*")
 	common.ExitOnErr(t, err)
 
 	// dir := t.TempDir()
@@ -99,7 +98,7 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 }
 
 func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
-	dir, err := ioutil.TempDir("", "gittest-*")
+	dir, err := os.MkdirTemp("", "gittest-*")
 	common.ExitOnErr(t, err)
 	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
@@ -265,7 +264,7 @@ func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, 
 }
 
 func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
-	dir, err := ioutil.TempDir("", "gittest-*")
+	dir, err := os.MkdirTemp("", "gittest-*")
 	common.ExitOnErr(t, err)
 	// dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)

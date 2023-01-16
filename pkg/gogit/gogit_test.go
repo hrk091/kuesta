@@ -329,9 +329,11 @@ func TestGit_Commit(t *testing.T) {
 		assert.Nil(t, err)
 
 		b, err := g.Branch()
+		common.ExitOnErr(t, err)
 		assert.Equal(t, testTrunk, b)
 
 		c, err := g.Head()
+		common.ExitOnErr(t, err)
 		assert.Equal(t, h, c.Hash)
 	})
 
@@ -605,6 +607,7 @@ func TestGit_Pull(t *testing.T) {
 		common.ExitOnErr(t, err)
 
 		got, err := gitPuller.Head()
+		common.ExitOnErr(t, err)
 		assert.Equal(t, want.String(), got.Hash.String())
 	})
 
@@ -626,6 +629,7 @@ func TestGit_Pull(t *testing.T) {
 		common.ExitOnErr(t, err)
 
 		got, err := gitPuller.Head()
+		common.ExitOnErr(t, err)
 		assert.Equal(t, want.String(), got.Hash.String())
 	})
 
@@ -685,6 +689,7 @@ func TestGit_RemoveBranch(t *testing.T) {
 	common.ExitOnErr(t, err)
 
 	_, err = git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
+	common.ExitOnErr(t, err)
 	refs, err := git.Branches()
 	common.ExitOnErr(t, err)
 	assert.Len(t, refs, 3)
@@ -739,6 +744,7 @@ func TestGit_Branch(t *testing.T) {
 		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
+		common.ExitOnErr(t, err)
 
 		remote, err := git.Remote("origin")
 		assert.Nil(t, err)
@@ -757,6 +763,7 @@ func TestGit_Branch(t *testing.T) {
 			Path:       dir,
 			RemoteName: "origin",
 		})
+		common.ExitOnErr(t, err)
 
 		remote, err := git.Remote("")
 		assert.Nil(t, err)
@@ -769,6 +776,7 @@ func TestGit_Branch(t *testing.T) {
 			Path:       dir,
 			RemoteName: "origin",
 		})
+		common.ExitOnErr(t, err)
 
 		_, err = git.Remote("origin")
 		assert.Error(t, err)

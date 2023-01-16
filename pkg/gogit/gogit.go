@@ -334,6 +334,9 @@ func (g *Git) Add(path string) error {
 	// NOTE go-git does not remove deleted files from index except for specifying deleted files individually.
 	// https://github.com/go-git/go-git/issues/113
 	stmap, err := w.Status()
+	if err != nil {
+		return errors.WithStack(fmt.Errorf("get status: %w", err))
+	}
 	prefix := filepath.Clean(path)
 	for fpath, st := range stmap {
 		if prefix != "." && !strings.HasPrefix(fpath, prefix) {
@@ -367,7 +370,7 @@ func (g *Git) Push(opts ...PushOpts) error {
 		}
 	}
 	if err := g.repo.Push(o); err != nil {
-		if err != extgogit.NoErrAlreadyUpToDate {
+		if !errors.Is(err, extgogit.NoErrAlreadyUpToDate) {
 			return errors.WithStack(fmt.Errorf("git push: %w", err))
 		}
 	}
@@ -408,8 +411,8 @@ func (g *Git) Pull(opts ...PullOpts) error {
 		return errors.WithStack(fmt.Errorf("get worktree: %w", err))
 	}
 	if err := w.Pull(o); err != nil {
-		if err != extgogit.NoErrAlreadyUpToDate {
-			return errors.WithStack(fmt.Errorf("git pull : %w", err))
+		if !errors.Is(err, extgogit.NoErrAlreadyUpToDate) {
+			return errors.WithStack(fmt.Errorf("git pull: %w", err))
 		}
 	}
 	return nil
@@ -563,7 +566,7 @@ func (r *GitRemote) RemoveBranch(rn plumbing.ReferenceName, opts ...PushOpts) er
 		}
 	}
 	err := r.remote.Push(o)
-	if err != nil && err != extgogit.NoErrAlreadyUpToDate {
+	if err != nil && !errors.Is(err, extgogit.NoErrAlreadyUpToDate) {
 		return errors.WithStack(err)
 	}
 	return nil

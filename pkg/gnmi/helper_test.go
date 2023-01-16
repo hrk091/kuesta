@@ -39,7 +39,7 @@ func TestGetGNMIServiceVersion(t *testing.T) {
 	ver, err := gnmi.GetGNMIServiceVersion()
 	assert.Nil(t, err)
 	re := regexp.MustCompile(`(\d+)(\.\d+)?(\.\d+)?`)
-	assert.NotNil(t, re.FindStringIndex(*ver))
+	assert.NotNil(t, re.FindStringIndex(ver))
 }
 
 func TestNewServer(t *testing.T) {

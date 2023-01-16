@@ -37,7 +37,7 @@ func Validate(v any) error {
 }
 
 func handleError(err error) error {
-	switch e := err.(type) {
+	switch e := err.(type) { // nolint
 	case validator.ValidationErrors:
 		var errMsg []string
 		for _, fe := range e {

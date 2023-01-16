@@ -231,12 +231,12 @@ func (s *DeviceAggregateServer) GitPushDeviceConfig(ctx context.Context) error {
 
 	_, err = w.Add("devices")
 	if err != nil {
-		return fmt.Errorf("git add devices: %v", err)
+		return fmt.Errorf("git add devices: %w", err)
 	}
 
 	stmap, err := w.Status()
 	if err != nil {
-		return fmt.Errorf("get status map: %v", err)
+		return fmt.Errorf("get status map: %w", err)
 	}
 	// TODO check only staged files
 	if len(stmap) == 0 {
@@ -272,7 +272,7 @@ func (r *SaveConfigRequest) Validate() error {
 func DecodeSaveConfigRequest(r io.Reader) (*SaveConfigRequest, error) {
 	var req SaveConfigRequest
 	if err := json.NewDecoder(r).Decode(&req); err != nil {
-		return nil, fmt.Errorf("decode: %v", err)
+		return nil, fmt.Errorf("decode: %w", err)
 	}
 	return &req, req.Validate()
 }
@@ -295,6 +295,8 @@ func MakeSyncCommitMessage(stmap git.Status) string {
 				devicesModified = append(devicesModified, deviceName)
 			case git.Deleted:
 				devicesDeleted = append(devicesDeleted, deviceName)
+			default:
+				// noop
 			}
 		}
 	}
