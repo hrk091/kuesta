@@ -176,11 +176,17 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("create http client: %w", err)
 	}
-	resp, err := c.Post(u.String(), "application/json", &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &buf)
+	if err != nil {
+		return fmt.Errorf("create http request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.Do(req)
 	if err != nil {
 		return fmt.Errorf("post: %w", errors.WithStack(err))
 	}
 	defer resp.Body.Close()
+
 	var bodyBuf []byte
 	if _, err := io.ReadFull(resp.Body, bodyBuf); err != nil {
 		l.Errorw("read body", "error", err)
