@@ -8,7 +8,9 @@ linters:
     - goconst
     - godot
     - gofumpt
+    - gosec
     - makezero
+    - misspell
     - nakedret
     - nestif
     - noctx
@@ -28,6 +30,7 @@ issues:
         - goconst
         - unused
         - bodyclose
+        - gosec
 run:
   skip-files:
     - generated.go
