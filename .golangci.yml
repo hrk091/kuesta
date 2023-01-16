@@ -28,3 +28,6 @@ issues:
         - goconst
         - unused
         - bodyclose
+run:
+  skip-files:
+    - generated.go
