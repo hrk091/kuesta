@@ -33,7 +33,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
-	"github.com/nttcom/kuesta/device-operator/pkg/model"
+	"github.com/nttcom/kuesta/device-operator/internal/model"
 	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"

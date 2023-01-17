@@ -32,7 +32,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/device-operator/pkg/model"
+	"github.com/nttcom/kuesta/device-operator/internal/model"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/pkg/errors"
