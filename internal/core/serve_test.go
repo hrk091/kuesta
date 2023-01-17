@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"context"
@@ -31,9 +31,9 @@ import (
 
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -42,9 +42,9 @@ import (
 )
 
 func TestServeCfg_Validate(t *testing.T) {
-	newValidStruct := func(t func(cfg *kuesta.ServeCfg)) *kuesta.ServeCfg {
-		cfg := &kuesta.ServeCfg{
-			RootCfg: kuesta.RootCfg{
+	newValidStruct := func(t func(cfg *core.ServeCfg)) *core.ServeCfg {
+		cfg := &core.ServeCfg{
+			RootCfg: core.RootCfg{
 				ConfigRootPath: "./",
 			},
 			Addr:            ":9339",
@@ -57,19 +57,19 @@ func TestServeCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *kuesta.ServeCfg)
+		transform func(cfg *core.ServeCfg)
 		wantError bool
 	}{
 		{
 			"ok: no-tls",
-			func(cfg *kuesta.ServeCfg) {
+			func(cfg *core.ServeCfg) {
 				cfg.NoTLS = true
 			},
 			false,
 		},
 		{
 			"ok: with-tls",
-			func(cfg *kuesta.ServeCfg) {
+			func(cfg *core.ServeCfg) {
 				cfg.TLSKeyPath = "./tls.key"
 				cfg.TLSCrtPath = "./tls.crt"
 			},
@@ -77,21 +77,21 @@ func TestServeCfg_Validate(t *testing.T) {
 		},
 		{
 			"err: addr is empty",
-			func(cfg *kuesta.ServeCfg) {
+			func(cfg *core.ServeCfg) {
 				cfg.Addr = ""
 			},
 			true,
 		},
 		{
 			"err: tls-key not set on TLS-mode",
-			func(cfg *kuesta.ServeCfg) {
+			func(cfg *core.ServeCfg) {
 				cfg.TLSCrtPath = "./tls.crt"
 			},
 			true,
 		},
 		{
 			"err: tls-crt not set on TLS-mode",
-			func(cfg *kuesta.ServeCfg) {
+			func(cfg *core.ServeCfg) {
 				cfg.TLSKeyPath = "./tls.key"
 			},
 			true,
@@ -126,7 +126,7 @@ func TestNorthboundServer_RunStatusSyncLoop(t *testing.T) {
 		Path: dirPuller,
 	})
 	common.ExitOnErr(t, err)
-	s := kuesta.NewNorthboundServerWithGit(&kuesta.ServeCfg{}, nil, sGit)
+	s := core.NewNorthboundServerWithGit(&core.ServeCfg{}, nil, sGit)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -157,7 +157,7 @@ func TestNorthboundServer_RunConfigSyncLoop(t *testing.T) {
 		Path: dirPuller,
 	})
 	common.ExitOnErr(t, err)
-	s := kuesta.NewNorthboundServerWithGit(&kuesta.ServeCfg{}, cGit, nil)
+	s := core.NewNorthboundServerWithGit(&core.ServeCfg{}, cGit, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -185,8 +185,8 @@ version: 0.1.0`)
 	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
 	common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
-	s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
-		RootCfg: kuesta.RootCfg{
+	s := core.NewNorthboundServerImpl(&core.ServeCfg{
+		RootCfg: core.RootCfg{
 			ConfigRootPath: dir,
 		},
 	})
@@ -418,8 +418,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
-				RootCfg: kuesta.RootCfg{
+			s := core.NewNorthboundServerImpl(&core.ServeCfg{
+				RootCfg: core.RootCfg{
 					ConfigRootPath: dir,
 					StatusRootPath: dir,
 				},
@@ -495,8 +495,8 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
-				RootCfg: kuesta.RootCfg{
+			s := core.NewNorthboundServerImpl(&core.ServeCfg{
+				RootCfg: core.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})
@@ -629,8 +629,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
-				RootCfg: kuesta.RootCfg{
+			s := core.NewNorthboundServerImpl(&core.ServeCfg{
+				RootCfg: core.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})
@@ -764,8 +764,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			tt.setup(dir)
-			s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
-				RootCfg: kuesta.RootCfg{
+			s := core.NewNorthboundServerImpl(&core.ServeCfg{
+				RootCfg: core.RootCfg{
 					ConfigRootPath: dir,
 				},
 			})

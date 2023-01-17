@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"bytes"
@@ -28,21 +28,21 @@ import (
 	"os"
 	"testing"
 
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRunCueGetImpl(t *testing.T) {
 	common.Chdir(t, "./testdata")
 	called := false
-	getter := kuesta.CueGetFunc(func(modPath, outDir string) error {
+	getter := core.CueGetFunc(func(modPath, outDir string) error {
 		assert.Equal(t, "github.com/nttcom/kuesta/testdata", modPath)
 		assert.Equal(t, "types/pkg/model", outDir)
 		called = true
 		return nil
 	})
-	err := kuesta.RunCueGetImpl(context.Background(), "./pkg/model/sample.go", getter)
+	err := core.RunCueGetImpl(context.Background(), "./pkg/model/sample.go", getter)
 	assert.Nil(t, err)
 
 	_, err = os.Stat("./types/pkg/model/sample.go")
@@ -102,7 +102,7 @@ type TestDevice struct {`),
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			err := kuesta.ConvertMapKeyToString("./pkg/model/sample.go", bytes.NewReader(tt.given), buf)
+			err := core.ConvertMapKeyToString("./pkg/model/sample.go", bytes.NewReader(tt.given), buf)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

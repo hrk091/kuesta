@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"context"
@@ -32,11 +32,11 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/golang/mock/gomock"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gitrepo/mock"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,8 +79,8 @@ Devices:
 
 	t.Run("ok: push to main", func(t *testing.T) {
 		repo, dir := setup(t)
-		err := kuesta.RunGitCommit(context.Background(), &kuesta.GitCommitCfg{
-			RootCfg: kuesta.RootCfg{
+		err := core.RunGitCommit(context.Background(), &core.GitCommitCfg{
+			RootCfg: core.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
 				PushToMain:     true,
@@ -106,8 +106,8 @@ Devices:
 		mockGitClient.EXPECT().CreatePullRequest(ctx, gomock.Any()).Return(42, nil)
 		gitrepo.ReplaceGitClientConstructors(mockGitClient)
 
-		err := kuesta.RunGitCommit(ctx, &kuesta.GitCommitCfg{
-			RootCfg: kuesta.RootCfg{
+		err := core.RunGitCommit(ctx, &core.GitCommitCfg{
+			RootCfg: core.RootCfg{
 				ConfigRootPath: dir,
 				GitTrunk:       "main",
 				PushToMain:     false,
@@ -147,7 +147,7 @@ Devices:
 	added:     dvc1
 	deleted:   dvc2
 	modified:  dvc3`
-	assert.Equal(t, want, kuesta.MakeCommitMessage(stmap))
+	assert.Equal(t, want, core.MakeCommitMessage(stmap))
 }
 
 func TestCheckGitFileIsStagedOrUnmodified(t *testing.T) {
@@ -179,7 +179,7 @@ func TestCheckGitFileIsStagedOrUnmodified(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := kuesta.CheckGitFileIsStagedOrUnmodified(tt.path, tt.st)
+		err := core.CheckGitFileIsStagedOrUnmodified(tt.path, tt.st)
 		if tt.wantErr {
 			assert.Error(t, err)
 		} else {
@@ -211,7 +211,7 @@ func TestCheckGitIsStagedOrUnmodified(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := kuesta.CheckGitIsStagedOrUnmodified(tt.st)
+		err := core.CheckGitIsStagedOrUnmodified(tt.st)
 		if tt.wantErr > 0 {
 			reg := regexp.MustCompile("bad")
 			assert.Equal(t, tt.wantErr, len(reg.FindAllString(err.Error(), -1)))

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"regexp"
@@ -28,6 +28,7 @@ import (
 	"time"
 
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
@@ -35,9 +36,9 @@ import (
 )
 
 func TestServiceApplyCfg_Validate(t *testing.T) {
-	newValidStruct := func(t func(cfg *kuesta.ServiceApplyCfg)) *kuesta.ServiceApplyCfg {
-		cfg := &kuesta.ServiceApplyCfg{
-			RootCfg: kuesta.RootCfg{
+	newValidStruct := func(t func(cfg *core.ServiceApplyCfg)) *core.ServiceApplyCfg {
+		cfg := &core.ServiceApplyCfg{
+			RootCfg: core.RootCfg{
 				ConfigRootPath: "./",
 			},
 		}
@@ -47,12 +48,12 @@ func TestServiceApplyCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *kuesta.ServiceApplyCfg)
+		transform func(cfg *core.ServiceApplyCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *kuesta.ServiceApplyCfg) {},
+			func(cfg *core.ServiceApplyCfg) {},
 			false,
 		},
 	}
@@ -93,7 +94,7 @@ func TestCheckGitStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := kuesta.CheckGitStatus(tt.st)
+		err := core.CheckGitStatus(tt.st)
 		if tt.wantErr > 0 {
 			reg := regexp.MustCompile(".cue")
 			assert.Equal(t, tt.wantErr, len(reg.FindAllString(err.Error(), -1)))
@@ -152,7 +153,7 @@ func TestCheckGitFileStatus(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := kuesta.CheckGitFileStatus(tt.path, tt.st)
+		err := core.CheckGitFileStatus(tt.path, tt.st)
 		if tt.wantErr {
 			assert.Error(t, err)
 		} else {
@@ -173,7 +174,7 @@ func TestServiceCompilePlan_Do(t *testing.T) {
 	common.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
 
 	stmap := getStatus(t, repo)
-	plan := kuesta.NewServiceCompilePlan(stmap, dir)
+	plan := core.NewServiceCompilePlan(stmap, dir)
 	updated := 0
 	deleted := 0
 	err = plan.Do(context.Background(),
@@ -202,7 +203,7 @@ func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 	common.ExitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
-	plan := kuesta.NewServiceCompilePlan(stmap, dir)
+	plan := core.NewServiceCompilePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }
 
@@ -218,7 +219,7 @@ func TestDeviceCompositePlan_Do(t *testing.T) {
 	common.ExitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
 
 	stmap := getStatus(t, repo)
-	plan := kuesta.NewDeviceCompositePlan(stmap, dir)
+	plan := core.NewDeviceCompositePlan(stmap, dir)
 	executed := 0
 	err = plan.Do(context.Background(),
 		func(ctx context.Context, dp kuesta.DevicePath) error {
@@ -238,6 +239,6 @@ func TestDeviceCompositePlan_IsEmpty(t *testing.T) {
 	common.ExitOnErr(t, err)
 
 	stmap := getStatus(t, repo)
-	plan := kuesta.NewDeviceCompositePlan(stmap, dir)
+	plan := core.NewDeviceCompositePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }

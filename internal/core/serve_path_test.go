@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +20,13 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"path/filepath"
 	"testing"
 
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -216,8 +217,8 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(dir)
 			}
-			c := kuesta.NewGnmiPathConverter(&kuesta.ServeCfg{
-				RootCfg: kuesta.RootCfg{
+			c := core.NewGnmiPathConverter(&core.ServeCfg{
+				RootCfg: core.RootCfg{
 					ConfigRootPath: dir,
 					StatusRootPath: dir,
 				},
@@ -228,9 +229,9 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 				switch r := got.(type) {
-				case kuesta.ServicePathReq:
+				case core.ServicePathReq:
 					assert.Equal(t, tt.want, r.Path())
-				case kuesta.DevicePathReq:
+				case core.DevicePathReq:
 					assert.Equal(t, tt.want, r.Path())
 				default:
 					t.Fatalf("unexpected type: %T", got)

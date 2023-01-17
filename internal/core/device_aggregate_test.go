@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"bytes"
@@ -35,8 +35,8 @@ import (
 	"time"
 
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,13 +46,13 @@ func TestDecodeSaveConfigRequest(t *testing.T) {
 	tests := []struct {
 		name    string
 		given   string
-		want    *kuesta.SaveConfigRequest
+		want    *core.SaveConfigRequest
 		wantErr bool
 	}{
 		{
 			"ok",
 			`{"device": "device1", "config": "foobar"}`,
-			&kuesta.SaveConfigRequest{
+			&core.SaveConfigRequest{
 				Device: "device1",
 				Config: &config,
 			},
@@ -81,7 +81,7 @@ func TestDecodeSaveConfigRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := strings.NewReader(tt.given)
-			got, err := kuesta.DecodeSaveConfigRequest(r)
+			got, err := core.DecodeSaveConfigRequest(r)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -105,19 +105,19 @@ Devices:
 	deleted:   dvc2
 	modified:  dvc3`
 
-	assert.Equal(t, want, kuesta.MakeSyncCommitMessage(stmap))
+	assert.Equal(t, want, core.MakeSyncCommitMessage(stmap))
 }
 
 func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 	dir := t.TempDir()
 	config := "foobar"
-	given := &kuesta.SaveConfigRequest{
+	given := &core.SaveConfigRequest{
 		Device: "device1",
 		Config: &config,
 	}
 
-	s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
-		RootCfg: kuesta.RootCfg{StatusRootPath: dir},
+	s := core.NewDeviceAggregateServer(&core.DeviceAggregateCfg{
+		RootCfg: core.RootCfg{StatusRootPath: dir},
 	})
 	err := s.SaveConfig(context.Background(), given)
 	assert.Nil(t, err)
@@ -135,8 +135,8 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 		oldRef, _ := repo.Head()
 		assert.Greater(t, len(getStatus(t, repo)), 0)
 
-		s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
-			RootCfg: kuesta.RootCfg{
+		s := core.NewDeviceAggregateServer(&core.DeviceAggregateCfg{
+			RootCfg: core.RootCfg{
 				StatusRootPath: dir,
 				GitRemote:      testRemote,
 			},
@@ -156,18 +156,18 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	testRemote := "test-remote"
 	repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
 	config := "foobar"
-	req := kuesta.SaveConfigRequest{
+	req := core.SaveConfigRequest{
 		Device: "device1",
 		Config: &config,
 	}
 
-	s := kuesta.NewDeviceAggregateServer(&kuesta.DeviceAggregateCfg{
-		RootCfg: kuesta.RootCfg{
+	s := core.NewDeviceAggregateServer(&core.DeviceAggregateCfg{
+		RootCfg: core.RootCfg{
 			StatusRootPath: dir,
 			GitRemote:      testRemote,
 		},
 	})
-	kuesta.UpdateCheckDuration = 100 * time.Millisecond
+	core.UpdateCheckDuration = 100 * time.Millisecond
 	s.Run(context.Background())
 
 	buf, err := json.Marshal(req)

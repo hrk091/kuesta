@@ -23,7 +23,7 @@
 package cmd
 
 import (
-	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +39,7 @@ func newGitCommitCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return kuesta.RunGitCommit(cmd.Context(), cfg)
+			return core.RunGitCommit(cmd.Context(), cfg)
 		},
 	}
 	mustBindToViper(cmd)
@@ -47,12 +47,12 @@ func newGitCommitCmd() *cobra.Command {
 	return cmd
 }
 
-func newGitCommitCfg(cmd *cobra.Command, args []string) (*kuesta.GitCommitCfg, error) {
+func newGitCommitCfg(cmd *cobra.Command, args []string) (*core.GitCommitCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &kuesta.GitCommitCfg{
+	cfg := &core.GitCommitCfg{
 		RootCfg: *rootCfg,
 	}
 	return cfg, cfg.Validate()

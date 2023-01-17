@@ -25,7 +25,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -41,13 +41,13 @@ func newServiceCompileCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return kuesta.RunServiceCompile(cmd.Context(), cfg)
+			return core.RunServiceCompile(cmd.Context(), cfg)
 		},
 	}
 	return cmd
 }
 
-func newServiceCompileCfg(cmd *cobra.Command, args []string) (*kuesta.ServiceCompileCfg, error) {
+func newServiceCompileCfg(cmd *cobra.Command, args []string) (*core.ServiceCompileCfg, error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("service is not specified")
 	}
@@ -55,7 +55,7 @@ func newServiceCompileCfg(cmd *cobra.Command, args []string) (*kuesta.ServiceCom
 	if err != nil {
 		return nil, err
 	}
-	cfg := &kuesta.ServiceCompileCfg{
+	cfg := &core.ServiceCompileCfg{
 		RootCfg: *rootCfg,
 		Service: args[0],
 		Keys:    args[1:],

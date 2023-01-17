@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,54 +20,12 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core
 
-import (
-	"testing"
+type ErrConfigValue struct {
+	err string
+}
 
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestRootCfg_Validate(t *testing.T) {
-	newValidStruct := func(t func(*kuesta.RootCfg)) *kuesta.RootCfg {
-		cfg := &kuesta.RootCfg{
-			Verbose:        0,
-			Devel:          false,
-			ConfigRootPath: "./",
-		}
-		t(cfg)
-		return cfg
-	}
-
-	tests := []struct {
-		name      string
-		transform func(cfg *kuesta.RootCfg)
-		wantError bool
-	}{
-		{
-			"ok",
-			func(cfg *kuesta.RootCfg) {},
-			false,
-		},
-		{
-			"err: Verbose is over range",
-			func(cfg *kuesta.RootCfg) {
-				cfg.Verbose = 4
-			},
-			true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := newValidStruct(tt.transform)
-			err := cfg.Validate()
-			if tt.wantError {
-				assert.Error(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-		})
-	}
+func (e *ErrConfigValue) Error() string {
+	return e.err
 }

@@ -23,7 +23,7 @@
 package cmd
 
 import (
-	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -39,18 +39,18 @@ func newServiceApplyCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return kuesta.RunServiceApply(cmd.Context(), cfg)
+			return core.RunServiceApply(cmd.Context(), cfg)
 		},
 	}
 	return cmd
 }
 
-func newServiceApplyCfg(cmd *cobra.Command, args []string) (*kuesta.ServiceApplyCfg, error) {
+func newServiceApplyCfg(cmd *cobra.Command, args []string) (*core.ServiceApplyCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
 	}
-	cfg := &kuesta.ServiceApplyCfg{
+	cfg := &core.ServiceApplyCfg{
 		RootCfg: *rootCfg,
 	}
 	return cfg, cfg.Validate()

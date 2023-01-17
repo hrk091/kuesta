@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"context"
@@ -38,6 +38,7 @@ import (
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/gnmi"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -319,8 +320,8 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		results = append(results, res)
 	}
 
-	sp := ServicePath{RootDir: s.cfg.ConfigRootPath}
-	if err := s.cGit.Add(sp.ServiceDirPath(ExcludeRoot)); err != nil {
+	sp := kuesta.ServicePath{RootDir: s.cfg.ConfigRootPath}
+	if err := s.cGit.Add(sp.ServiceDirPath(kuesta.ExcludeRoot)); err != nil {
 		s.Error(l, err, "git add")
 		return nil, status.Errorf(codes.Internal, "failed to git-add")
 	}
@@ -394,7 +395,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 		s.Error(l, err, "get gnmi service version")
 		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
 	}
-	mlist, err := ReadServiceMetaAll(s.cfg.ConfigRootPath)
+	mlist, err := kuesta.ReadServiceMetaAll(s.cfg.ConfigRootPath)
 	if err != nil {
 		s.Error(l, err, "get gnmi service version")
 		return nil, err
@@ -481,7 +482,7 @@ func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path
 	l.Debugw("delete")
 
 	sp := r.Path()
-	if err = os.Remove(sp.ServiceInputPath(IncludeRoot)); err != nil {
+	if err = os.Remove(sp.ServiceInputPath(kuesta.IncludeRoot)); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			s.Error(l, err, "delete file")
 			return nil, status.Errorf(codes.Internal, "failed to delete file: %s", r.String())

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"context"
@@ -30,6 +30,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 )
 
@@ -50,10 +51,10 @@ func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	l.Debug("device composite called")
 
 	cctx := cuecontext.New()
-	sp := ServicePath{RootDir: cfg.ConfigRootPath}
-	dp := DevicePath{RootDir: cfg.ConfigRootPath, Device: cfg.Device}
+	sp := kuesta.ServicePath{RootDir: cfg.ConfigRootPath}
+	dp := kuesta.DevicePath{RootDir: cfg.ConfigRootPath, Device: cfg.Device}
 
-	files, err := CollectPartialDeviceConfig(sp.ServiceDirPath(IncludeRoot), cfg.Device)
+	files, err := CollectPartialDeviceConfig(sp.ServiceDirPath(kuesta.IncludeRoot), cfg.Device)
 	if err != nil {
 		return fmt.Errorf("collect files: %w", err)
 	}

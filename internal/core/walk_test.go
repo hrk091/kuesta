@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,15 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"io/fs"
 	"path/filepath"
 	"testing"
 
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +46,7 @@ func TestCollectPartialDeviceConfig(t *testing.T) {
 	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "one", "computed", "device1.cue"), dummy))
 
 	t.Run("ok", func(t *testing.T) {
-		files, err := kuesta.CollectPartialDeviceConfig(dir, "device1")
+		files, err := core.CollectPartialDeviceConfig(dir, "device1")
 		assert.Nil(t, err)
 		assert.Equal(t, 3, len(files))
 		assert.Contains(t, files, filepath.Join(dir, "foo/one/computed/device1.cue"))
@@ -55,13 +55,13 @@ func TestCollectPartialDeviceConfig(t *testing.T) {
 	})
 
 	t.Run("ok: not found", func(t *testing.T) {
-		files, err := kuesta.CollectPartialDeviceConfig(dir, "device3")
+		files, err := core.CollectPartialDeviceConfig(dir, "device3")
 		assert.Nil(t, err)
 		assert.Equal(t, 0, len(files))
 	})
 
 	t.Run("err: directory not exist", func(t *testing.T) {
-		_, err := kuesta.CollectPartialDeviceConfig("notexist", "device1")
+		_, err := core.CollectPartialDeviceConfig("notexist", "device1")
 		if assert.Error(t, err) {
 			var pathError *fs.PathError
 			assert.ErrorAs(t, err, &pathError)

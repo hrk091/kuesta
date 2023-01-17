@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"context"
@@ -31,6 +31,7 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
 )
@@ -73,20 +74,20 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 		return nil
 	}
 	err = scPlan.Do(ctx,
-		func(ctx context.Context, sp ServicePath) error {
+		func(ctx context.Context, sp kuesta.ServicePath) error {
 			fmt.Printf("Delete service config: service=%s keys=%v\n", sp.Service, sp.Keys)
-			if _, err := w.Remove(sp.ServiceComputedDirPath(ExcludeRoot)); err != nil {
+			if _, err := w.Remove(sp.ServiceComputedDirPath(kuesta.ExcludeRoot)); err != nil {
 				return fmt.Errorf("git remove: %w", err)
 			}
 			return nil
 		},
-		func(ctx context.Context, sp ServicePath) error {
+		func(ctx context.Context, sp kuesta.ServicePath) error {
 			fmt.Printf("Compile service config: service=%s keys=%v\n", sp.Service, sp.Keys)
 			cfg := &ServiceCompileCfg{RootCfg: cfg.RootCfg, Service: sp.Service, Keys: sp.Keys}
 			if err := RunServiceCompile(ctx, cfg); err != nil {
 				return fmt.Errorf("service updating: %w", err)
 			}
-			if _, err := w.Add(sp.ServiceComputedDirPath(ExcludeRoot)); err != nil {
+			if _, err := w.Add(sp.ServiceComputedDirPath(kuesta.ExcludeRoot)); err != nil {
 				return fmt.Errorf("git add: %w", err)
 			}
 			return nil
@@ -106,13 +107,13 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	}
 
 	err = dcPlan.Do(ctx,
-		func(ctx context.Context, dp DevicePath) error {
+		func(ctx context.Context, dp kuesta.DevicePath) error {
 			fmt.Printf("Update device config: device=%s\n", dp.Device)
 			cfg := &DeviceCompositeCfg{RootCfg: cfg.RootCfg, Device: dp.Device}
 			if err := RunDeviceComposite(ctx, cfg); err != nil {
 				return fmt.Errorf("device composite: %w", err)
 			}
-			if _, err := w.Add(dp.DeviceConfigPath(ExcludeRoot)); err != nil {
+			if _, err := w.Add(dp.DeviceConfigPath(kuesta.ExcludeRoot)); err != nil {
 				return fmt.Errorf("git add: %w", err)
 			}
 			return nil
@@ -140,12 +141,12 @@ func CheckGitStatus(stmap extgogit.Status) error {
 func CheckGitFileStatus(path string, st extgogit.FileStatus) error {
 	dir, file := filepath.Split(path)
 	dir = strings.TrimRight(dir, string(filepath.Separator))
-	if strings.HasSuffix(dir, DirComputed) {
+	if strings.HasSuffix(dir, kuesta.DirComputed) {
 		if gogit.IsEitherWorktreeOrStagingTrackedAndChanged(st) {
 			return fmt.Errorf("changes in compilation result is not allowd, you need to reset it: %s", path)
 		}
 	}
-	if strings.HasPrefix(dir, DirDevices) && file == FileConfigCue {
+	if strings.HasPrefix(dir, kuesta.DirDevices) && file == kuesta.FileConfigCue {
 		if gogit.IsEitherWorktreeOrStagingTrackedAndChanged(st) {
 			return fmt.Errorf("changes in device config is not allowd, you need to reset it: %s", path)
 		}
@@ -160,13 +161,13 @@ func CheckGitFileStatus(path string, st extgogit.FileStatus) error {
 }
 
 type (
-	ServiceFunc func(ctx context.Context, sp ServicePath) error
-	DeviceFunc  func(ctx context.Context, sp DevicePath) error
+	ServiceFunc func(ctx context.Context, sp kuesta.ServicePath) error
+	DeviceFunc  func(ctx context.Context, sp kuesta.DevicePath) error
 )
 
 type ServiceCompilePlan struct {
-	update []ServicePath
-	delete []ServicePath
+	update []kuesta.ServicePath
+	delete []kuesta.ServicePath
 }
 
 // NewServiceCompilePlan creates new ServiceCompilePlan from the given git file statuses.
@@ -177,12 +178,12 @@ func NewServiceCompilePlan(stmap extgogit.Status, root string) *ServiceCompilePl
 		if !gogit.IsTrackedAndChanged(st.Staging) {
 			continue
 		}
-		service, keys, err := ParseServiceInputPath(path)
+		service, keys, err := kuesta.ParseServiceInputPath(path)
 		if err != nil {
 			continue
 		}
 
-		sp := ServicePath{RootDir: root, Service: service, Keys: keys}
+		sp := kuesta.ServicePath{RootDir: root, Service: service, Keys: keys}
 		if st.Staging == extgogit.Deleted {
 			plan.delete = append(plan.delete, sp)
 		} else {
@@ -213,21 +214,21 @@ func (p *ServiceCompilePlan) IsEmpty() bool {
 }
 
 type DeviceCompositePlan struct {
-	composite []DevicePath
+	composite []kuesta.DevicePath
 }
 
 // NewDeviceCompositePlan creates new DeviceCompositePlan from the given git file statuses.
 func NewDeviceCompositePlan(stmap extgogit.Status, root string) *DeviceCompositePlan {
-	updated := common.NewSet[DevicePath]()
+	updated := common.NewSet[kuesta.DevicePath]()
 	for path, st := range stmap {
 		if st.Staging == extgogit.Unmodified {
 			continue
 		}
-		device, err := ParseServiceComputedFilePath(path)
+		device, err := kuesta.ParseServiceComputedFilePath(path)
 		if err != nil {
 			continue
 		}
-		updated.Add(DevicePath{RootDir: root, Device: device})
+		updated.Add(kuesta.DevicePath{RootDir: root, Device: device})
 	}
 	plan := &DeviceCompositePlan{composite: updated.List()}
 	return plan

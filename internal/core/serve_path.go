@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +20,13 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"fmt"
 
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 )
@@ -36,7 +37,7 @@ type PathReq interface {
 }
 
 type ServicePathReq struct {
-	path    *ServicePath
+	path    *kuesta.ServicePath
 	service string
 	keys    map[string]string
 }
@@ -46,10 +47,10 @@ func (ServicePathReq) Type() PathType {
 }
 
 func (s ServicePathReq) String() string {
-	return s.path.ServicePath(ExcludeRoot)
+	return s.path.ServicePath(kuesta.ExcludeRoot)
 }
 
-func (s *ServicePathReq) Path() *ServicePath {
+func (s *ServicePathReq) Path() *kuesta.ServicePath {
 	return s.path
 }
 
@@ -58,7 +59,7 @@ func (s *ServicePathReq) Keys() map[string]string {
 }
 
 type DevicePathReq struct {
-	path   *DevicePath
+	path   *kuesta.DevicePath
 	device string
 }
 
@@ -67,10 +68,10 @@ func (DevicePathReq) Type() PathType {
 }
 
 func (s DevicePathReq) String() string {
-	return s.path.DevicePath(ExcludeRoot)
+	return s.path.DevicePath(kuesta.ExcludeRoot)
 }
 
-func (s DevicePathReq) Path() *DevicePath {
+func (s DevicePathReq) Path() *kuesta.DevicePath {
 	return s.path
 }
 
@@ -79,13 +80,13 @@ type GnmiPathConverter struct {
 
 	// meta caches service metadata
 	// TODO clear cache periodically
-	meta map[string]*ServiceMeta
+	meta map[string]*kuesta.ServiceMeta
 }
 
 func NewGnmiPathConverter(cfg *ServeCfg) *GnmiPathConverter {
 	return &GnmiPathConverter{
 		cfg:  cfg,
-		meta: map[string]*ServiceMeta{},
+		meta: map[string]*kuesta.ServiceMeta{},
 	}
 }
 
@@ -98,12 +99,12 @@ func (c *GnmiPathConverter) Convert(prefix, path *gnmi.Path) (PathReq, error) {
 	}
 	kindEl := elem[0]
 	switch kindEl.GetName() {
-	case DirServices:
+	case kuesta.DirServices:
 		return c.convertService(elem[1:])
-	case DirDevices:
+	case kuesta.DirDevices:
 		return c.convertDevice(elem[1:])
 	default:
-		return nil, errors.WithStack(fmt.Errorf("name of the first elem must be `%s` or `%s`", DirServices, DirDevices))
+		return nil, errors.WithStack(fmt.Errorf("name of the first elem must be `%s` or `%s`", kuesta.DirServices, kuesta.DirDevices))
 	}
 }
 
@@ -117,7 +118,7 @@ func (c *GnmiPathConverter) convertService(elem []*gnmi.PathElem) (ServicePathRe
 	if !ok {
 		return ServicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyServiceKind))
 	}
-	p := ServicePath{RootDir: c.cfg.ConfigRootPath, Service: svcKind}
+	p := kuesta.ServicePath{RootDir: c.cfg.ConfigRootPath, Service: svcKind}
 
 	cctx := cuecontext.New()
 	tf, err := p.ReadServiceTransform(cctx)
@@ -152,7 +153,7 @@ func (c *GnmiPathConverter) convertDevice(elem []*gnmi.PathElem) (DevicePathReq,
 		return DevicePathReq{}, errors.WithStack(fmt.Errorf("`%s` key is required for service path", KeyDeviceName))
 	}
 
-	p := DevicePath{RootDir: c.cfg.StatusRootPath, Device: deviceName}
+	p := kuesta.DevicePath{RootDir: c.cfg.StatusRootPath, Device: deviceName}
 	return DevicePathReq{path: &p, device: deviceName}, nil
 }
 

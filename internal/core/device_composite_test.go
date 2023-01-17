@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta_test
+package core_test
 
 import (
 	"context"
@@ -29,19 +29,18 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestServiceCompileCfg_Validate(t *testing.T) {
-	newValidStruct := func(t func(cfg *kuesta.ServiceCompileCfg)) *kuesta.ServiceCompileCfg {
-		cfg := &kuesta.ServiceCompileCfg{
-			RootCfg: kuesta.RootCfg{
+func TestDeviceCompositeCfg_Validate(t *testing.T) {
+	newValidStruct := func(t func(cfg *core.DeviceCompositeCfg)) *core.DeviceCompositeCfg {
+		cfg := &core.DeviceCompositeCfg{
+			RootCfg: core.RootCfg{
 				ConfigRootPath: "./",
 			},
-			Service: "foo",
-			Keys:    []string{"one", "two"},
+			Device: "device1",
 		}
 		t(cfg)
 		return cfg
@@ -49,32 +48,18 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		transform func(cfg *kuesta.ServiceCompileCfg)
+		transform func(cfg *core.DeviceCompositeCfg)
 		wantError bool
 	}{
 		{
 			"ok",
-			func(cfg *kuesta.ServiceCompileCfg) {},
+			func(cfg *core.DeviceCompositeCfg) {},
 			false,
 		},
 		{
-			"err: service is empty",
-			func(cfg *kuesta.ServiceCompileCfg) {
-				cfg.Service = ""
-			},
-			true,
-		},
-		{
-			"err: keys length is 0",
-			func(cfg *kuesta.ServiceCompileCfg) {
-				cfg.Keys = nil
-			},
-			true,
-		},
-		{
-			"err: one of keys is empty",
-			func(cfg *kuesta.ServiceCompileCfg) {
-				cfg.Keys = []string{"one", ""}
+			"err: device is empty",
+			func(cfg *core.DeviceCompositeCfg) {
+				cfg.Device = ""
 			},
 			true,
 		},
@@ -92,7 +77,7 @@ func TestServiceCompileCfg_Validate(t *testing.T) {
 	}
 }
 
-func TestRunServiceCompile(t *testing.T) {
+func TestRunDeviceComposite(t *testing.T) {
 	want := []byte(`{
 	Interface: {
 		Ethernet1: {
@@ -105,17 +90,26 @@ func TestRunServiceCompile(t *testing.T) {
 			Mtu:         9000 @go(,*uint16)
 			Subinterface: {} @go(,map[uint32]*Interface_Subinterface)
 		}
+		Ethernet2: {
+			Name:        "Ethernet2" @go(,*string)
+			Description: "bar"       @go(,*string)
+			Enabled:     false       @go(,*bool)
+			AdminStatus: 1
+			OperStatus:  1
+			Type:        80
+			Mtu:         9000 @go(,*uint16)
+			Subinterface: {} @go(,map[uint32]*Interface_Subinterface)
+		}
 	} @go(,map[string]*Interface)
 	Vlan: {} @go(,map[uint16]*Vlan)
 }
 `)
-	err := kuesta.RunServiceCompile(context.Background(), &kuesta.ServiceCompileCfg{
-		RootCfg: kuesta.RootCfg{ConfigRootPath: "./testdata"},
-		Service: "oc_interface",
-		Keys:    []string{"oc01", "1"},
+	err := core.RunDeviceComposite(context.Background(), &core.DeviceCompositeCfg{
+		RootCfg: core.RootCfg{ConfigRootPath: "./testdata"},
+		Device:  "oc01",
 	})
 	common.ExitOnErr(t, err)
-	got, err := os.ReadFile(filepath.Join("./testdata", "services", "oc_interface", "oc01", "1", "computed", "oc01.cue"))
+	got, err := os.ReadFile(filepath.Join("./testdata", "devices", "oc01", "config.cue"))
 	common.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()

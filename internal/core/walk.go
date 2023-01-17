@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"errors"
@@ -29,6 +29,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	errs "github.com/pkg/errors"
 )
 
@@ -42,7 +43,7 @@ func CollectPartialDeviceConfig(dir, device string) ([]string, error) {
 		if !info.IsDir() {
 			return nil
 		}
-		if info.Name() != DirComputed {
+		if info.Name() != kuesta.DirComputed {
 			return nil
 		}
 

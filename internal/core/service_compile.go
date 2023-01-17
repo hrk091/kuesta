@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"context"
@@ -29,6 +29,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/cue"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 )
 
@@ -51,7 +52,7 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 
 	cctx := cuecontext.New()
 
-	sp := ServicePath{
+	sp := kuesta.ServicePath{
 		RootDir: cfg.ConfigRootPath,
 		Service: cfg.Service,
 		Keys:    cfg.Keys,
@@ -80,7 +81,7 @@ func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 
 	for it.Next() {
 		device := it.Label()
-		buf, err := NewDevice(it.Value()).Config()
+		buf, err := kuesta.NewDevice(it.Value()).Config()
 		if err != nil {
 			return fmt.Errorf("extract device config: %w", err)
 		}

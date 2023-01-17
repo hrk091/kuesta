@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package kuesta
+package core
 
 import (
 	"context"
@@ -37,6 +37,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -205,8 +206,8 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 
 // SaveConfig writes device config contained in supplied SaveConfigRequest.
 func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigRequest) error {
-	dp := DevicePath{RootDir: s.cfg.StatusRootPath, Device: r.Device}
-	if err := common.WriteFileWithMkdir(dp.DeviceActualConfigPath(IncludeRoot), []byte(*r.Config)); err != nil {
+	dp := kuesta.DevicePath{RootDir: s.cfg.StatusRootPath, Device: r.Device}
+	if err := common.WriteFileWithMkdir(dp.DeviceActualConfigPath(kuesta.IncludeRoot), []byte(*r.Config)); err != nil {
 		return fmt.Errorf("write actual device config: %w", err)
 	}
 	return nil

@@ -25,7 +25,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +41,7 @@ func newCueGetCmd() *cobra.Command {
 			}
 			logger.Setup(cfg.Devel, cfg.Verbose)
 
-			return kuesta.RunCueGet(cmd.Context(), cfg)
+			return core.RunCueGet(cmd.Context(), cfg)
 		},
 	}
 	cmd.PersistentFlags().StringP(FlagAggregateAddr, "", ":8000", "Bind address of device aggregator")
@@ -50,7 +50,7 @@ func newCueGetCmd() *cobra.Command {
 	return cmd
 }
 
-func newCueGetCfg(cmd *cobra.Command, args []string) (*kuesta.CueGetCfg, error) {
+func newCueGetCfg(cmd *cobra.Command, args []string) (*core.CueGetCfg, error) {
 	rootCfg, err := newRootCfg(cmd)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func newCueGetCfg(cmd *cobra.Command, args []string) (*kuesta.CueGetCfg, error) 
 	if len(args) == 0 {
 		return nil, fmt.Errorf("target file is not specified")
 	}
-	cfg := &kuesta.CueGetCfg{
+	cfg := &core.CueGetCfg{
 		RootCfg:  *rootCfg,
 		FilePath: args[0],
 	}
