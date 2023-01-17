@@ -26,6 +26,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 	"time"
 
@@ -790,4 +791,11 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetGNMIServiceVersion(t *testing.T) {
+	ver, err := core.GetGNMIServiceVersion()
+	assert.Nil(t, err)
+	re := regexp.MustCompile(`(\d+)(\.\d+)?(\.\d+)?`)
+	assert.NotNil(t, re.FindStringIndex(ver))
 }

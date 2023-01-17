@@ -34,7 +34,7 @@ import (
 	source "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gnmi"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -173,7 +173,7 @@ var _ = Describe("DeviceOperator controller", func() {
 		Context("when device config updated", func() {
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false
-				m := &gnmi.GnmiMock{
+				m := &testhelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, nil
@@ -181,7 +181,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
 				common.MustNil(err)
-				gs := gnmi.NewServerWithListener(m, lis)
+				gs := testhelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config1, rev1st), timeout, interval).Should(Succeed())
@@ -353,7 +353,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false
-				m := &gnmi.GnmiMock{
+				m := &testhelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, nil
@@ -361,7 +361,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
 				common.MustNil(err)
-				gs := gnmi.NewServerWithListener(m, lis)
+				gs := testhelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())
@@ -383,7 +383,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			It("should send gNMI SetRequest and change to failed when request failed", func() {
 				setCalled := false
-				m := &gnmi.GnmiMock{
+				m := &testhelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, fmt.Errorf("failed")
@@ -391,7 +391,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
 				common.MustNil(err)
-				gs := gnmi.NewServerWithListener(m, lis)
+				gs := testhelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())

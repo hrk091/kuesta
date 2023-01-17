@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,23 +20,17 @@
  THE SOFTWARE.
 */
 
-package gnmi
+package testhelper
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
-	"fmt"
-	"io"
 	"log"
 	"net"
 
-	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	"google.golang.org/protobuf/proto"
 )
 
 const bufSize = 1024 * 1024
@@ -77,7 +71,7 @@ func (s *GnmiMock) Subscribe(stream pb.GNMI_SubscribeServer) error {
 	return s.SubscribeHandler(stream)
 }
 
-func NewServer(ctx context.Context, s pb.GNMIServer, opts ...grpc.DialOption) (*grpc.Server, *grpc.ClientConn) {
+func NewGnmiServer(ctx context.Context, s pb.GNMIServer, opts ...grpc.DialOption) (*grpc.Server, *grpc.ClientConn) {
 	lis := bufconn.Listen(bufSize)
 	g := grpc.NewServer()
 
@@ -100,7 +94,7 @@ func NewServer(ctx context.Context, s pb.GNMIServer, opts ...grpc.DialOption) (*
 	return g, conn
 }
 
-func NewServerWithListener(s pb.GNMIServer, lis net.Listener) *grpc.Server {
+func NewGnmiServerWithListener(s pb.GNMIServer, lis net.Listener) *grpc.Server {
 	g := grpc.NewServer()
 	pb.RegisterGNMIServer(g, s)
 	go func() {
@@ -109,25 +103,4 @@ func NewServerWithListener(s pb.GNMIServer, lis net.Listener) *grpc.Server {
 		}
 	}()
 	return g
-}
-
-// GetGNMIServiceVersion returns a pointer to the gNMI service version string.
-// The method is non-trivial because of the way it is defined in the proto file.
-func GetGNMIServiceVersion() (string, error) {
-	gzB, _ := (&pb.Update{}).Descriptor() // nolint
-	r, err := gzip.NewReader(bytes.NewReader(gzB))
-	if err != nil {
-		return "", fmt.Errorf("error in initializing gzip reader: %w", err)
-	}
-	defer r.Close()
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return "", fmt.Errorf("error in reading gzip data: %w", err)
-	}
-	desc := &dpb.FileDescriptorProto{}
-	if err := proto.Unmarshal(b, desc); err != nil {
-		return "", fmt.Errorf("error in unmarshaling proto: %w", err)
-	}
-	ver := proto.GetExtension(desc.Options, pb.E_GnmiService)
-	return (ver).(string), nil
 }

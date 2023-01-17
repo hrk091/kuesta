@@ -23,10 +23,13 @@
 package core
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -34,10 +37,10 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
-	"github.com/nttcom/kuesta/pkg/gnmi"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -47,6 +50,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type ServeCfg struct {
@@ -390,7 +394,7 @@ func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string
 func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
 	l := logger.FromContext(ctx)
 
-	ver, err := gnmi.GetGNMIServiceVersion()
+	ver, err := GetGNMIServiceVersion()
 	if err != nil {
 		s.Error(l, err, "get gnmi service version")
 		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
@@ -618,4 +622,25 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	}
 
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_UPDATE}, nil
+}
+
+// GetGNMIServiceVersion returns a pointer to the gNMI service version string.
+// The method is non-trivial because of the way it is defined in the proto file.
+func GetGNMIServiceVersion() (string, error) {
+	gzB, _ := (&pb.Update{}).Descriptor() // nolint
+	r, err := gzip.NewReader(bytes.NewReader(gzB))
+	if err != nil {
+		return "", fmt.Errorf("error in initializing gzip reader: %w", err)
+	}
+	defer r.Close()
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return "", fmt.Errorf("error in reading gzip data: %w", err)
+	}
+	desc := &descriptor.FileDescriptorProto{}
+	if err := proto.Unmarshal(b, desc); err != nil {
+		return "", fmt.Errorf("error in unmarshaling proto: %w", err)
+	}
+	ver := proto.GetExtension(desc.Options, pb.E_GnmiService)
+	return (ver).(string), nil
 }

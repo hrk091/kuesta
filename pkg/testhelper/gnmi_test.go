@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,34 +20,26 @@
  THE SOFTWARE.
 */
 
-package gnmi_test
+package testhelper_test
 
 import (
 	"context"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/gnmi"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetGNMIServiceVersion(t *testing.T) {
-	ver, err := gnmi.GetGNMIServiceVersion()
-	assert.Nil(t, err)
-	re := regexp.MustCompile(`(\d+)(\.\d+)?(\.\d+)?`)
-	assert.NotNil(t, re.FindStringIndex(ver))
-}
-
 func TestNewServer(t *testing.T) {
 	getCalled := false
 	setCalled := false
 	capabilitiesCalled := false
 	subscribeCalled := false
-	m := &gnmi.GnmiMock{
+	m := &testhelper.GnmiMock{
 		GetHandler: func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 			getCalled = true
 			return &pb.GetResponse{}, nil
@@ -67,7 +59,7 @@ func TestNewServer(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := gnmi.NewServer(ctx, m)
+	gs, conn := testhelper.NewGnmiServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
