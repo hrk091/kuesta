@@ -181,8 +181,8 @@ version: 0.1.0`)
 	fooModel := &pb.ModelData{Name: "foo", Organization: "org-foo", Version: "0.1.0"}
 	barModel := &pb.ModelData{Name: "bar"}
 
-	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), fooMeta))
-	common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
+	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), fooMeta))
+	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
 	common.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
 	s := kuesta.NewNorthboundServerImpl(&kuesta.ServeCfg{
@@ -236,8 +236,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -265,7 +265,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -296,8 +296,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -331,7 +331,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -362,7 +362,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			nil,
 			codes.NotFound,
@@ -390,8 +390,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
 			},
 			nil,
 			codes.Internal,
@@ -406,7 +406,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
 			},
 			nil,
 			codes.Internal,
@@ -463,8 +463,8 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -481,7 +481,7 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -554,8 +554,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -579,7 +579,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -692,8 +692,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -718,7 +718,7 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			nil,
@@ -736,7 +736,7 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,

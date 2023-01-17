@@ -35,7 +35,6 @@ import (
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/gnmi"
-	"github.com/nttcom/kuesta/pkg/kuesta"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -127,7 +126,7 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing without baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -207,7 +206,7 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing with baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +291,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
+				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)
@@ -331,7 +330,7 @@ var _ = Describe("DeviceOperator controller", func() {
 		Context("when device config updated", func() {
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
-					common.MustNil(kuesta.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
+					common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
 				})
 				h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := io.Copy(w, buf)

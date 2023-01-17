@@ -54,7 +54,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "transform.cue")
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
+				common.ExitOnErr(t, common.WriteFileWithMkdir(path, []byte(`
 #Input: {
 	// kuesta:"key=1"
 	bar:   string
@@ -83,7 +83,7 @@ func TestGnmiPathConverter_Convert(t *testing.T) {
 			},
 			func(dir string) {
 				path := filepath.Join(dir, "services", "foo", "transform.cue")
-				common.ExitOnErr(t, kuesta.WriteFileWithMkdir(path, []byte(`
+				common.ExitOnErr(t, common.WriteFileWithMkdir(path, []byte(`
 #Input: {
 	// kuesta:"key=1"
 	bar:   string

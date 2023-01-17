@@ -24,7 +24,6 @@ package kuesta_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -33,52 +32,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/stretchr/testify/assert"
 )
-
-func TestWriteFileWithMkdir(t *testing.T) {
-	dir := t.TempDir()
-	buf := []byte("foobar")
-
-	t.Run("ok: new dir", func(t *testing.T) {
-		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err := kuesta.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
-
-		got, err := os.ReadFile(path)
-		assert.Nil(t, err)
-		assert.Equal(t, buf, got)
-	})
-
-	t.Run("ok: existing dir", func(t *testing.T) {
-		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
-		common.ExitOnErr(t, err)
-
-		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = kuesta.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
-
-		got, err := os.ReadFile(path)
-		assert.Nil(t, err)
-		assert.Equal(t, buf, got)
-	})
-
-	t.Run("ok: write multiple times", func(t *testing.T) {
-		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
-		common.ExitOnErr(t, err)
-
-		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = kuesta.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
-		err = kuesta.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
-
-		got, err := os.ReadFile(path)
-		assert.Nil(t, err)
-		assert.Equal(t, buf, got)
-	})
-}
 
 // test helpers
 

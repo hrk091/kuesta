@@ -141,7 +141,7 @@ func (p *ServicePath) ReadServiceInput() ([]byte, error) {
 
 // WriteServiceInputFile writes the supplied service's input file.
 func (p *ServicePath) WriteServiceInputFile(buf []byte) error {
-	return WriteFileWithMkdir(p.ServiceInputPath(IncludeRoot), buf)
+	return common.WriteFileWithMkdir(p.ServiceInputPath(IncludeRoot), buf)
 }
 
 // ServiceTransformPath returns the path to the specified service's transform file.
@@ -177,7 +177,7 @@ func (p *ServicePath) ReadServiceComputedFile(device string) ([]byte, error) {
 
 // WriteServiceComputedFile writes the partial device config computed from service to the corresponding computed dir.
 func (p *ServicePath) WriteServiceComputedFile(device string, buf []byte) error {
-	return WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
+	return common.WriteFileWithMkdir(p.ServiceComputedPath(device, IncludeRoot), buf)
 }
 
 // ServiceMetaPath returns the path to the service meta.
@@ -280,7 +280,7 @@ func (p *DevicePath) ReadDeviceConfigFile() ([]byte, error) {
 
 // WriteDeviceConfigFile writes the merged device config to the corresponding device dir.
 func (p *DevicePath) WriteDeviceConfigFile(buf []byte) error {
-	return WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
+	return common.WriteFileWithMkdir(p.DeviceConfigPath(IncludeRoot), buf)
 }
 
 // CheckSum returns the SHA256 checksum of the device config.

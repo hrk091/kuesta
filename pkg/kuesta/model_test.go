@@ -114,7 +114,7 @@ func TestReadServiceMeta(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "metadata.yaml")
 			if tt.given != nil {
-				err := kuesta.WriteFileWithMkdir(path, tt.given)
+				err := common.WriteFileWithMkdir(path, tt.given)
 				common.ExitOnErr(t, err)
 			}
 			got, err := kuesta.ReadServiceMeta(path)
@@ -148,7 +148,7 @@ func TestNewServiceTransformer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
 			common.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()
@@ -166,7 +166,7 @@ func TestNewServiceTransformer(t *testing.T) {
 
 func TestServerTransformer_Apply(t *testing.T) {
 	dir := t.TempDir()
-	err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
 	common.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
@@ -213,7 +213,7 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 	nullVal:  null
 }`)
 	dir := t.TempDir()
-	err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
+	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
 	common.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
@@ -396,7 +396,7 @@ func TestServiceTransformer_InputKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			err := kuesta.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
 			common.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()

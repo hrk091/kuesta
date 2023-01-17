@@ -206,7 +206,7 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 // SaveConfig writes device config contained in supplied SaveConfigRequest.
 func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigRequest) error {
 	dp := DevicePath{RootDir: s.cfg.StatusRootPath, Device: r.Device}
-	if err := WriteFileWithMkdir(dp.DeviceActualConfigPath(IncludeRoot), []byte(*r.Config)); err != nil {
+	if err := common.WriteFileWithMkdir(dp.DeviceActualConfigPath(IncludeRoot), []byte(*r.Config)); err != nil {
 		return fmt.Errorf("write actual device config: %w", err)
 	}
 	return nil
