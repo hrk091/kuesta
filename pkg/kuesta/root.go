@@ -23,8 +23,8 @@
 package kuesta
 
 import (
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gogit"
 )
 
 type RootCfg struct {

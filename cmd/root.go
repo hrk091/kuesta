@@ -27,7 +27,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nttcom/kuesta/pkg/gogit"
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cast"

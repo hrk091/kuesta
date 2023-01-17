@@ -25,95 +25,41 @@ package gitrepo_test
 import (
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/gitrepo"
+	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewGitHubClient(t *testing.T) {
+func TestNewGitRepoClient(t *testing.T) {
 	token := ""
 
 	tests := []struct {
-		name    string
-		given   string
-		wantRet bool
+		name     string
+		given    string
+		wantKind string
+		wantErr  bool
 	}{
 		{
 			"ok",
 			"https://github.com/hrk091/kuesta-testdata",
-			true,
-		},
-		{
-			"err: incorrect git repo",
-			"https://not.exist.com/hrk091/kuesta-testdata",
-			false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gitrepo.NewGitHubClient(tt.given, token)
-			if tt.wantRet {
-				assert.NotNil(t, c)
-			} else {
-				assert.Nil(t, c)
-			}
-		})
-	}
-}
-
-func TestNewRepoRef(t *testing.T) {
-	tests := []struct {
-		name    string
-		given   string
-		want    gitrepo.GitRepoRef
-		wantErr bool
-	}{
-		{
-			"ok",
-			"https://github.com/hrk091/kuesta-testdata",
-			gitrepo.GitRepoRef{
-				Owner: "hrk091",
-				Name:  "kuesta-testdata",
-			},
-			false,
-		},
-		{
-			"ok: repoName including slash",
-			"https://github.com/hrk091/kuesta/testdata",
-			gitrepo.GitRepoRef{
-				Owner: "hrk091",
-				Name:  "kuesta/testdata",
-			},
+			"github",
 			false,
 		},
 		{
 			"err: incorrect git repo",
 			"https://not.exist.com/hrk091/kuesta-testdata",
-			gitrepo.GitRepoRef{},
-			true,
-		},
-		{
-			"err: repoName not given",
-			"https://not.exist.com/hrk091/",
-			gitrepo.GitRepoRef{},
-			true,
-		},
-		{
-			"err: org not given",
-			"https://not.exist.com/",
-			gitrepo.GitRepoRef{},
+			"",
 			true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := gitrepo.NewRepoRef(tt.given)
+			c, err := gitrepo.NewGitRepoClient(tt.given, token)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.wantKind, c.Kind())
 			}
 		})
 	}

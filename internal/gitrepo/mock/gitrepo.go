@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	gitrepo "github.com/nttcom/kuesta/pkg/gitrepo"
+	gitrepo "github.com/nttcom/kuesta/internal/gitrepo"
 )
 
 // MockGitRepoClient is a mock of GitRepoClient interface.

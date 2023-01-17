@@ -32,10 +32,10 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/golang/mock/gomock"
+	"github.com/nttcom/kuesta/internal/gitrepo"
+	"github.com/nttcom/kuesta/internal/gitrepo/mock"
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gitrepo"
-	"github.com/nttcom/kuesta/pkg/gitrepo/mock"
-	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/stretchr/testify/assert"
 )

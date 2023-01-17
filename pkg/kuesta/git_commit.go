@@ -31,9 +31,9 @@ import (
 	"time"
 
 	extgogit "github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/internal/gitrepo"
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gitrepo"
-	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
 )

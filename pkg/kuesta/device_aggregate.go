@@ -35,8 +35,8 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/gogit"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
