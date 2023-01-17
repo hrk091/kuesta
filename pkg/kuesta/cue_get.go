@@ -64,7 +64,7 @@ func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 }
 
 func RunCueGetImpl(ctx context.Context, path string, getter CueGetter) error {
-	_ = WriterFromContext(ctx)
+	_ = common.WriterFromContext(ctx)
 
 	if err := validateIsModuleRoot(); err != nil {
 		return fmt.Errorf("validate: %w", err)

@@ -50,7 +50,7 @@ func (c *GitCommitCfg) Validate() error {
 // RunGitCommit runs the main process of the `git commit` command.
 func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	l := logger.FromContext(ctx)
-	out := WriterFromContext(ctx)
+	out := common.WriterFromContext(ctx)
 	l.Debug("git commit called")
 
 	git, err := gogit.NewGit(cfg.ConfigGitOptions())
