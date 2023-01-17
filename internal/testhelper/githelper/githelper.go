@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package core_test
+package githelper
 
 import (
 	"os"
@@ -31,12 +31,11 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 )
 
-// test helpers
-
-func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
+func InitRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := os.MkdirTemp("", "gittest-*")
 	testhelper.ExitOnErr(t, err)
 
@@ -44,14 +43,14 @@ func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	repo, err := extgogit.PlainInit(dir, false)
 	testhelper.ExitOnErr(t, err)
 
-	testhelper.ExitOnErr(t, addFile(repo, "README.md", "# test"))
-	_, err = commit(repo, time.Now())
+	testhelper.ExitOnErr(t, CreateFileWithAdding(repo, "README.md", "# test"))
+	_, err = Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
-	testhelper.ExitOnErr(t, createBranch(repo, branch))
+	testhelper.ExitOnErr(t, CreateBranch(repo, branch))
 	return repo, dir
 }
 
-func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
+func InitBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := os.MkdirTemp("", "gittest-*")
 	testhelper.ExitOnErr(t, err)
 	// dir := t.TempDir()
@@ -60,20 +59,77 @@ func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	return repo, dir
 }
 
-func addFile(repo *extgogit.Repository, path, content string) error {
-	wt, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
+func InitRepoWithRemote(t *testing.T, branch, remote string) (*extgogit.Repository, string, string) {
+	_, dirBare := InitBareRepo(t)
+	repo, dir := InitRepo(t, branch)
+	_, err := repo.CreateRemote(&config.RemoteConfig{
+		Name: remote,
+		URLs: []string{dirBare},
+	})
+	testhelper.ExitOnErr(t, err)
+
+	return repo, dir, dirBare
+}
+
+func SetupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
+	_, dir, _ := InitRepoWithRemote(t, "main", "origin")
+
+	opt.Path = dir
+	git, err := gogit.NewGit(opt)
+	testhelper.ExitOnErr(t, err)
+
+	remote, err := git.Remote("origin")
+	testhelper.ExitOnErr(t, err)
+	return remote, git, dir
+}
+
+func CloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
+	dir, err := os.MkdirTemp("", "gittest-*")
+	testhelper.ExitOnErr(t, err)
+	// dir := t.TempDir()
+	repo, err := extgogit.PlainClone(dir, false, opts)
+	testhelper.ExitOnErr(t, err)
+	return repo, dir
+}
+
+func CreateFile(wt *extgogit.Worktree, path, content string) error {
 	f, err := wt.Filesystem.Create(path)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	if _, err = f.Write([]byte(content)); err != nil {
-		f.Close()
 		return err
 	}
-	if err = f.Close(); err != nil {
+	return nil
+}
+
+func ModifyFile(wt *extgogit.Worktree, path, content string) error {
+	f, err := wt.Filesystem.OpenFile(path, os.O_WRONLY, 0o666)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = f.Write([]byte(content)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteFile(wt *extgogit.Worktree, path string) error {
+	if err := wt.Filesystem.Remove(path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateFileWithAdding(repo *extgogit.Repository, path, content string) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+	if err := CreateFile(wt, path, content); err != nil {
 		return err
 	}
 	if _, err = wt.Add(path); err != nil {
@@ -82,18 +138,29 @@ func addFile(repo *extgogit.Repository, path, content string) error {
 	return nil
 }
 
-func commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
+func DeleteFileWithAdding(repo *extgogit.Repository, path string) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+	if _, err = wt.Remove(path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func Commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return plumbing.Hash{}, err
 	}
 	return wt.Commit("Updated", &extgogit.CommitOptions{
-		Author:    mockSignature(time),
-		Committer: mockSignature(time),
+		Author:    MockSignature(time),
+		Committer: MockSignature(time),
 	})
 }
 
-func push(repo *extgogit.Repository, branch, remote string) error {
+func Push(repo *extgogit.Repository, branch, remote string) error {
 	o := &extgogit.PushOptions{
 		RemoteName: remote,
 		Progress:   os.Stdout,
@@ -104,19 +171,7 @@ func push(repo *extgogit.Repository, branch, remote string) error {
 	return repo.Push(o)
 }
 
-func checkout(repo *extgogit.Repository, branch string) error {
-	w, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
-	opt := &extgogit.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
-		Keep:   true,
-	}
-	return w.Checkout(opt)
-}
-
-func createBranch(repo *extgogit.Repository, branch string) error {
+func CreateBranch(repo *extgogit.Repository, branch string) error {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return err
@@ -133,7 +188,7 @@ func createBranch(repo *extgogit.Repository, branch string) error {
 	})
 }
 
-func mockSignature(time time.Time) *object.Signature {
+func MockSignature(time time.Time) *object.Signature {
 	return &object.Signature{
 		Name:  "Test User",
 		Email: "test@example.com",
@@ -141,18 +196,7 @@ func mockSignature(time time.Time) *object.Signature {
 	}
 }
 
-func deleteFile(repo *extgogit.Repository, path string) error {
-	wt, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
-	if _, err = wt.Remove(path); err != nil {
-		return err
-	}
-	return nil
-}
-
-func getStatus(t *testing.T, repo *extgogit.Repository) extgogit.Status {
+func GetStatus(t *testing.T, repo *extgogit.Repository) extgogit.Status {
 	w, err := repo.Worktree()
 	testhelper.ExitOnErr(t, err)
 	stmap, err := w.Status()
@@ -161,14 +205,14 @@ func getStatus(t *testing.T, repo *extgogit.Repository) extgogit.Status {
 	return stmap
 }
 
-func getBranch(t *testing.T, repo *extgogit.Repository) string {
+func GetBranch(t *testing.T, repo *extgogit.Repository) string {
 	ref, err := repo.Head()
 	testhelper.ExitOnErr(t, err)
 
 	return ref.Name().Short()
 }
 
-func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName string) []*plumbing.Reference {
+func GetRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName string) []*plumbing.Reference {
 	remote, err := repo.Remote(remoteName)
 	testhelper.ExitOnErr(t, err)
 	branches, err := remote.List(&extgogit.ListOptions{})
@@ -177,51 +221,12 @@ func getRemoteBranches(t *testing.T, repo *extgogit.Repository, remoteName strin
 	return branches
 }
 
-func getRemoteBranch(t *testing.T, repo *extgogit.Repository, remoteName, branchName string) *plumbing.Reference {
-	branches := getRemoteBranches(t, repo, remoteName)
+func GetRemoteBranch(t *testing.T, repo *extgogit.Repository, remoteName, branchName string) *plumbing.Reference {
+	branches := GetRemoteBranches(t, repo, remoteName)
 	for _, ref := range branches {
 		if ref.Name().Short() == branchName {
 			return ref
 		}
 	}
 	return nil
-}
-
-func setupGitRepoWithRemote(t *testing.T, remote string) (*extgogit.Repository, string, string) {
-	_, url := initBareRepo(t)
-
-	repo, dir := initRepo(t, "main")
-	_, err := repo.CreateRemote(&config.RemoteConfig{
-		Name: remote,
-		URLs: []string{url},
-	})
-	testhelper.ExitOnErr(t, err)
-
-	testhelper.ExitOnErr(t, addFile(repo, "devices/device1/actual_config.cue", "{will_deleted: _}"))
-	testhelper.ExitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{will_updated: _}"))
-	_, err = commit(repo, time.Now())
-	testhelper.ExitOnErr(t, err)
-
-	testhelper.ExitOnErr(t, repo.CreateBranch(&config.Branch{
-		Name:   "main",
-		Remote: remote,
-		Merge:  plumbing.NewBranchReferenceName("main"),
-	}))
-
-	testhelper.ExitOnErr(t, push(repo, "main", remote))
-
-	testhelper.ExitOnErr(t, deleteFile(repo, "devices/device1/actual_config.cue"))
-	testhelper.ExitOnErr(t, addFile(repo, "devices/device2/actual_config.cue", "{updated: _}"))
-	testhelper.ExitOnErr(t, addFile(repo, "devices/device3/actual_config.cue", "{added: _}"))
-
-	return repo, dir, url
-}
-
-func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
-	dir, err := os.MkdirTemp("", "gittest-*")
-	testhelper.ExitOnErr(t, err)
-	// dir := t.TempDir()
-	repo, err := extgogit.PlainClone(dir, false, opts)
-	testhelper.ExitOnErr(t, err)
-	return repo, dir
 }

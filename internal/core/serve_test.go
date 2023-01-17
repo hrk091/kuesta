@@ -34,6 +34,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/testhelper/githelper"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -113,16 +114,16 @@ func TestServeCfg_Validate(t *testing.T) {
 }
 
 func TestNorthboundServer_RunStatusSyncLoop(t *testing.T) {
-	repo, _, dirBare := setupGitRepoWithRemote(t, "origin")
-	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+	repo, _, dirBare := core.SetupGitRepoWithRemote(t, "origin")
+	repoPuller, dirPuller := githelper.CloneRepo(t, &extgogit.CloneOptions{
 		URL:           dirBare,
 		RemoteName:    "origin",
 		ReferenceName: plumbing.NewBranchReferenceName("main"),
 	})
 
-	wantHash, err := commit(repo, time.Now())
+	wantHash, err := githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
-	testhelper.ExitOnErr(t, push(repo, "main", "origin"))
+	testhelper.ExitOnErr(t, githelper.Push(repo, "main", "origin"))
 
 	sGit, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dirPuller,
@@ -144,16 +145,16 @@ func TestNorthboundServer_RunStatusSyncLoop(t *testing.T) {
 }
 
 func TestNorthboundServer_RunConfigSyncLoop(t *testing.T) {
-	repo, _, dirBare := setupGitRepoWithRemote(t, "origin")
-	repoPuller, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+	repo, _, dirBare := core.SetupGitRepoWithRemote(t, "origin")
+	repoPuller, dirPuller := githelper.CloneRepo(t, &extgogit.CloneOptions{
 		URL:           dirBare,
 		RemoteName:    "origin",
 		ReferenceName: plumbing.NewBranchReferenceName("main"),
 	})
 
-	wantHash, err := commit(repo, time.Now())
+	wantHash, err := githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
-	testhelper.ExitOnErr(t, push(repo, "main", "origin"))
+	testhelper.ExitOnErr(t, githelper.Push(repo, "main", "origin"))
 
 	cGit, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dirPuller,

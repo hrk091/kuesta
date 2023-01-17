@@ -36,32 +36,33 @@ import (
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gitrepo/mock"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/testhelper/githelper"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRunGitCommit(t *testing.T) {
 	setup := func(t *testing.T) (*extgogit.Repository, string) {
-		_, url := initBareRepo(t)
+		_, url := githelper.InitBareRepo(t)
 
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		_, err := repo.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
 			URLs: []string{url},
 		})
 		testhelper.ExitOnErr(t, err)
 
-		testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-		testhelper.ExitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
-		_, err = commit(repo, time.Now())
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/one/input.cue", "{}"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "devices/device1/config.cue", "{}"))
+		_, err = githelper.Commit(repo, time.Now())
 		testhelper.ExitOnErr(t, err)
 
-		testhelper.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-		testhelper.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-		testhelper.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
-		testhelper.ExitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
-		testhelper.ExitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
-		testhelper.ExitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
+		testhelper.ExitOnErr(t, githelper.DeleteFileWithAdding(repo, "services/foo/one/input.cue"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/two/input.cue", "{}"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/three/input.cue", "{}"))
+		testhelper.ExitOnErr(t, githelper.DeleteFileWithAdding(repo, "devices/device1/config.cue"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "devices/device2/config.cue", "{}"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "devices/device3/config.cue", "{}"))
 		return repo, dir
 	}
 
@@ -87,7 +88,7 @@ Devices:
 			},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, "main", getBranch(t, repo))
+		assert.Equal(t, "main", githelper.GetBranch(t, repo))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
@@ -114,7 +115,7 @@ Devices:
 			},
 		})
 		assert.Nil(t, err)
-		assert.True(t, strings.HasPrefix(getBranch(t, repo), "REV-"))
+		assert.True(t, strings.HasPrefix(githelper.GetBranch(t, repo), "REV-"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,

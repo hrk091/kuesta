@@ -36,6 +36,7 @@ import (
 
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/core"
+	"github.com/nttcom/kuesta/internal/testhelper/githelper"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
@@ -131,9 +132,9 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 	testRemote := "test-remote"
 
 	t.Run("ok", func(t *testing.T) {
-		repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
+		repo, dir, _ := core.SetupGitRepoWithRemote(t, testRemote)
 		oldRef, _ := repo.Head()
-		assert.Greater(t, len(getStatus(t, repo)), 0)
+		assert.Greater(t, len(githelper.GetStatus(t, repo)), 0)
 
 		s := core.NewDeviceAggregateServer(&core.DeviceAggregateCfg{
 			RootCfg: core.RootCfg{
@@ -143,10 +144,10 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 		})
 		err := s.GitPushDeviceConfig(context.Background())
 		assert.Nil(t, err)
-		assert.Equal(t, len(getStatus(t, repo)), 0)
+		assert.Equal(t, len(githelper.GetStatus(t, repo)), 0)
 
 		localRef, _ := repo.Head()
-		remoteRef := getRemoteBranch(t, repo, testRemote, "main")
+		remoteRef := githelper.GetRemoteBranch(t, repo, testRemote, "main")
 		assert.NotEqual(t, localRef.Hash().String(), oldRef.Hash().String())
 		assert.Equal(t, localRef.Hash().String(), remoteRef.Hash().String())
 	})
@@ -154,7 +155,7 @@ func TestDeviceAggregateServer_GitPushSyncBranch(t *testing.T) {
 
 func TestDeviceAggregateServer_Run(t *testing.T) {
 	testRemote := "test-remote"
-	repo, dir, _ := setupGitRepoWithRemote(t, testRemote)
+	repo, dir, _ := core.SetupGitRepoWithRemote(t, testRemote)
 	config := "foobar"
 	req := core.SaveConfigRequest{
 		Device: "device1",
@@ -185,12 +186,12 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	}, time.Second, 100*time.Millisecond)
 	assert.Equal(t, []byte(config), got)
 
-	assert.Greater(t, len(getStatus(t, repo)), 0)
+	assert.Greater(t, len(githelper.GetStatus(t, repo)), 0)
 	assert.Eventually(t, func() bool {
 		localRef, _ := repo.Head()
-		remoteRef := getRemoteBranch(t, repo, testRemote, "main")
+		remoteRef := githelper.GetRemoteBranch(t, repo, testRemote, "main")
 		return localRef.Hash().String() == remoteRef.Hash().String()
 	}, time.Second, 100*time.Millisecond)
 
-	assert.Equal(t, len(getStatus(t, repo)), 0)
+	assert.Equal(t, len(githelper.GetStatus(t, repo)), 0)
 }

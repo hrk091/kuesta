@@ -29,6 +29,7 @@ import (
 
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/core"
+	"github.com/nttcom/kuesta/internal/testhelper/githelper"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -164,16 +165,16 @@ func TestCheckGitFileStatus(t *testing.T) {
 
 func TestServiceCompilePlan_Do(t *testing.T) {
 	var err error
-	repo, dir := initRepo(t, "main")
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-	_, err = commit(repo, time.Now())
+	repo, dir := githelper.InitRepo(t, "main")
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/one/input.cue", "{}"))
+	_, err = githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
 
-	testhelper.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+	testhelper.ExitOnErr(t, githelper.DeleteFileWithAdding(repo, "services/foo/one/input.cue"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/two/input.cue", "{}"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/three/input.cue", "{}"))
 
-	stmap := getStatus(t, repo)
+	stmap := githelper.GetStatus(t, repo)
 	plan := core.NewServiceCompilePlan(stmap, dir)
 	updated := 0
 	deleted := 0
@@ -197,28 +198,28 @@ func TestServiceCompilePlan_Do(t *testing.T) {
 
 func TestServiceCompilePlan_IsEmpty(t *testing.T) {
 	var err error
-	repo, dir := initRepo(t, "main")
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-	_, err = commit(repo, time.Now())
+	repo, dir := githelper.InitRepo(t, "main")
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/one/input.cue", "{}"))
+	_, err = githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
 
-	stmap := getStatus(t, repo)
+	stmap := githelper.GetStatus(t, repo)
 	plan := core.NewServiceCompilePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }
 
 func TestDeviceCompositePlan_Do(t *testing.T) {
 	var err error
-	repo, dir := initRepo(t, "main")
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
-	_, err = commit(repo, time.Now())
+	repo, dir := githelper.InitRepo(t, "main")
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/one/computed/device1.cue", "{}"))
+	_, err = githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
 
-	testhelper.ExitOnErr(t, deleteFile(repo, "services/foo/one/computed/device1.cue"))
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/two/computed/device2.cue", "{}"))
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/three/computed/device3.cue", "{}"))
+	testhelper.ExitOnErr(t, githelper.DeleteFileWithAdding(repo, "services/foo/one/computed/device1.cue"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/two/computed/device2.cue", "{}"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/three/computed/device3.cue", "{}"))
 
-	stmap := getStatus(t, repo)
+	stmap := githelper.GetStatus(t, repo)
 	plan := core.NewDeviceCompositePlan(stmap, dir)
 	executed := 0
 	err = plan.Do(context.Background(),
@@ -233,12 +234,12 @@ func TestDeviceCompositePlan_Do(t *testing.T) {
 
 func TestDeviceCompositePlan_IsEmpty(t *testing.T) {
 	var err error
-	repo, dir := initRepo(t, "main")
-	testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/computed/device1.cue", "{}"))
-	_, err = commit(repo, time.Now())
+	repo, dir := githelper.InitRepo(t, "main")
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "services/foo/one/computed/device1.cue", "{}"))
+	_, err = githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
 
-	stmap := getStatus(t, repo)
+	stmap := githelper.GetStatus(t, repo)
 	plan := core.NewDeviceCompositePlan(stmap, dir)
 	assert.True(t, plan.IsEmpty())
 }

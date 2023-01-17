@@ -94,7 +94,7 @@ func TestNewGit(t *testing.T) {
 	})
 
 	t.Run("ok: clone", func(t *testing.T) {
-		repoPusher, dir, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		repoPusher, dir, remoteUrl := githelper.InitRepoWithRemote(t, "main", "origin")
 		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		opt := &gogit.GitOptions{
@@ -114,7 +114,7 @@ func TestNewGit(t *testing.T) {
 	})
 
 	t.Run("err: no repo without shouldClone flag", func(t *testing.T) {
-		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main", "origin")
 		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		dir := t.TempDir()
@@ -131,7 +131,7 @@ func TestNewGit(t *testing.T) {
 
 func TestGit_Clone(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main", "origin")
 		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		dir := t.TempDir()
@@ -217,7 +217,7 @@ func TestGit_Signature(t *testing.T) {
 
 func TestGit_Head(t *testing.T) {
 	repo, dir := githelper.InitRepo(t, "main")
-	testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "hash"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "hash"))
 	want, err := githelper.Commit(repo, time.Now())
 	testhelper.ExitOnErr(t, err)
 
@@ -306,7 +306,7 @@ func TestGit_Checkout(t *testing.T) {
 func TestGit_Commit(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		repo, dir := githelper.InitRepo(t, "main")
-		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "dummy"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
@@ -319,7 +319,7 @@ func TestGit_Commit(t *testing.T) {
 	t.Run("ok: other trunk branch", func(t *testing.T) {
 		testTrunk := "test-branch"
 		repo, dir := githelper.InitRepo(t, testTrunk)
-		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "dummy"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
@@ -456,7 +456,7 @@ func TestGit_Push(t *testing.T) {
 			RemoteName: testRemote,
 		})
 		testhelper.ExitOnErr(t, err)
-		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "push"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		_, err = g.Commit(wantMsg)
 		testhelper.ExitOnErr(t, err)
@@ -482,7 +482,7 @@ func TestGit_Push(t *testing.T) {
 			TrunkBranch: "main",
 		})
 		testhelper.ExitOnErr(t, err)
-		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "push"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "push"))
 		_, err = g.Commit("added: test")
 		testhelper.ExitOnErr(t, err)
 
@@ -593,7 +593,7 @@ func TestGit_Pull(t *testing.T) {
 		})
 
 		// push branch
-		testhelper.ExitOnErr(t, githelper.AddFile(gitPuller.Repo(), "test", "push"))
+		testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(gitPuller.Repo(), "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		want, err := gitPusher.Commit(wantMsg)
 		testhelper.ExitOnErr(t, err)
@@ -665,7 +665,7 @@ func TestGit_Reset(t *testing.T) {
 		Path: dir,
 	})
 	testhelper.ExitOnErr(t, err)
-	testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "hash"))
+	testhelper.ExitOnErr(t, githelper.CreateFileWithAdding(repo, "test", "hash"))
 
 	w, err := repo.Worktree()
 	testhelper.ExitOnErr(t, err)
@@ -703,7 +703,7 @@ func TestGit_RemoveBranch(t *testing.T) {
 }
 
 func TestGit_RemoveGoneBranches(t *testing.T) {
-	repo, dir, _ := githelper.InitRepoWithRemote(t, "main")
+	repo, dir, _ := githelper.InitRepoWithRemote(t, "main", "origin")
 	testhelper.ExitOnErr(t, githelper.Push(repo, "main", "origin"))
 
 	testhelper.ExitOnErr(t, githelper.CreateBranch(repo, "foo"))
