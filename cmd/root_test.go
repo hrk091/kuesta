@@ -27,17 +27,17 @@ import (
 	"testing"
 
 	"github.com/nttcom/kuesta/cmd"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRootCmd(t *testing.T) {
 	dummyToken := "dummy-git-token"
-	common.ExitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
+	testhelper.ExitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
 
 	dummyRootpath := "dummy-rootpath"
-	common.ExitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
+	testhelper.ExitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
 
 	_ = cmd.NewRootCmd()
 	assert.Equal(t, dummyToken, viper.GetString(cmd.FlagGitToken))

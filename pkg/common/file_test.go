@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,7 +39,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err := common.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -47,11 +48,11 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: existing dir", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = common.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)
@@ -60,13 +61,13 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: write multiple times", func(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, "foo", "bar"), 0o750)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
 		err = common.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		err = common.WriteFileWithMkdir(path, buf)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
 		assert.Nil(t, err)

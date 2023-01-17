@@ -29,21 +29,22 @@ import (
 
 	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCollectPartialDeviceConfig(t *testing.T) {
 	dir := t.TempDir()
 	dummy := []byte("dummy")
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "transform.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "input.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "computed", "device1.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "computed", "device2.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "two", "input.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "two", "computed", "device1.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "transform.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "one", "input.cue"), dummy))
-	common.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "one", "computed", "device1.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "transform.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "input.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "computed", "device1.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "one", "computed", "device2.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "two", "input.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "foo", "two", "computed", "device1.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "transform.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "one", "input.cue"), dummy))
+	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "bar", "one", "computed", "device1.cue"), dummy))
 
 	t.Run("ok", func(t *testing.T) {
 		files, err := core.CollectPartialDeviceConfig(dir, "device1")

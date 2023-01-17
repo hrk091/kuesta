@@ -29,12 +29,12 @@ import (
 	"testing"
 
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRunCueGetImpl(t *testing.T) {
-	common.Chdir(t, "./testdata")
+	testhelper.Chdir(t, "./testdata")
 	called := false
 	getter := core.CueGetFunc(func(modPath, outDir string) error {
 		assert.Equal(t, "github.com/nttcom/kuesta/testdata", modPath)

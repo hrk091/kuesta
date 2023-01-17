@@ -168,6 +168,7 @@ func CueKuestaTagOf(v cue.Value, path string) (string, error) {
 	return GetKuestaTag(vv)
 }
 
+// GetKuestaTag extracts the value tagged with 'kuesta' key from ast.CommentGroup.
 func GetKuestaTag(v cue.Value) (string, error) {
 	cgs := ast.Comments(v.Source())
 	if len(cgs) == 0 {

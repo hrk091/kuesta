@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package testhelper
+package gnmihelper
 
 import (
 	"context"

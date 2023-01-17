@@ -29,6 +29,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -115,7 +116,7 @@ func TestReadServiceMeta(t *testing.T) {
 			path := filepath.Join(dir, "metadata.yaml")
 			if tt.given != nil {
 				err := common.WriteFileWithMkdir(path, tt.given)
-				common.ExitOnErr(t, err)
+				testhelper.ExitOnErr(t, err)
 			}
 			got, err := kuesta.ReadServiceMeta(path)
 			if tt.wantErr {
@@ -149,7 +150,7 @@ func TestNewServiceTransformer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
-			common.ExitOnErr(t, err)
+			testhelper.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()
 			tr, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
@@ -167,18 +168,18 @@ func TestNewServiceTransformer(t *testing.T) {
 func TestServerTransformer_Apply(t *testing.T) {
 	dir := t.TempDir()
 	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	tr, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	t.Run("ok", func(t *testing.T) {
 		in := cctx.CompileBytes(input)
-		common.ExitOnErr(t, in.Err())
+		testhelper.ExitOnErr(t, in.Err())
 
 		it, err := tr.Apply(in)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		assert.True(t, it.Next())
 		assert.Equal(t, "device1", it.Label())
@@ -189,7 +190,7 @@ func TestServerTransformer_Apply(t *testing.T) {
 
 	t.Run("ok: missing optional fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingOptinoal)
-		common.ExitOnErr(t, in.Err())
+		testhelper.ExitOnErr(t, in.Err())
 
 		_, err := tr.Apply(in)
 		assert.Nil(t, err)
@@ -197,7 +198,7 @@ func TestServerTransformer_Apply(t *testing.T) {
 
 	t.Run("err: missing required fields", func(t *testing.T) {
 		in := cctx.CompileBytes(missingRequired)
-		common.ExitOnErr(t, in.Err())
+		testhelper.ExitOnErr(t, in.Err())
 
 		_, err := tr.Apply(in)
 		assert.Error(t, err)
@@ -214,11 +215,11 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 }`)
 	dir := t.TempDir()
 	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	transformer, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	tests := []struct {
 		name    string
@@ -397,11 +398,11 @@ func TestServiceTransformer_InputKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
-			common.ExitOnErr(t, err)
+			testhelper.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()
 			transformer, err := kuesta.ReadServiceTransformer(cctx, []string{"transform.cue"}, dir)
-			common.ExitOnErr(t, err)
+			testhelper.ExitOnErr(t, err)
 
 			got, err := transformer.InputKeys()
 			if tt.wantErr {
@@ -469,10 +470,10 @@ config: {
 		Mtu:     9000
 	}
 }`))
-		common.ExitOnErr(t, want.Err())
+		testhelper.ExitOnErr(t, want.Err())
 
 		device, err := kuesta.NewDeviceFromBytes(cctx, given)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		got, err := device.Config()
 		assert.Nil(t, err)
 		assert.True(t, want.Equals(cctx.CompileBytes(got)))
@@ -483,7 +484,7 @@ config: {
 		given := []byte(`something: {foo: "bar"}`)
 
 		device, err := kuesta.NewDeviceFromBytes(cctx, given)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		got, err := device.Config()
 		assert.Nil(t, got)
 		assert.Error(t, err)

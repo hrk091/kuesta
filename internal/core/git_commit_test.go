@@ -36,7 +36,7 @@ import (
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gitrepo/mock"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,19 +49,19 @@ func TestRunGitCommit(t *testing.T) {
 			Name: "origin",
 			URLs: []string{url},
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
-		common.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
-		common.ExitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
+		testhelper.ExitOnErr(t, addFile(repo, "services/foo/one/input.cue", "{}"))
+		testhelper.ExitOnErr(t, addFile(repo, "devices/device1/config.cue", "{}"))
 		_, err = commit(repo, time.Now())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
-		common.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
-		common.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
-		common.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
-		common.ExitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
-		common.ExitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
-		common.ExitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
+		testhelper.ExitOnErr(t, deleteFile(repo, "services/foo/one/input.cue"))
+		testhelper.ExitOnErr(t, addFile(repo, "services/foo/two/input.cue", "{}"))
+		testhelper.ExitOnErr(t, addFile(repo, "services/foo/three/input.cue", "{}"))
+		testhelper.ExitOnErr(t, deleteFile(repo, "devices/device1/config.cue"))
+		testhelper.ExitOnErr(t, addFile(repo, "devices/device2/config.cue", "{}"))
+		testhelper.ExitOnErr(t, addFile(repo, "devices/device3/config.cue", "{}"))
 		return repo, dir
 	}
 
@@ -93,9 +93,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		h, err := g.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 
@@ -120,9 +120,9 @@ Devices:
 			Path:        dir,
 			TrunkBranch: "main",
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		h, err := g.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, wantMsg, h.Message)
 	})
 }

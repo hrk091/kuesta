@@ -26,7 +26,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -37,7 +37,7 @@ var _ = Describe("DeviceRollout controller", func() {
 	ctx := context.Background()
 
 	var testDr provisioner.DeviceRollout
-	common.MustNil(newTestDataFromFixture("devicerollout", &testDr))
+	testhelper.MustNil(newTestDataFromFixture("devicerollout", &testDr))
 	desired := provisioner.DeviceConfigMap{
 		"device1": {Checksum: "desired", GitRevision: "desired"},
 		"device2": {Checksum: "desired", GitRevision: "desired"},

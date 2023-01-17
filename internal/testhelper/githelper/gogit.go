@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package gogit_test
+package githelper
 
 import (
 	"os"
@@ -32,67 +32,67 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 )
 
-func initRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
+func InitRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 	dir, err := os.MkdirTemp("", "gittest-*")
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
-	common.ExitOnErr(t, addFile(repo, "README.md", "# test"))
-	_, err = commit(repo, time.Now())
-	common.ExitOnErr(t, err)
-	common.ExitOnErr(t, createBranch(repo, branch))
+	testhelper.ExitOnErr(t, AddFile(repo, "README.md", "# test"))
+	_, err = Commit(repo, time.Now())
+	testhelper.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, CreateBranch(repo, branch))
 	return repo, dir
 }
 
-func initBareRepo(t *testing.T) (*extgogit.Repository, string) {
+func InitBareRepo(t *testing.T) (*extgogit.Repository, string) {
 	dir, err := os.MkdirTemp("", "gittest-*")
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	// dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	return repo, dir
 }
 
-func initRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, string, string) {
-	_, dirBare := initBareRepo(t)
-	repo, dir := initRepo(t, branch)
+func InitRepoWithRemote(t *testing.T, branch string) (*extgogit.Repository, string, string) {
+	_, dirBare := InitBareRepo(t)
+	repo, dir := InitRepo(t, branch)
 	_, err := repo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
 		URLs: []string{dirBare},
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	return repo, dir, dirBare
 }
 
-func setupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
-	_, dir, _ := initRepoWithRemote(t, "main")
+func SetupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *gogit.Git, string) {
+	_, dir, _ := InitRepoWithRemote(t, "main")
 
 	opt.Path = dir
 	git, err := gogit.NewGit(opt)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	remote, err := git.Remote("origin")
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	return remote, git, dir
 }
 
-func cloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
+func CloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
 	dir, err := os.MkdirTemp("", "gittest-*")
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	// dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	return repo, dir
 }
 
-func createFile(wt *extgogit.Worktree, path, content string) error {
+func CreateFile(wt *extgogit.Worktree, path, content string) error {
 	f, err := wt.Filesystem.Create(path)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func createFile(wt *extgogit.Worktree, path, content string) error {
 	return nil
 }
 
-func modifyFile(wt *extgogit.Worktree, path, content string) error {
+func ModifyFile(wt *extgogit.Worktree, path, content string) error {
 	f, err := wt.Filesystem.OpenFile(path, os.O_WRONLY, 0o666)
 	if err != nil {
 		return err
@@ -117,19 +117,19 @@ func modifyFile(wt *extgogit.Worktree, path, content string) error {
 	return nil
 }
 
-func deleteFile(wt *extgogit.Worktree, path string) error {
+func DeleteFile(wt *extgogit.Worktree, path string) error {
 	if err := wt.Filesystem.Remove(path); err != nil {
 		return err
 	}
 	return nil
 }
 
-func addFile(repo *extgogit.Repository, path, content string) error {
+func AddFile(repo *extgogit.Repository, path, content string) error {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
-	if err := createFile(wt, path, content); err != nil {
+	if err := CreateFile(wt, path, content); err != nil {
 		return err
 	}
 	if _, err = wt.Add(path); err != nil {
@@ -138,18 +138,18 @@ func addFile(repo *extgogit.Repository, path, content string) error {
 	return nil
 }
 
-func commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
+func Commit(repo *extgogit.Repository, time time.Time) (plumbing.Hash, error) {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return plumbing.Hash{}, err
 	}
 	return wt.Commit("Updated", &extgogit.CommitOptions{
-		Author:    mockSignature(time),
-		Committer: mockSignature(time),
+		Author:    MockSignature(time),
+		Committer: MockSignature(time),
 	})
 }
 
-func push(repo *extgogit.Repository, branch, remote string) error {
+func Push(repo *extgogit.Repository, branch, remote string) error {
 	o := &extgogit.PushOptions{
 		RemoteName: remote,
 		Progress:   os.Stdout,
@@ -160,7 +160,7 @@ func push(repo *extgogit.Repository, branch, remote string) error {
 	return repo.Push(o)
 }
 
-func createBranch(repo *extgogit.Repository, branch string) error {
+func CreateBranch(repo *extgogit.Repository, branch string) error {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func createBranch(repo *extgogit.Repository, branch string) error {
 	})
 }
 
-func mockSignature(time time.Time) *object.Signature {
+func MockSignature(time time.Time) *object.Signature {
 	return &object.Signature{
 		Name:  "Test User",
 		Email: "test@example.com",

@@ -34,6 +34,7 @@ import (
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -44,7 +45,7 @@ var _ = Describe("GitRepository watcher", func() {
 	ctx := context.Background()
 
 	var testGr sourcev1.GitRepository
-	common.MustNil(newTestDataFromFixture("gitrepository", &testGr))
+	testhelper.MustNil(newTestDataFromFixture("gitrepository", &testGr))
 
 	config1 := []byte("foo")
 	config2 := []byte("bar")
@@ -56,8 +57,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var err error
 		dir, err = ioutil.TempDir("", "git-watcher-test-*")
 		Expect(err).NotTo(HaveOccurred())
-		common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-		common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+		testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+		testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
 
 		gr := testGr.DeepCopy()
 		Expect(k8sClient.Create(ctx, gr)).NotTo(HaveOccurred())
@@ -117,8 +118,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var version string
 
 		BeforeEach(func() {
-			common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-			common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+			testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+			testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
 
 			var dr kuestav1alpha1.DeviceRollout
 			Eventually(func() error {

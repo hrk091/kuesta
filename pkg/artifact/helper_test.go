@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 )
 
 func mustGenTgzArchive(path, content string) (string, io.Reader) {
@@ -44,8 +44,8 @@ func mustGenTgzArchive(path, content string) (string, io.Reader) {
 	if _, err := tw.Write([]byte(content)); err != nil {
 		panic(err)
 	}
-	common.MustNil(tw.Close())
-	common.MustNil(gw.Close())
+	testhelper.MustNil(tw.Close())
+	testhelper.MustNil(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer

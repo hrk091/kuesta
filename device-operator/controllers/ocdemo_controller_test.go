@@ -35,6 +35,7 @@ import (
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testhelper/gnmihelper"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -67,11 +68,11 @@ var _ = Describe("DeviceOperator controller", func() {
 	rev2nd := "rev2"
 
 	var testOpe deviceoperator.OcDemo
-	common.MustNil(newTestDataFromFixture("device1.deviceoperator", &testOpe))
+	testhelper.MustNil(newTestDataFromFixture("device1.deviceoperator", &testOpe))
 	var testDr provisioner.DeviceRollout
-	common.MustNil(newTestDataFromFixture("devicerollout", &testDr))
+	testhelper.MustNil(newTestDataFromFixture("devicerollout", &testDr))
 	var testGr source.GitRepository
-	common.MustNil(newTestDataFromFixture("gitrepository", &testGr))
+	testhelper.MustNil(newTestDataFromFixture("gitrepository", &testGr))
 
 	BeforeEach(func() {
 		Expect(k8sClient.Create(ctx, testOpe.DeepCopy())).NotTo(HaveOccurred())
@@ -126,12 +127,12 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing without baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write(data)
-				common.MustNil(err)
+				testhelper.MustNil(err)
 			}))
 
 			gr := testGr.DeepCopy()
@@ -173,15 +174,15 @@ var _ = Describe("DeviceOperator controller", func() {
 		Context("when device config updated", func() {
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false
-				m := &testhelper.GnmiMock{
+				m := &gnmihelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, nil
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				common.MustNil(err)
-				gs := testhelper.NewGnmiServerWithListener(m, lis)
+				testhelper.MustNil(err)
+				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config1, rev1st), timeout, interval).Should(Succeed())
@@ -206,12 +207,12 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing with baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write(data)
-				common.MustNil(err)
+				testhelper.MustNil(err)
 			}))
 
 			gr := testGr.DeepCopy()
@@ -291,11 +292,11 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
+				testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)
-				common.MustNil(err)
+				testhelper.MustNil(err)
 			}))
 
 			gr := testGr.DeepCopy()
@@ -330,11 +331,11 @@ var _ = Describe("DeviceOperator controller", func() {
 		Context("when device config updated", func() {
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
-					common.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
+					testhelper.MustNil(common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
 				})
 				h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := io.Copy(w, buf)
-					common.MustNil(err)
+					testhelper.MustNil(err)
 				}))
 
 				gr := testGr.DeepCopy()
@@ -353,15 +354,15 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			It("should send gNMI SetRequest and change to completed when request succeeded", func() {
 				setCalled := false
-				m := &testhelper.GnmiMock{
+				m := &gnmihelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, nil
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				common.MustNil(err)
-				gs := testhelper.NewGnmiServerWithListener(m, lis)
+				testhelper.MustNil(err)
+				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())
@@ -383,15 +384,15 @@ var _ = Describe("DeviceOperator controller", func() {
 
 			It("should send gNMI SetRequest and change to failed when request failed", func() {
 				setCalled := false
-				m := &testhelper.GnmiMock{
+				m := &gnmihelper.GnmiMock{
 					SetHandler: func(ctx context.Context, request *pb.SetRequest) (*pb.SetResponse, error) {
 						setCalled = true
 						return &pb.SetResponse{}, fmt.Errorf("failed")
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				common.MustNil(err)
-				gs := testhelper.NewGnmiServerWithListener(m, lis)
+				testhelper.MustNil(err)
+				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
 				Eventually(startRollout(config2, rev2nd), timeout, interval).Should(Succeed())

@@ -36,7 +36,7 @@ import (
 
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -123,7 +123,7 @@ func TestDeviceAggregateServer_SaveConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	got, err := os.ReadFile(filepath.Join(dir, "devices", "device1", "actual_config.cue"))
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Equal(t, []byte(config), got)
 }
 
@@ -171,7 +171,7 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 	s.Run(context.Background())
 
 	buf, err := json.Marshal(req)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	request := httptest.NewRequest(http.MethodPost, "/commit", bytes.NewBuffer(buf))
 	response := httptest.NewRecorder()
 	s.HandleFunc(response, request)

@@ -20,14 +20,14 @@
  THE SOFTWARE.
 */
 
-package testhelper_test
+package gnmihelper_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testhelper/gnmihelper"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -39,7 +39,7 @@ func TestNewServer(t *testing.T) {
 	setCalled := false
 	capabilitiesCalled := false
 	subscribeCalled := false
-	m := &testhelper.GnmiMock{
+	m := &gnmihelper.GnmiMock{
 		GetHandler: func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 			getCalled = true
 			return &pb.GetResponse{}, nil
@@ -59,7 +59,7 @@ func TestNewServer(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := testhelper.NewGnmiServer(ctx, m)
+	gs, conn := gnmihelper.NewGnmiServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})

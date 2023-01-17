@@ -31,7 +31,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/testhelper/githelper"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,11 +78,11 @@ func TestGitOptions_Validate(t *testing.T) {
 
 func TestNewGit(t *testing.T) {
 	t.Run("ok: use existing", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		opt := &gogit.GitOptions{
 			Path: dir,
 		}
-		common.ExitOnErr(t, opt.Validate())
+		testhelper.ExitOnErr(t, opt.Validate())
 
 		g, err := gogit.NewGit(opt)
 		assert.Nil(t, err)
@@ -93,14 +94,14 @@ func TestNewGit(t *testing.T) {
 	})
 
 	t.Run("ok: clone", func(t *testing.T) {
-		repoPusher, dir, remoteUrl := initRepoWithRemote(t, "main")
-		common.ExitOnErr(t, push(repoPusher, "main", "origin"))
+		repoPusher, dir, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		opt := &gogit.GitOptions{
 			RepoUrl: remoteUrl,
 			Path:    dir,
 		}
-		common.ExitOnErr(t, opt.Validate())
+		testhelper.ExitOnErr(t, opt.Validate())
 		opt.ShouldCloneIfNotExist()
 
 		g, err := gogit.NewGit(opt)
@@ -113,15 +114,15 @@ func TestNewGit(t *testing.T) {
 	})
 
 	t.Run("err: no repo without shouldClone flag", func(t *testing.T) {
-		repoPusher, _, remoteUrl := initRepoWithRemote(t, "main")
-		common.ExitOnErr(t, push(repoPusher, "main", "origin"))
+		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		dir := t.TempDir()
 		opt := &gogit.GitOptions{
 			RepoUrl: remoteUrl,
 			Path:    dir,
 		}
-		common.ExitOnErr(t, opt.Validate())
+		testhelper.ExitOnErr(t, opt.Validate())
 
 		_, err := gogit.NewGit(opt)
 		assert.Error(t, err)
@@ -130,15 +131,15 @@ func TestNewGit(t *testing.T) {
 
 func TestGit_Clone(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		repoPusher, _, remoteUrl := initRepoWithRemote(t, "main")
-		common.ExitOnErr(t, push(repoPusher, "main", "origin"))
+		repoPusher, _, remoteUrl := githelper.InitRepoWithRemote(t, "main")
+		testhelper.ExitOnErr(t, githelper.Push(repoPusher, "main", "origin"))
 
 		dir := t.TempDir()
 		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
 			RepoUrl: remoteUrl,
 			Path:    dir,
 		})
-		common.ExitOnErr(t, g.Options().Validate())
+		testhelper.ExitOnErr(t, g.Options().Validate())
 
 		_, err := g.Clone()
 		assert.Nil(t, err)
@@ -149,7 +150,7 @@ func TestGit_Clone(t *testing.T) {
 		g := gogit.NewGitWithoutRepo(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, g.Options().Validate())
+		testhelper.ExitOnErr(t, g.Options().Validate())
 
 		_, err := g.Clone()
 		assert.Error(t, err)
@@ -206,7 +207,7 @@ func TestGit_Signature(t *testing.T) {
 	})
 	t.Run("default", func(t *testing.T) {
 		o := &gogit.GitOptions{Path: "dummy"}
-		common.ExitOnErr(t, o.Validate())
+		testhelper.ExitOnErr(t, o.Validate())
 		g := gogit.NewGitWithoutRepo(o)
 		got := g.Signature()
 		assert.Equal(t, gogit.DefaultGitUser, got.Name)
@@ -215,87 +216,87 @@ func TestGit_Signature(t *testing.T) {
 }
 
 func TestGit_Head(t *testing.T) {
-	repo, dir := initRepo(t, "main")
-	common.ExitOnErr(t, addFile(repo, "test", "hash"))
-	want, err := commit(repo, time.Now())
-	common.ExitOnErr(t, err)
+	repo, dir := githelper.InitRepo(t, "main")
+	testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "hash"))
+	want, err := githelper.Commit(repo, time.Now())
+	testhelper.ExitOnErr(t, err)
 
 	g, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	c, err := g.Head()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Equal(t, want, c.Hash)
 }
 
 func TestGit_Checkout(t *testing.T) {
 	t.Run("ok: checkout to main", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = g.Checkout()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		b, err := g.Branch()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, "main", b)
 	})
 
 	t.Run("ok: checkout to specified trunk", func(t *testing.T) {
 		branchName := "test-branch"
-		_, dir := initRepo(t, branchName)
+		_, dir := githelper.InitRepo(t, branchName)
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: branchName,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = g.Checkout()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		b, err := g.Branch()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, branchName, b)
 	})
 
 	t.Run("ok: checkout to new branch", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		b, err := g.Branch()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, "test", b)
 	})
 
 	t.Run("err: checkout to existing branch with create opt", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, createBranch(repo, "test"))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, githelper.CreateBranch(repo, "test"))
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("main"), gogit.CheckoutOptsCreateNew())
 		assert.Error(t, err)
 	})
 
 	t.Run("err: checkout to new branch without create opt", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = g.Checkout(gogit.CheckoutOptsTo("test"))
 		assert.Error(t, err)
@@ -304,46 +305,46 @@ func TestGit_Checkout(t *testing.T) {
 
 func TestGit_Commit(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
-		common.ExitOnErr(t, addFile(repo, "test", "dummy"))
+		repo, dir := githelper.InitRepo(t, "main")
+		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		_, err = g.Commit("added: test")
 		assert.Nil(t, err)
 	})
 
 	t.Run("ok: other trunk branch", func(t *testing.T) {
 		testTrunk := "test-branch"
-		repo, dir := initRepo(t, testTrunk)
-		common.ExitOnErr(t, addFile(repo, "test", "dummy"))
+		repo, dir := githelper.InitRepo(t, testTrunk)
+		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "dummy"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:        dir,
 			TrunkBranch: testTrunk,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		h, err := g.Commit("added: test")
 		assert.Nil(t, err)
 
 		b, err := g.Branch()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, testTrunk, b)
 
 		c, err := g.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, h, c.Hash)
 	})
 
 	t.Run("ok: commit even when no change", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		_, err = g.Commit("no change")
 		assert.Nil(t, err)
 	})
@@ -351,23 +352,23 @@ func TestGit_Commit(t *testing.T) {
 
 func TestGit_Add(t *testing.T) {
 	t.Run("ok: create new", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		wt, err := repo.Worktree()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		filepath := "test/added.txt"
-		common.ExitOnErr(t, createFile(wt, filepath, "dummy"))
-		common.ExitOnErr(t, modifyFile(wt, "README.md", "foobar"))
+		testhelper.ExitOnErr(t, githelper.CreateFile(wt, filepath, "dummy"))
+		testhelper.ExitOnErr(t, githelper.ModifyFile(wt, "README.md", "foobar"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		err = g.Add("test")
 		assert.Nil(t, err)
 
 		stmap, err := wt.Status()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		count := 0
 		for fpath, st := range stmap {
 			if st.Staging == extgogit.Unmodified {
@@ -381,21 +382,21 @@ func TestGit_Add(t *testing.T) {
 	})
 
 	t.Run("ok: modify existing", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		wt, err := repo.Worktree()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
-		common.ExitOnErr(t, modifyFile(wt, "README.md", "foobar"))
+		testhelper.ExitOnErr(t, githelper.ModifyFile(wt, "README.md", "foobar"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		err = g.Add("")
 		assert.Nil(t, err)
 
 		stmap, err := wt.Status()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		count := 0
 		for fpath, st := range stmap {
 			if st.Staging == extgogit.Unmodified {
@@ -409,22 +410,22 @@ func TestGit_Add(t *testing.T) {
 	})
 
 	t.Run("ok: delete existing", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		wt, err := repo.Worktree()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		t.Log("#################", dir)
-		common.ExitOnErr(t, deleteFile(wt, "README.md"))
+		testhelper.ExitOnErr(t, githelper.DeleteFile(wt, "README.md"))
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		err = g.Add("")
 		assert.Nil(t, err)
 
 		stmap, err := wt.Status()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		count := 0
 		for fpath, st := range stmap {
 			if st.Staging == extgogit.Unmodified {
@@ -439,40 +440,40 @@ func TestGit_Add(t *testing.T) {
 }
 
 func TestGit_Push(t *testing.T) {
-	remoteRepo, url := initBareRepo(t)
+	remoteRepo, url := githelper.InitBareRepo(t)
 
 	t.Run("ok", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		testRemote := "test-remote"
 		_, err := repo.CreateRemote(&config.RemoteConfig{
 			Name: testRemote,
 			URLs: []string{url},
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: testRemote,
 		})
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, addFile(repo, "test", "push"))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		_, err = g.Commit(wantMsg)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = g.Push(gogit.PushOptBranch("main"))
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		ref, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("main"), false)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		c, err := repo.CommitObject(ref.Hash())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		assert.Equal(t, wantMsg, c.Message)
 	})
 
 	t.Run("err: remote not exist", func(t *testing.T) {
-		repo, dir := initRepo(t, "main")
+		repo, dir := githelper.InitRepo(t, "main")
 		noExistRemote := "not-exist"
 
 		g, err := gogit.NewGit(&gogit.GitOptions{
@@ -480,10 +481,10 @@ func TestGit_Push(t *testing.T) {
 			RemoteName:  noExistRemote,
 			TrunkBranch: "main",
 		})
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, addFile(repo, "test", "push"))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "push"))
 		_, err = g.Commit("added: test")
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = g.Push()
 		assert.Error(t, err)
@@ -491,29 +492,29 @@ func TestGit_Push(t *testing.T) {
 }
 
 func TestGit_SetUpstream(t *testing.T) {
-	_, dirBare := initBareRepo(t)
+	_, dirBare := githelper.InitBareRepo(t)
 	testRemote := "test-remote"
 
-	repo, dir := initRepo(t, "main")
+	repo, dir := githelper.InitRepo(t, "main")
 	_, err := repo.CreateRemote(&config.RemoteConfig{
 		Name: testRemote,
 		URLs: []string{dirBare},
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path:       dir,
 		RemoteName: testRemote,
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	_, err = git.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	err = git.SetUpstream("test")
 	assert.Nil(t, err)
 
 	c, err := repo.Storer.Config()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	exists := false
 	for name, r := range c.Branches {
@@ -527,14 +528,14 @@ func TestGit_SetUpstream(t *testing.T) {
 }
 
 func TestGit_Branches(t *testing.T) {
-	_, dir := initRepo(t, "main")
+	_, dir := githelper.InitRepo(t, "main")
 	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	_, err = git.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	refs, err := git.Branches()
 	assert.Nil(t, err)
@@ -549,30 +550,30 @@ func TestGit_Pull(t *testing.T) {
 
 	setup := func(t *testing.T, beforeCloneFn func(*gogit.Git)) (*gogit.Git, *gogit.Git) {
 		// setup remote bare repo
-		_, dirBare := initBareRepo(t)
+		_, dirBare := githelper.InitBareRepo(t)
 
 		// setup pusher
-		repoPusher, dirPusher := initRepo(t, "main")
+		repoPusher, dirPusher := githelper.InitRepo(t, "main")
 		_, err := repoPusher.CreateRemote(&config.RemoteConfig{
 			Name: testRemote,
 			URLs: []string{dirBare},
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		gitPusher, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dirPusher,
 			RemoteName: testRemote,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = gitPusher.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		if beforeCloneFn != nil {
 			beforeCloneFn(gitPusher)
 		}
 
 		// setup puller by git clone
-		_, dirPuller := cloneRepo(t, &extgogit.CloneOptions{
+		_, dirPuller := githelper.CloneRepo(t, &extgogit.CloneOptions{
 			URL:        dirBare,
 			RemoteName: testRemote,
 		})
@@ -580,78 +581,78 @@ func TestGit_Pull(t *testing.T) {
 			Path:       dirPuller,
 			RemoteName: testRemote,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		return gitPusher, gitPuller
 	}
 
 	t.Run("ok", func(t *testing.T) {
 		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
-			common.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
-			common.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
+			testhelper.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
+			testhelper.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
 		})
 
 		// push branch
-		common.ExitOnErr(t, addFile(gitPuller.Repo(), "test", "push"))
+		testhelper.ExitOnErr(t, githelper.AddFile(gitPuller.Repo(), "test", "push"))
 		wantMsg := "git commit which should be pushed to remote"
 		want, err := gitPusher.Commit(wantMsg)
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
-		common.ExitOnErr(t, gitPusher.Push(gogit.PushOptBranch("test")))
+		testhelper.ExitOnErr(t, gitPusher.Push(gogit.PushOptBranch("test")))
 
 		// pull branch
 		_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = gitPuller.Pull()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		got, err := gitPuller.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, want.String(), got.Hash.String())
 	})
 
 	t.Run("ok: no update", func(t *testing.T) {
 		gitPusher, gitPuller := setup(t, func(pusher *gogit.Git) {
-			common.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
-			common.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
+			testhelper.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("master")))
+			testhelper.ExitOnErr(t, pusher.Push(gogit.PushOptBranch("test")))
 		})
 
 		head, err := gitPusher.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		want := head.Hash
 
 		// pull branch
 		_, err = gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = gitPuller.Pull()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		got, err := gitPuller.Head()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Equal(t, want.String(), got.Hash.String())
 	})
 
 	t.Run("err: upstream branch not exist", func(t *testing.T) {
 		_, gitPuller := setup(t, func(g *gogit.Git) {
-			common.ExitOnErr(t, g.Push(gogit.PushOptBranch("master")))
+			testhelper.ExitOnErr(t, g.Push(gogit.PushOptBranch("master")))
 		})
 
 		_, err := gitPuller.Checkout(gogit.CheckoutOptsTo("test"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = gitPuller.Pull()
 		assert.Error(t, err)
 	})
 
 	t.Run("err: remote repo not exist", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: testRemote,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		err = git.Pull()
 		assert.Error(t, err)
@@ -659,92 +660,92 @@ func TestGit_Pull(t *testing.T) {
 }
 
 func TestGit_Reset(t *testing.T) {
-	repo, dir := initRepo(t, "main")
+	repo, dir := githelper.InitRepo(t, "main")
 	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
-	common.ExitOnErr(t, err)
-	common.ExitOnErr(t, addFile(repo, "test", "hash"))
+	testhelper.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, githelper.AddFile(repo, "test", "hash"))
 
 	w, err := repo.Worktree()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	st, err := w.Status()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Greater(t, len(st), 0)
 
 	err = git.Reset(gogit.ResetOptsHard())
 	assert.Nil(t, err)
 
 	st, err = w.Status()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Equal(t, len(st), 0)
 }
 
 func TestGit_RemoveBranch(t *testing.T) {
-	_, dir := initRepo(t, "main")
+	_, dir := githelper.InitRepo(t, "main")
 	git, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	_, err = git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	refs, err := git.Branches()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Len(t, refs, 3)
 
-	common.ExitOnErr(t, git.RemoveBranch(plumbing.NewBranchReferenceName("foo")))
+	testhelper.ExitOnErr(t, git.RemoveBranch(plumbing.NewBranchReferenceName("foo")))
 
 	refs, err = git.Branches()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Len(t, refs, 2)
 }
 
 func TestGit_RemoveGoneBranches(t *testing.T) {
-	repo, dir, _ := initRepoWithRemote(t, "main")
-	common.ExitOnErr(t, push(repo, "main", "origin"))
+	repo, dir, _ := githelper.InitRepoWithRemote(t, "main")
+	testhelper.ExitOnErr(t, githelper.Push(repo, "main", "origin"))
 
-	common.ExitOnErr(t, createBranch(repo, "foo"))
-	common.ExitOnErr(t, push(repo, "foo", "origin"))
+	testhelper.ExitOnErr(t, githelper.CreateBranch(repo, "foo"))
+	testhelper.ExitOnErr(t, githelper.Push(repo, "foo", "origin"))
 
-	common.ExitOnErr(t, createBranch(repo, "bar"))
-	common.ExitOnErr(t, push(repo, "bar", "origin"))
+	testhelper.ExitOnErr(t, githelper.CreateBranch(repo, "bar"))
+	testhelper.ExitOnErr(t, githelper.Push(repo, "bar", "origin"))
 
 	g, err := gogit.NewGit(&gogit.GitOptions{
 		Path: dir,
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	refs, err := g.Branches()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Len(t, refs, 4)
 
 	remote, err := g.Remote("origin")
-	common.ExitOnErr(t, err)
-	common.ExitOnErr(t, remote.RemoveBranch(plumbing.NewBranchReferenceName("bar")))
+	testhelper.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, remote.RemoveBranch(plumbing.NewBranchReferenceName("bar")))
 
 	err = g.RemoveGoneBranches()
 	assert.Nil(t, err)
 
 	refs, err = g.Branches()
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	assert.Len(t, refs, 2)
 }
 
 func TestGit_Branch(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		_, dirBare := initBareRepo(t)
-		repo, dir := initRepo(t, "main")
+		_, dirBare := githelper.InitBareRepo(t)
+		repo, dir := githelper.InitRepo(t, "main")
 		_, err := repo.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
 			URLs: []string{dirBare},
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path: dir,
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		remote, err := git.Remote("origin")
 		assert.Nil(t, err)
@@ -752,18 +753,18 @@ func TestGit_Branch(t *testing.T) {
 	})
 
 	t.Run("ok: use default", func(t *testing.T) {
-		_, dirBare := initBareRepo(t)
-		repo, dir := initRepo(t, "main")
+		_, dirBare := githelper.InitBareRepo(t)
+		repo, dir := githelper.InitRepo(t, "main")
 		_, err := repo.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
 			URLs: []string{dirBare},
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: "origin",
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		remote, err := git.Remote("")
 		assert.Nil(t, err)
@@ -771,12 +772,12 @@ func TestGit_Branch(t *testing.T) {
 	})
 
 	t.Run("err: remote not exist", func(t *testing.T) {
-		_, dir := initRepo(t, "main")
+		_, dir := githelper.InitRepo(t, "main")
 		git, err := gogit.NewGit(&gogit.GitOptions{
 			Path:       dir,
 			RemoteName: "origin",
 		})
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 
 		_, err = git.Remote("origin")
 		assert.Error(t, err)
@@ -816,7 +817,7 @@ func TestGitBranch_BasicAuth(t *testing.T) {
 			opt := &gogit.GitOptions{
 				Token: tt.token,
 			}
-			remote, _, _ := setupRemoteRepo(t, opt)
+			remote, _, _ := githelper.SetupRemoteRepo(t, opt)
 			assert.Equal(t, tt.want, remote.BasicAuth())
 		})
 	}
@@ -824,15 +825,15 @@ func TestGitBranch_BasicAuth(t *testing.T) {
 
 func TestGitRemote_Branches(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		remote, git, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		remote, git, _ := githelper.SetupRemoteRepo(t, &gogit.GitOptions{})
 
 		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
 
 		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
 
 		branches, err := remote.Branches()
 		assert.Nil(t, err)
@@ -843,7 +844,7 @@ func TestGitRemote_Branches(t *testing.T) {
 	})
 
 	t.Run("err: no branch", func(t *testing.T) {
-		remote, _, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		remote, _, _ := githelper.SetupRemoteRepo(t, &gogit.GitOptions{})
 		_, err := remote.Branches()
 		assert.Error(t, err)
 	})
@@ -851,27 +852,27 @@ func TestGitRemote_Branches(t *testing.T) {
 
 func TestGitRemote_RemoveBranch(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		remote, git, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		remote, git, _ := githelper.SetupRemoteRepo(t, &gogit.GitOptions{})
 
 		_, err := git.Checkout(gogit.CheckoutOptsTo("foo"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, git.Push(gogit.PushOptBranch("foo")))
 
 		_, err = git.Checkout(gogit.CheckoutOptsTo("bar"), gogit.CheckoutOptsCreateNew())
-		common.ExitOnErr(t, err)
-		common.ExitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
+		testhelper.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, git.Push(gogit.PushOptBranch("bar")))
 
 		err = remote.RemoveBranch(plumbing.NewBranchReferenceName("foo"))
 		assert.Nil(t, err)
 
 		branches, err := remote.Branches()
-		common.ExitOnErr(t, err)
+		testhelper.ExitOnErr(t, err)
 		assert.Len(t, branches, 1)
 		assert.Equal(t, "refs/heads/bar", branches[0].Name().String())
 	})
 
 	t.Run("ok: branch not found", func(t *testing.T) {
-		remote, _, _ := setupRemoteRepo(t, &gogit.GitOptions{})
+		remote, _, _ := githelper.SetupRemoteRepo(t, &gogit.GitOptions{})
 		err := remote.RemoveBranch(plumbing.NewBranchReferenceName("foo"))
 		assert.Nil(t, err)
 	})

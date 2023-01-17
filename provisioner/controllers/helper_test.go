@@ -35,7 +35,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,8 +92,8 @@ func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
 		panic(err)
 	}
 
-	common.MustNil(tw.Close())
-	common.MustNil(gw.Close())
+	testhelper.MustNil(tw.Close())
+	testhelper.MustNil(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer

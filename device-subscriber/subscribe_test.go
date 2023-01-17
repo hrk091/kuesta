@@ -30,8 +30,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testhelper/gnmihelper"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"
@@ -47,7 +47,7 @@ func TestSubscribe(t *testing.T) {
 			JsonIetfVal: []byte(`{"foo": "bar"}`),
 		},
 	}
-	m := &testhelper.GnmiMock{
+	m := &gnmihelper.GnmiMock{
 		SubscribeHandler: func(stream pb.GNMI_SubscribeServer) error {
 			for i := 0; i < 3; i++ {
 				resp := &pb.SubscribeResponse{
@@ -68,11 +68,11 @@ func TestSubscribe(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := testhelper.NewGnmiServer(ctx, m)
+	gs, conn := gnmihelper.NewGnmiServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	count := 0
 	err = Subscribe(ctx, client, func() error {
@@ -119,7 +119,7 @@ func TestSync(t *testing.T) {
 	}
 }`
 
-	m := &testhelper.GnmiMock{
+	m := &gnmihelper.GnmiMock{
 		GetHandler: func(ctx context.Context, request *pb.GetRequest) (*pb.GetResponse, error) {
 			v := gnmi.TypedValue{
 				Value: &gnmi.TypedValue_JsonIetfVal{
@@ -139,18 +139,18 @@ func TestSync(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	gs, conn := testhelper.NewGnmiServer(ctx, m)
+	gs, conn := gnmihelper.NewGnmiServer(ctx, m)
 	defer gs.Stop()
 
 	client, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	cfg := Config{
 		Device: "device1",
 	}
 	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req SaveConfigRequest
-		common.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
+		testhelper.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
 		assert.Equal(t, req.Device, cfg.Device)
 		assert.Equal(t, want, req.Config)
 	}))
@@ -210,15 +210,15 @@ func TestGetEntireConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &testhelper.GnmiMock{
+			m := &gnmihelper.GnmiMock{
 				GetHandler: tt.handler,
 			}
 			ctx := context.Background()
-			s, conn := testhelper.NewGnmiServer(ctx, m)
+			s, conn := gnmihelper.NewGnmiServer(ctx, m)
 			defer s.Stop()
 
 			c, err := gnmiclient.NewFromConn(ctx, conn, gclient.Destination{})
-			common.ExitOnErr(t, err)
+			testhelper.ExitOnErr(t, err)
 			got, err := GetEntireConfig(ctx, c)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -239,7 +239,7 @@ func TestPostDeviceConfig(t *testing.T) {
 		}
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var req SaveConfigRequest
-			common.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
+			testhelper.ExitOnErr(t, json.NewDecoder(r.Body).Decode(&req))
 			assert.Equal(t, req.Device, cfg.Device)
 			assert.Equal(t, req.Config, deviceConfig)
 		}))

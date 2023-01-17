@@ -30,7 +30,7 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,9 +114,9 @@ func TestRunServiceCompile(t *testing.T) {
 		Service: "oc_interface",
 		Keys:    []string{"oc01", "1"},
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "services", "oc_interface", "oc01", "1", "computed", "oc01.cue"))
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)

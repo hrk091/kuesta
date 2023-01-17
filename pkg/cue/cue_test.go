@@ -32,6 +32,7 @@ import (
 	"cuelang.org/go/cue/load"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -140,7 +141,7 @@ func TestNewValueFromJson(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 				w, err := kcue.NewValueFromBytes(cctx, []byte(tt.want))
-				common.ExitOnErr(t, err)
+				testhelper.ExitOnErr(t, err)
 				assert.True(t, w.Equals(got))
 			}
 		})
@@ -150,7 +151,7 @@ func TestNewValueFromJson(t *testing.T) {
 func TestNewValueWithInstance(t *testing.T) {
 	dir := t.TempDir()
 	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	tests := []struct {
 		name    string
@@ -194,7 +195,7 @@ func TestFormatCue(t *testing.T) {
 		Mtu:     9000
 	}
 }`))
-	common.ExitOnErr(t, want.Err())
+	testhelper.ExitOnErr(t, want.Err())
 
 	got, err := kcue.FormatCue(want)
 	assert.Nil(t, err)
@@ -257,7 +258,7 @@ func TestCueKindOf(t *testing.T) {
 `)
 	cctx := cuecontext.New()
 	val, err := kcue.NewValueFromBytes(cctx, given)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	assert.Equal(t, cue.StructKind, kcue.CueKindOf(val, ""))
 	assert.Equal(t, cue.StructKind, kcue.CueKindOf(val, "#Input"))
@@ -278,7 +279,7 @@ func TestCueCommentOf(t *testing.T) {
 `)
 	cctx := cuecontext.New()
 	val, err := kcue.NewValueFromBytes(cctx, given)
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	t1, err := kcue.CueKuestaTagOf(val, "#Input.key1")
 	assert.Equal(t, "key=1", t1)
@@ -363,7 +364,7 @@ func TestGetKuestaTag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cctx := cuecontext.New()
 			val, err := kcue.NewValueFromBytes(cctx, tt.given)
-			common.ExitOnErr(t, err)
+			testhelper.ExitOnErr(t, err)
 
 			tag, err := kcue.GetKuestaTag(val.LookupPath(cue.ParsePath("#Input.foo")))
 			if tt.wantErr {

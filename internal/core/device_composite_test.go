@@ -30,7 +30,7 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -108,9 +108,9 @@ func TestRunDeviceComposite(t *testing.T) {
 		RootCfg: core.RootCfg{ConfigRootPath: "./testdata"},
 		Device:  "oc01",
 	})
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 	got, err := os.ReadFile(filepath.Join("./testdata", "devices", "oc01", "config.cue"))
-	common.ExitOnErr(t, err)
+	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
 	wantVal := cctx.CompileBytes(want)
