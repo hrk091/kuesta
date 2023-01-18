@@ -70,7 +70,7 @@ func (r *DeviceRolloutReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (r *DeviceRolloutReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

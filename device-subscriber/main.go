@@ -31,7 +31,7 @@ import (
 func main() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		stacktrace.ShowStackTrace(os.Stderr, err)
+		stacktrace.Show(os.Stderr, err)
 		os.Exit(1)
 	}
 }

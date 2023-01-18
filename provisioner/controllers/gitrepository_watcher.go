@@ -120,7 +120,7 @@ func (r *GitRepositoryWatcher) Error(ctx context.Context, err error, msg string,
 		return
 	}
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

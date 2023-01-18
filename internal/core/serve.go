@@ -225,7 +225,7 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
@@ -387,7 +387,7 @@ func NewNorthboundServerImpl(cfg *ServeCfg) *NorthboundServerImpl {
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)

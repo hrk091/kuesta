@@ -39,7 +39,7 @@ func TestShowStackTrace(t *testing.T) {
 		err3 := errors.Wrap(err2, "baz")
 
 		buf := &bytes.Buffer{}
-		stacktrace.ShowStackTrace(buf, err3)
+		stacktrace.Show(buf, err3)
 
 		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
 		assert.Equal(t, 1, len(found))
@@ -49,7 +49,7 @@ func TestShowStackTrace(t *testing.T) {
 		err := errors.New("foo")
 
 		buf := &bytes.Buffer{}
-		stacktrace.ShowStackTrace(buf, err)
+		stacktrace.Show(buf, err)
 
 		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
 		assert.Equal(t, 1, len(found))
@@ -57,7 +57,7 @@ func TestShowStackTrace(t *testing.T) {
 
 	t.Run("nil", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		stacktrace.ShowStackTrace(buf, nil)
+		stacktrace.Show(buf, nil)
 		t.Log(buf)
 
 		assert.Equal(t, 0, len(buf.Bytes()))

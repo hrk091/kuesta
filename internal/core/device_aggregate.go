@@ -146,7 +146,7 @@ func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 
 func (s *DeviceAggregateServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)

@@ -26,7 +26,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nttcom/kuesta/internal/logger"
+	"github.com/nttcom/kuesta/device-subscriber/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 )

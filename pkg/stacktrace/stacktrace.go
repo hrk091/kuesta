@@ -29,15 +29,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ShowStackTrace shows the stacktrace of the original error only.
-func ShowStackTrace(w io.Writer, err error) {
-	if st := GetStackTrace(err); st != "" {
+// Show shows the stacktrace of the original error only.
+func Show(w io.Writer, err error) {
+	if st := Get(err); st != "" {
 		fmt.Fprintf(w, "StackTrace: %s\n\n", st)
 	}
 }
 
-// GetStackTrace returns the stacktrace of the original error only.
-func GetStackTrace(err error) string {
+// Get returns the stacktrace of the original error only.
+func Get(err error) string {
 	st := bottomStackTrace(err)
 	if st != nil {
 		return fmt.Sprintf("%+v", st.StackTrace())
@@ -50,13 +50,13 @@ type stackTracer interface {
 }
 
 func bottomStackTrace(err error) stackTracer {
-	var st stackTracer
-	if errors.Unwrap(err) != nil {
-		st = bottomStackTrace(errors.Unwrap(err))
-		if st != nil {
+	nestedErr := errors.Unwrap(err)
+	if nestedErr != nil {
+		if st := bottomStackTrace(nestedErr); st != nil {
 			return st
 		}
 	}
+	// type check after checking all nested errors are not stackTracer
 	if e, ok := err.(stackTracer); ok { // nolint
 		return e
 	}

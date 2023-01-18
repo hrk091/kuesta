@@ -224,7 +224,7 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 
 func (r *DeviceReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

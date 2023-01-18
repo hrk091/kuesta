@@ -25,7 +25,7 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/nttcom/kuesta/internal/validator"
+	"github.com/nttcom/kuesta/device-subscriber/internal/validator"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -82,7 +82,7 @@ func FromContext(ctx context.Context) *zap.SugaredLogger {
 
 func Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.GetStackTrace(err); st != "" {
+	if st := stacktrace.Get(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)

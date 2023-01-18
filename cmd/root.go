@@ -42,7 +42,7 @@ var cfgFile string
 func Execute() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		stacktrace.ShowStackTrace(os.Stderr, err)
+		stacktrace.Show(os.Stderr, err)
 		// NOTE add show cmd.UsageString() for the specific error if needed
 		os.Exit(1)
 	}
