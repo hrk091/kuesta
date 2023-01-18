@@ -36,10 +36,7 @@ import (
 )
 
 func InitRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
-	dir, err := os.MkdirTemp("", "gittest-*")
-	testhelper.ExitOnErr(t, err)
-
-	// dir := t.TempDir()
+	dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, false)
 	testhelper.ExitOnErr(t, err)
 
@@ -51,9 +48,7 @@ func InitRepo(t *testing.T, branch string) (*extgogit.Repository, string) {
 }
 
 func InitBareRepo(t *testing.T) (*extgogit.Repository, string) {
-	dir, err := os.MkdirTemp("", "gittest-*")
-	testhelper.ExitOnErr(t, err)
-	// dir := t.TempDir()
+	dir := t.TempDir()
 	repo, err := extgogit.PlainInit(dir, true)
 	testhelper.ExitOnErr(t, err)
 	return repo, dir
@@ -84,9 +79,7 @@ func SetupRemoteRepo(t *testing.T, opt *gogit.GitOptions) (*gogit.GitRemote, *go
 }
 
 func CloneRepo(t *testing.T, opts *extgogit.CloneOptions) (*extgogit.Repository, string) {
-	dir, err := os.MkdirTemp("", "gittest-*")
-	testhelper.ExitOnErr(t, err)
-	// dir := t.TempDir()
+	dir := t.TempDir()
 	repo, err := extgogit.PlainClone(dir, false, opts)
 	testhelper.ExitOnErr(t, err)
 	return repo, dir

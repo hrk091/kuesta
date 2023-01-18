@@ -169,7 +169,9 @@ func TestDeviceAggregateServer_Run(t *testing.T) {
 		},
 	})
 	core.UpdateCheckDuration = 100 * time.Millisecond
-	s.Run(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s.Run(ctx)
 
 	buf, err := json.Marshal(req)
 	testhelper.ExitOnErr(t, err)

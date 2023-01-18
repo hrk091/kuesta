@@ -25,7 +25,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -65,7 +64,7 @@ func (r *GitRepositoryWatcher) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	l.Info(fmt.Sprintf("revision: %s", repository.Status.Artifact.Revision))
 
-	tmpDir, err := ioutil.TempDir("", repository.Name)
+	tmpDir, err := os.MkdirTemp("", repository.Name)
 	if err != nil {
 		r.Error(ctx, err, "create temp dir")
 		return ctrl.Result{}, err

@@ -26,7 +26,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -54,7 +53,7 @@ var _ = Describe("GitRepository watcher", func() {
 
 	BeforeEach(func() {
 		var err error
-		dir, err = ioutil.TempDir("", "git-watcher-test-*")
+		dir, err = os.MkdirTemp("", "git-watcher-test-*")
 		Expect(err).NotTo(HaveOccurred())
 		testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
 		testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))

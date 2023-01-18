@@ -111,7 +111,7 @@ func mustGenTgzArchive(dir string) (string, io.Reader) {
 }
 
 func newGitRepoArtifact(fn func(dir string)) (string, io.Reader) {
-	dir, err := ioutil.TempDir("", "git-watcher-test-*")
+	dir, err := os.MkdirTemp("", "git-watcher-test-*")
 	must(err)
 	fn(dir)
 	return mustGenTgzArchive(dir)
