@@ -42,7 +42,7 @@ import (
 	logger2 "github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/credentials"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/stacktrace"
@@ -69,9 +69,9 @@ type ServeCfg struct {
 	TLSCACrtPath    string
 }
 
-func (c *ServeCfg) TLSServerConfig() *common.TLSServerConfig {
-	cfg := &common.TLSServerConfig{
-		TLSConfigBase: common.TLSConfigBase{
+func (c *ServeCfg) TLSServerConfig() *credentials.TLSServerConfig {
+	cfg := &credentials.TLSServerConfig{
+		TLSConfigBase: credentials.TLSConfigBase{
 			NoTLS:     c.NoTLS,
 			CrtPath:   c.TLSCrtPath,
 			KeyPath:   c.TLSKeyPath,
@@ -118,7 +118,7 @@ func RunServe(ctx context.Context, cfg *ServeCfg) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	credOpts, err := common.GRPCServerCredentials(cfg.TLSServerConfig())
+	credOpts, err := credentials.GRPCServerCredentials(cfg.TLSServerConfig())
 	if err != nil {
 		return fmt.Errorf("setup credentials: %w", err)
 	}

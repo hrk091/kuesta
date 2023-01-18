@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/credentials"
 	gnmiclient "github.com/openconfig/gnmi/client"
 	core "k8s.io/api/core/v1"
 )
@@ -100,7 +100,7 @@ func (s *DeviceSpec) GnmiDestination(tlsData, credData map[string][]byte) (gnmic
 		return dest, nil
 	}
 	clientCfg := s.TLS.TLSClientConfig(tlsData)
-	tlsCfg, err := common.NewTLSConfig(clientCfg.Certificates(false), clientCfg.VerifyServer())
+	tlsCfg, err := credentials.NewTLSConfig(clientCfg.Certificates(false), clientCfg.VerifyServer())
 	if err != nil {
 		return gnmiclient.Destination{}, fmt.Errorf("new tls config: %w", err)
 	}
@@ -166,14 +166,14 @@ type TLSSpec struct {
 	ServerName string `json:"serverName,omitempty"`
 }
 
-// TLSClientConfig returns common.TLSClientConfig generated from tls-type k8s Secret resource.
-func (c *TLSSpec) TLSClientConfig(secretData map[string][]byte) *common.TLSClientConfig {
+// TLSClientConfig returns credentials.TLSClientConfig generated from tls-type k8s Secret resource.
+func (c *TLSSpec) TLSClientConfig(secretData map[string][]byte) *credentials.TLSClientConfig {
 	crtData := secretData[core.TLSCertKey]
 	keyData := secretData[core.TLSPrivateKeyKey]
 	caCrtData := secretData[core.ServiceAccountRootCAKey]
 
-	return &common.TLSClientConfig{
-		TLSConfigBase: common.TLSConfigBase{
+	return &credentials.TLSClientConfig{
+		TLSConfigBase: credentials.TLSConfigBase{
 			NoTLS:     c.NoTLS,
 			CrtData:   crtData,
 			KeyData:   keyData,

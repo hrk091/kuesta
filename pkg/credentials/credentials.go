@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package common
+package credentials
 
 import (
 	"crypto/tls"

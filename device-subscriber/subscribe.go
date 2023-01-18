@@ -37,7 +37,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/device-subscriber/internal/logger"
 	"github.com/nttcom/kuesta/device-subscriber/internal/model"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/credentials"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
@@ -211,7 +211,7 @@ func gNMIDestination(cfg Config) (gclient.Destination, error) {
 		return dest, nil
 	}
 	tlsDeviceCfg := cfg.DeviceTLSClientConfig()
-	tlsCfg, err := common.NewTLSConfig(tlsDeviceCfg.Certificates(false), tlsDeviceCfg.VerifyServer())
+	tlsCfg, err := credentials.NewTLSConfig(tlsDeviceCfg.Certificates(false), tlsDeviceCfg.VerifyServer())
 	if err != nil {
 		return gclient.Destination{}, fmt.Errorf("get tls config: %w", err)
 	}
@@ -219,12 +219,12 @@ func gNMIDestination(cfg Config) (gclient.Destination, error) {
 	return dest, nil
 }
 
-func httpClient(cfg *common.TLSClientConfig) (*http.Client, error) {
+func httpClient(cfg *credentials.TLSClientConfig) (*http.Client, error) {
 	c := &http.Client{}
 	if cfg.NoTLS {
 		return c, nil
 	}
-	tlsCfg, err := common.NewTLSConfig(cfg.Certificates(false), cfg.VerifyServer())
+	tlsCfg, err := credentials.NewTLSConfig(cfg.Certificates(false), cfg.VerifyServer())
 	if err != nil {
 		return nil, fmt.Errorf("new tls config: %w", err)
 	}

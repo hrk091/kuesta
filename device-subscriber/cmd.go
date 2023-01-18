@@ -28,7 +28,7 @@ import (
 
 	"github.com/nttcom/kuesta/device-subscriber/internal/validator"
 	"github.com/nttcom/kuesta/internal/logger"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/credentials"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,9 +49,9 @@ type Config struct {
 	TLSDeviceCACrtPath string `mapstructure:"tls-device-ca"`
 }
 
-func (c *Config) TLSClientConfig() *common.TLSClientConfig {
-	return &common.TLSClientConfig{
-		TLSConfigBase: common.TLSConfigBase{
+func (c *Config) TLSClientConfig() *credentials.TLSClientConfig {
+	return &credentials.TLSClientConfig{
+		TLSConfigBase: credentials.TLSConfigBase{
 			NoTLS:     c.NoTLS,
 			CrtPath:   c.TLSCrtPath,
 			KeyPath:   c.TLSKeyPath,
@@ -61,9 +61,9 @@ func (c *Config) TLSClientConfig() *common.TLSClientConfig {
 	}
 }
 
-func (c *Config) DeviceTLSClientConfig() *common.TLSClientConfig {
-	return &common.TLSClientConfig{
-		TLSConfigBase: common.TLSConfigBase{
+func (c *Config) DeviceTLSClientConfig() *credentials.TLSClientConfig {
+	return &credentials.TLSClientConfig{
+		TLSConfigBase: credentials.TLSConfigBase{
 			NoTLS:     c.NoTLS,
 			CrtPath:   c.TLSCrtPath,
 			KeyPath:   c.TLSKeyPath,

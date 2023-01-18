@@ -40,7 +40,7 @@ import (
 	logger2 "github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/pkg/credentials"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"github.com/pkg/errors"
@@ -60,9 +60,9 @@ type DeviceAggregateCfg struct {
 	TLSCACrtPath string
 }
 
-func (c *DeviceAggregateCfg) TLSServerConfig() *common.TLSServerConfig {
-	cfg := &common.TLSServerConfig{
-		TLSConfigBase: common.TLSConfigBase{
+func (c *DeviceAggregateCfg) TLSServerConfig() *credentials.TLSServerConfig {
+	cfg := &credentials.TLSServerConfig{
+		TLSConfigBase: credentials.TLSConfigBase{
 			NoTLS:     c.NoTLS,
 			CrtPath:   c.TLSCrtPath,
 			KeyPath:   c.TLSKeyPath,
@@ -113,7 +113,7 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	}
 	credCfg := cfg.TLSServerConfig()
 	// NOTE server certificate is set inside ListenAndServeTLS
-	tlsCfg, err := common.NewTLSConfig(credCfg.VerifyClient())
+	tlsCfg, err := credentials.NewTLSConfig(credCfg.VerifyClient())
 	if err != nil {
 		return fmt.Errorf("new tls config: %w", err)
 	}
