@@ -31,7 +31,6 @@ import (
 
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -136,7 +135,7 @@ func TestServicePath_ReadServiceInput(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), want)
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadServiceInput()
@@ -202,7 +201,7 @@ func TestServicePath_ReadServiceTransform(t *testing.T) {
 				&ast.Field{Label: ast.NewIdent("test"), Value: ast.NewString("dummy")},
 			),
 		)
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), []byte(fmt.Sprint(want)))
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadServiceTransform(cctx)
@@ -254,7 +253,7 @@ func TestServicePath_ReadServiceComputedFile(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "computed", "device1.cue"), want)
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadServiceComputedFile("device1")
@@ -318,7 +317,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 			Kind: "foo",
 		}
 		given := []byte(`kind: foo`)
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadServiceMeta()
@@ -351,7 +350,7 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 		p := newValidServicePath()
 		p.RootDir = dir
 		given := []byte(`kind: "foo`)
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), given)
 		testhelper.ExitOnErr(t, err)
 
 		_, err = p.ReadServiceMeta()
@@ -362,8 +361,8 @@ func TestServicePath_ReadServiceMeta(t *testing.T) {
 func TestServicePath_ReadServiceMetaAll(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
-		testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
+		testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), []byte(`kind: foo`)))
+		testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), []byte(``)))
 		testhelper.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
 		mlist, err := kuesta.ReadServiceMetaAll(dir)
@@ -463,7 +462,7 @@ func TestDevicePath_ReadDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), want)
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadDeviceConfigFile()
@@ -515,7 +514,7 @@ func TestDevicePath_CheckSum(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		dir := t.TempDir()
-		testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
+		testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config))
 
 		hasher := sha256.New()
 		hasher.Write(config)
@@ -544,7 +543,7 @@ func TestDevicePath_ReadActualDeviceConfigFile(t *testing.T) {
 		p := newValidDevicePath()
 		p.RootDir = dir
 		want := []byte("foobar")
-		err := common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), want)
+		err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), want)
 		testhelper.ExitOnErr(t, err)
 
 		r, err := p.ReadActualDeviceConfigFile()
@@ -677,7 +676,7 @@ func TestNewDevicePathList(t *testing.T) {
 		dir := t.TempDir()
 		testhelper.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device1"), 0o750))
 		testhelper.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "devices", "device2"), 0o750))
-		testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
+		testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "dummy"), []byte("dummy")))
 
 		paths, err := kuesta.NewDevicePathList(dir)
 		assert.Nil(t, err)

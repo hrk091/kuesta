@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/nttcom/kuesta/internal/file"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
@@ -209,7 +210,7 @@ func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 // SaveConfig writes device config contained in supplied SaveConfigRequest.
 func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigRequest) error {
 	dp := kuesta.DevicePath{RootDir: s.cfg.StatusRootPath, Device: r.Device}
-	if err := common.WriteFileWithMkdir(dp.DeviceActualConfigPath(kuesta.IncludeRoot), []byte(*r.Config)); err != nil {
+	if err := file.WriteFileWithMkdir(dp.DeviceActualConfigPath(kuesta.IncludeRoot), []byte(*r.Config)); err != nil {
 		return fmt.Errorf("write actual device config: %w", err)
 	}
 	return nil

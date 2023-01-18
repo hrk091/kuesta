@@ -27,7 +27,6 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -115,7 +114,7 @@ func TestReadServiceMeta(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "metadata.yaml")
 			if tt.given != nil {
-				err := common.WriteFileWithMkdir(path, tt.given)
+				err := testhelper.WriteFileWithMkdir(path, tt.given)
 				testhelper.ExitOnErr(t, err)
 			}
 			got, err := kuesta.ReadServiceMeta(path)
@@ -149,7 +148,7 @@ func TestNewServiceTransformer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
 			testhelper.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()
@@ -167,7 +166,7 @@ func TestNewServiceTransformer(t *testing.T) {
 
 func TestServerTransformer_Apply(t *testing.T) {
 	dir := t.TempDir()
-	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
 	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
@@ -214,7 +213,7 @@ func TestServiceTransformer_ConvertInputType(t *testing.T) {
 	nullVal:  null
 }`)
 	dir := t.TempDir()
-	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
+	err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transformCue)
 	testhelper.ExitOnErr(t, err)
 
 	cctx := cuecontext.New()
@@ -397,7 +396,7 @@ func TestServiceTransformer_InputKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
+			err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), tt.given)
 			testhelper.ExitOnErr(t, err)
 
 			cctx := cuecontext.New()

@@ -30,7 +30,6 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
-	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -150,7 +149,7 @@ func TestNewValueFromJson(t *testing.T) {
 
 func TestNewValueWithInstance(t *testing.T) {
 	dir := t.TempDir()
-	err := common.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
+	err := testhelper.WriteFileWithMkdir(filepath.Join(dir, "transform.cue"), transform)
 	testhelper.ExitOnErr(t, err)
 
 	tests := []struct {

@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package common
+package file
 
 import (
 	"os"

@@ -20,14 +20,13 @@
  THE SOFTWARE.
 */
 
-package common_test
+package testhelper_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +37,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 
 	t.Run("ok: new dir", func(t *testing.T) {
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err := common.WriteFileWithMkdir(path, buf)
+		err := testhelper.WriteFileWithMkdir(path, buf)
 		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
@@ -51,7 +50,7 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		testhelper.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = common.WriteFileWithMkdir(path, buf)
+		err = testhelper.WriteFileWithMkdir(path, buf)
 		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)
@@ -64,9 +63,9 @@ func TestWriteFileWithMkdir(t *testing.T) {
 		testhelper.ExitOnErr(t, err)
 
 		path := filepath.Join(dir, "foo", "bar", "tmp.txt")
-		err = common.WriteFileWithMkdir(path, buf)
+		err = testhelper.WriteFileWithMkdir(path, buf)
 		testhelper.ExitOnErr(t, err)
-		err = common.WriteFileWithMkdir(path, buf)
+		err = testhelper.WriteFileWithMkdir(path, buf)
 		testhelper.ExitOnErr(t, err)
 
 		got, err := os.ReadFile(path)

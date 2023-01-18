@@ -35,7 +35,6 @@ import (
 	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/internal/testhelper/githelper"
-	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/testhelper"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -184,8 +183,8 @@ version: 0.1.0`)
 	fooModel := &pb.ModelData{Name: "foo", Organization: "org-foo", Version: "0.1.0"}
 	barModel := &pb.ModelData{Name: "bar"}
 
-	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), fooMeta))
-	testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
+	testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "metadata.yaml"), fooMeta))
+	testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "bar", "metadata.yaml"), barMeta))
 	testhelper.ExitOnErr(t, os.MkdirAll(filepath.Join(dir, "services", "baz"), 0o750))
 
 	s := core.NewNorthboundServerImpl(&core.ServeCfg{
@@ -239,8 +238,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -268,7 +267,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: nil,
@@ -299,8 +298,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -334,7 +333,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), deviceConfig))
 			},
 			&pb.Notification{
 				Prefix: &pb.Path{
@@ -365,7 +364,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			nil,
 			codes.NotFound,
@@ -393,8 +392,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), invalidServiceInput))
 			},
 			nil,
 			codes.Internal,
@@ -409,7 +408,7 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "actual_config.cue"), invalidDeviceConfig))
 			},
 			nil,
 			codes.Internal,
@@ -466,8 +465,8 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "two", "input.cue"), serviceInput))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -484,7 +483,7 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 				},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), transformCue))
 			},
 			&pb.UpdateResult{
 				Op: pb.UpdateResult_DELETE,
@@ -557,8 +556,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -582,7 +581,7 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -695,8 +694,8 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			[]byte(`{
@@ -721,7 +720,7 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "transform.cue"), serviceTransform))
 			},
 			filepath.Join("services", "foo", "one", "2", "input.cue"),
 			nil,
@@ -739,7 +738,7 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 				Value: &pb.TypedValue_JsonVal{JsonVal: requestJson},
 			},
 			func(dir string) {
-				testhelper.ExitOnErr(t, common.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
+				testhelper.ExitOnErr(t, testhelper.WriteFileWithMkdir(filepath.Join(dir, "services", "foo", "one", "2", "input.cue"), serviceInputToBeUpdated))
 			},
 			filepath.Join("services", "foo", "one", "two", "input.cue"),
 			nil,
