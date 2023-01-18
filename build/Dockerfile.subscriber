@@ -16,7 +16,7 @@ ARG GOARCH=amd64
 RUN CGO_ENABLED=${CGO_ENABLED} \
     GOOS=${GOOS} \
     GOARCH=${GOARCH} \
-    go build -o subscriber -ldflags "-w -s" main.go cmd.go subscribe.go
+    go build -o subscriber -ldflags "-w -s" main.go
 
 
 FROM scratch
