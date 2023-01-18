@@ -31,9 +31,10 @@ import (
 	"time"
 
 	extgogit "github.com/go-git/go-git/v5"
+	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
 )
@@ -44,13 +45,13 @@ type GitCommitCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *GitCommitCfg) Validate() error {
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunGitCommit runs the main process of the `git commit` command.
 func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	l := logger.FromContext(ctx)
-	out := common.WriterFromContext(ctx)
+	out := WriterFromContext(ctx)
 	l.Debug("git commit called")
 
 	git, err := gogit.NewGit(cfg.ConfigGitOptions())
@@ -192,7 +193,7 @@ func CheckGitIsStagedOrUnmodified(stmap extgogit.Status) error {
 		err = multierr.Append(err, CheckGitFileIsStagedOrUnmodified(path, *st))
 	}
 	if err != nil {
-		return common.JoinErr("check git status:", err)
+		return error2.JoinErr("check git status:", err)
 	}
 	return nil
 }

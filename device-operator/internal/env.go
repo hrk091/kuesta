@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +20,17 @@
  THE SOFTWARE.
 */
 
-package common
+package internal
 
 import (
-	"fmt"
-	"strings"
-
-	"go.uber.org/multierr"
+	"log"
+	"os"
 )
 
-func JoinErr(msg string, err error) error {
-	msgs := []string{msg}
-	for _, err := range multierr.Errors(err) {
-		msgs = append(msgs, err.Error())
+func MustGetEnv(name string) string {
+	v := os.Getenv(name)
+	if v == "" {
+		log.Fatalf("Failed to load Env var: %s\n", name)
 	}
-	return fmt.Errorf("%s", strings.Join(msgs, "\n "))
+	return v
 }

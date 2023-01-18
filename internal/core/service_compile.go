@@ -27,7 +27,7 @@ import (
 	"fmt"
 
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
@@ -42,7 +42,7 @@ type ServiceCompileCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *ServiceCompileCfg) Validate() error {
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunServiceCompile runs the main process of the `service compile` command.

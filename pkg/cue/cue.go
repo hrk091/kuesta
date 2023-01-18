@@ -33,7 +33,7 @@ import (
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/token"
 	cuejson "cuelang.org/go/encoding/json"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/util"
 	"github.com/pkg/errors"
 )
 
@@ -111,7 +111,7 @@ func NewAstExpr(value any) ast.Expr {
 		return ast.NewList(items...)
 	case map[string]any:
 		var fields []any
-		for _, k := range common.SortedMapKeys(val) {
+		for _, k := range util.SortedMapKeys(val) {
 			v := val[k]
 			key := ast.NewIdent(k)
 			value := NewAstExpr(v)

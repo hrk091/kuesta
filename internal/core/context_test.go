@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +20,26 @@
  THE SOFTWARE.
 */
 
-package common_test
+package core_test
 
 import (
+	"bytes"
+	"context"
+	"os"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/core"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOr(t *testing.T) {
-	assert.Equal(t, "one", common.Or("one"))
-	assert.Equal(t, "two", common.Or("", "two"))
-	assert.Equal(t, "three", common.Or("", "", "three"))
+func TestWriterFromContext(t *testing.T) {
+	ctx := context.Background()
+	assert.Equal(t, os.Stdout, core.WriterFromContext(ctx))
+}
+
+func TestWriterFromContext_WithWriter(t *testing.T) {
+	buf := &bytes.Buffer{}
+	ctx := context.Background()
+	ctx = core.WithWriter(ctx, buf)
+	assert.Equal(t, buf, core.WriterFromContext(ctx))
 }

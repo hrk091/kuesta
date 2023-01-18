@@ -36,6 +36,8 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
@@ -81,7 +83,7 @@ func (c *DeviceAggregateCfg) Validate() error {
 			return fmt.Errorf("tls-key and tls-crt options must be set to use TLS")
 		}
 	}
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunDeviceAggregate runs the main process of the `device aggregate` command.
@@ -197,7 +199,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 }
 
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
-	common.SetInterval(ctx, func() {
+	util.SetInterval(ctx, func() {
 		if err := s.GitPushDeviceConfig(ctx); err != nil {
 			logger.Error(ctx, err, "push sync branch")
 		}
@@ -271,7 +273,7 @@ type SaveConfigRequest struct {
 }
 
 func (r *SaveConfigRequest) Validate() error {
-	return common.Validate(r)
+	return validator.Validate(r)
 }
 
 // DecodeSaveConfigRequest decodes supplied payload to SaveConfigRequest.

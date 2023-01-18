@@ -20,27 +20,53 @@
  THE SOFTWARE.
 */
 
-package common
+package validator_test
 
 import (
-	"context"
-	"io"
-	"os"
+	"testing"
+
+	"github.com/nttcom/kuesta/internal/validator"
+	"github.com/stretchr/testify/assert"
 )
 
-type _keyWriter struct{}
+func TestValidate(t *testing.T) {
+	type WithValidateTag struct {
+		Required string `validate:"required"`
+		Limited  uint8  `validate:"max=1"`
+	}
 
-// WithWriter sets io.Writer to context for outputting message from command.
-func WithWriter(parent context.Context, w io.Writer) context.Context {
-	return context.WithValue(parent, _keyWriter{}, w)
-}
+	tests := []struct {
+		name    string
+		given   WithValidateTag
+		wantErr bool
+	}{
+		{
+			"ok",
+			WithValidateTag{
+				Required: "foo",
+				Limited:  1,
+			},
+			false,
+		},
+		{
+			"bad",
+			WithValidateTag{
+				Required: "",
+				Limited:  3,
+			},
+			true,
+		},
+	}
 
-// WriterFromContext extract io.Writer from context.
-func WriterFromContext(ctx context.Context) io.Writer {
-	v, ok := ctx.Value(_keyWriter{}).(io.Writer)
-	if !ok {
-		return os.Stdout
-	} else {
-		return v
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.given)
+			t.Log(err)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }

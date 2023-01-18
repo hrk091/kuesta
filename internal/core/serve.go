@@ -39,6 +39,8 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
@@ -105,7 +107,7 @@ func (c *ServeCfg) Validate() error {
 	if c.SyncPeriod < 10 {
 		c.SyncPeriod = 10
 	}
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 func RunServe(ctx context.Context, cfg *ServeCfg) error {
@@ -202,7 +204,7 @@ func (s *NorthboundServer) RunStatusSyncLoop(ctx context.Context, dur time.Durat
 			logger.Error(ctx, err, "git pull")
 		}
 	}
-	common.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
+	util.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
 }
 
 func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Duration) {
@@ -216,7 +218,7 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 			logger.Error(ctx, err, "git pull")
 		}
 	}
-	common.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
+	util.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
 }
 
 // Error shows an error with stacktrace if attached.
@@ -533,7 +535,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
 	}
 
-	expr := kcue.NewAstExpr(common.MergeMap(input, convertedKeys))
+	expr := kcue.NewAstExpr(util.MergeMap(input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "encode to cue value: %v", inputVal.Err())
@@ -606,7 +608,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
 	}
 
-	expr := kcue.NewAstExpr(common.MergeMap(curInput, input, convertedKeys))
+	expr := kcue.NewAstExpr(util.MergeMap(curInput, input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
 		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())

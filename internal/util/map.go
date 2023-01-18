@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,27 @@
  THE SOFTWARE.
 */
 
-package common_test
+package util
 
-import (
-	"testing"
+import "sort"
 
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestMergeMap(t *testing.T) {
-	m1 := map[string]int{"a": 1, "b": 2}
-	m2 := map[string]int{"b": 3, "c": 4, "d": 5}
-	m3 := map[string]int{"b": 6, "c": 7, "e": 8}
-	want := map[string]int{"a": 1, "b": 6, "c": 7, "d": 5, "e": 8}
-	assert.Equal(t, want, common.MergeMap(m1, m2, m3))
+func MergeMap[T any](maps ...map[string]T) map[string]T {
+	merged := map[string]T{}
+	for _, m := range maps {
+		for k, v := range m {
+			merged[k] = v
+		}
+	}
+	return merged
 }
 
-func TestSortedMapKeys(t *testing.T) {
-	m := map[string]int{"b": 2, "c": 3, "a": 1}
-	want := []string{"a", "b", "c"}
-	assert.Equal(t, want, common.SortedMapKeys(m))
+func SortedMapKeys[T any](m map[string]T) []string {
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
 }

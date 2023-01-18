@@ -20,26 +20,27 @@
  THE SOFTWARE.
 */
 
-package common_test
+package core
 
 import (
-	"bytes"
 	"context"
+	"io"
 	"os"
-	"testing"
-
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestWriterFromContext(t *testing.T) {
-	ctx := context.Background()
-	assert.Equal(t, os.Stdout, common.WriterFromContext(ctx))
+type _keyWriter struct{}
+
+// WithWriter sets io.Writer to context for outputting message from command.
+func WithWriter(parent context.Context, w io.Writer) context.Context {
+	return context.WithValue(parent, _keyWriter{}, w)
 }
 
-func TestWriterFromContext_WithWriter(t *testing.T) {
-	buf := &bytes.Buffer{}
-	ctx := context.Background()
-	ctx = common.WithWriter(ctx, buf)
-	assert.Equal(t, buf, common.WriterFromContext(ctx))
+// WriterFromContext extract io.Writer from context.
+func WriterFromContext(ctx context.Context) io.Writer {
+	v, ok := ctx.Value(_keyWriter{}).(io.Writer)
+	if !ok {
+		return os.Stdout
+	} else {
+		return v
+	}
 }

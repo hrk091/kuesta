@@ -33,9 +33,9 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
+	"github.com/nttcom/kuesta/device-operator/internal"
 	"github.com/nttcom/kuesta/device-operator/internal/model"
 	"github.com/nttcom/kuesta/pkg/artifact"
-	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	device "github.com/nttcom/kuesta/pkg/device"
 	"github.com/nttcom/kuesta/pkg/kuesta"
@@ -65,9 +65,9 @@ var (
 )
 
 func SetupEnv() {
-	subscriberImage = common.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE")
-	subscriberImageVersion = common.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE_VERSION")
-	aggregatorUrl = common.MustGetEnv("KUESTA_AGGREGATOR_URL")
+	subscriberImage = internal.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE")
+	subscriberImageVersion = internal.MustGetEnv("KUESTA_SUBSCRIBER_IMAGE_VERSION")
+	aggregatorUrl = internal.MustGetEnv("KUESTA_AGGREGATOR_URL")
 }
 
 func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

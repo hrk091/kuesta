@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,38 +20,19 @@
  THE SOFTWARE.
 */
 
-package common_test
+package error
 
 import (
-	"context"
-	"testing"
-	"time"
+	"fmt"
+	"strings"
 
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
+	"go.uber.org/multierr"
 )
 
-func TestSetInterval(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		count := 0
-		common.SetInterval(context.Background(), func() {
-			count++
-		}, time.Millisecond)
-
-		assert.Eventually(t, func() bool {
-			return count > 2
-		}, time.Second, 5*time.Millisecond)
-	})
-
-	t.Run("ok: not called after cancelled", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		count := 0
-		common.SetInterval(ctx, func() {
-			count++
-			cancel()
-		}, time.Millisecond)
-		time.Sleep(5 * time.Millisecond)
-		assert.Equal(t, 1, count)
-	})
+func JoinErr(msg string, err error) error {
+	msgs := []string{msg}
+	for _, err := range multierr.Errors(err) {
+		msgs = append(msgs, err.Error())
+	}
+	return fmt.Errorf("%s", strings.Join(msgs, "\n "))
 }

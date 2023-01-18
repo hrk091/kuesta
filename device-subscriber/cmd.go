@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nttcom/kuesta/device-subscriber/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
@@ -77,7 +78,7 @@ func (c *Config) Validate() error {
 	if c.TLSSkipVerify && c.TLSCACrtPath != "" {
 		return fmt.Errorf("skip-verify and tls-ca-crt flags are mutually exclusive")
 	}
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 func NewRootCmd() *cobra.Command {

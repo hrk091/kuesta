@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,31 +20,39 @@
  THE SOFTWARE.
 */
 
-package common
+package util
 
-import (
-	"context"
-	"fmt"
-	"strings"
-	"time"
+type Empty struct{}
 
-	"github.com/nttcom/kuesta/pkg/logger"
-)
+type Set[T comparable] struct {
+	m map[T]Empty
+}
 
-func SetInterval(ctx context.Context, fn func(), dur time.Duration, msgs ...string) {
-	l := logger.FromContext(ctx)
-	msg := strings.Join(msgs, " ")
+func NewSet[T comparable](items ...T) Set[T] {
+	s := Set[T]{
+		m: make(map[T]Empty),
+	}
+	for _, i := range items {
+		s.Add(i)
+	}
+	return s
+}
 
-	go func() {
-		for {
-			select {
-			case <-time.After(dur):
-				l.Debugf("run func (every %s): %s", dur.String(), msg)
-				fn()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-	l.Infof(fmt.Sprintf("start interval loop: %s", msg))
+func (s *Set[T]) Add(v T) bool {
+	added := !s.Has(v)
+	s.m[v] = Empty{}
+	return added
+}
+
+func (s *Set[T]) Has(v T) bool {
+	_, ok := s.m[v]
+	return ok
+}
+
+func (s *Set[T]) List() []T {
+	var items []T
+	for k := range s.m {
+		items = append(items, k)
+	}
+	return items
 }

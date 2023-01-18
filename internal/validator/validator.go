@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,39 +20,31 @@
  THE SOFTWARE.
 */
 
-package common
+package validator
 
-type Empty struct{}
+import (
+	"fmt"
+	"strings"
 
-type Set[T comparable] struct {
-	m map[T]Empty
+	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
+)
+
+var _validator = validator.New()
+
+func Validate(v any) error {
+	return errors.WithStack(handleError(_validator.Struct(v)))
 }
 
-func NewSet[T comparable](items ...T) Set[T] {
-	s := Set[T]{
-		m: make(map[T]Empty),
+func handleError(err error) error {
+	switch e := err.(type) { // nolint
+	case validator.ValidationErrors:
+		var errMsg []string
+		for _, fe := range e {
+			errMsg = append(errMsg, fe.Error())
+		}
+		return fmt.Errorf(strings.Join(errMsg, "\n"))
+	default:
+		return e
 	}
-	for _, i := range items {
-		s.Add(i)
-	}
-	return s
-}
-
-func (s *Set[T]) Add(v T) bool {
-	added := !s.Has(v)
-	s.m[v] = Empty{}
-	return added
-}
-
-func (s *Set[T]) Has(v T) bool {
-	_, ok := s.m[v]
-	return ok
-}
-
-func (s *Set[T]) List() []T {
-	var items []T
-	for k := range s.m {
-		items = append(items, k)
-	}
-	return items
 }

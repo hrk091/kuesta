@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,53 +20,31 @@
  THE SOFTWARE.
 */
 
-package common_test
+package validator
 
 import (
-	"testing"
+	"fmt"
+	"strings"
 
-	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/stretchr/testify/assert"
+	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
 )
 
-func TestValidate(t *testing.T) {
-	type WithValidateTag struct {
-		Required string `validate:"required"`
-		Limited  uint8  `validate:"max=1"`
-	}
+var _validator = validator.New()
 
-	tests := []struct {
-		name    string
-		given   WithValidateTag
-		wantErr bool
-	}{
-		{
-			"ok",
-			WithValidateTag{
-				Required: "foo",
-				Limited:  1,
-			},
-			false,
-		},
-		{
-			"bad",
-			WithValidateTag{
-				Required: "",
-				Limited:  3,
-			},
-			true,
-		},
-	}
+func Validate(v any) error {
+	return errors.WithStack(handleError(_validator.Struct(v)))
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := common.Validate(tt.given)
-			t.Log(err)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-		})
+func handleError(err error) error {
+	switch e := err.(type) { // nolint
+	case validator.ValidationErrors:
+		var errMsg []string
+		for _, fe := range e {
+			errMsg = append(errMsg, fe.Error())
+		}
+		return fmt.Errorf(strings.Join(errMsg, "\n"))
+	default:
+		return e
 	}
 }

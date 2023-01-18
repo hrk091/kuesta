@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,33 +20,53 @@
  THE SOFTWARE.
 */
 
-package common_test
+package validator_test
 
 import (
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSet(t *testing.T) {
-	t.Run("string", func(t *testing.T) {
-		set := common.NewSet[string]("foo")
-		assert.False(t, set.Add("foo"))
-		assert.True(t, set.Add("bar"))
-		assert.True(t, set.Has("foo"))
-		assert.False(t, set.Has("baz"))
-		assert.Contains(t, set.List(), "foo")
-		assert.Contains(t, set.List(), "bar")
-	})
+func TestValidate(t *testing.T) {
+	type WithValidateTag struct {
+		Required string `validate:"required"`
+		Limited  uint8  `validate:"max=1"`
+	}
 
-	t.Run("int", func(t *testing.T) {
-		set := common.NewSet[int](1)
-		assert.False(t, set.Add(1))
-		assert.True(t, set.Add(2))
-		assert.True(t, set.Has(1))
-		assert.False(t, set.Has(3))
-		assert.Contains(t, set.List(), 1)
-		assert.Contains(t, set.List(), 2)
-	})
+	tests := []struct {
+		name    string
+		given   WithValidateTag
+		wantErr bool
+	}{
+		{
+			"ok",
+			WithValidateTag{
+				Required: "foo",
+				Limited:  1,
+			},
+			false,
+		},
+		{
+			"bad",
+			WithValidateTag{
+				Required: "",
+				Limited:  3,
+			},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.given)
+			t.Log(err)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }

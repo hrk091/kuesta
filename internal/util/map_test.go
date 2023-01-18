@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,31 +20,25 @@
  THE SOFTWARE.
 */
 
-package common
+package util_test
 
 import (
-	"fmt"
-	"strings"
+	"testing"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/pkg/errors"
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/stretchr/testify/assert"
 )
 
-var _validator = validator.New()
-
-func Validate(v any) error {
-	return errors.WithStack(handleError(_validator.Struct(v)))
+func TestMergeMap(t *testing.T) {
+	m1 := map[string]int{"a": 1, "b": 2}
+	m2 := map[string]int{"b": 3, "c": 4, "d": 5}
+	m3 := map[string]int{"b": 6, "c": 7, "e": 8}
+	want := map[string]int{"a": 1, "b": 6, "c": 7, "d": 5, "e": 8}
+	assert.Equal(t, want, util.MergeMap(m1, m2, m3))
 }
 
-func handleError(err error) error {
-	switch e := err.(type) { // nolint
-	case validator.ValidationErrors:
-		var errMsg []string
-		for _, fe := range e {
-			errMsg = append(errMsg, fe.Error())
-		}
-		return fmt.Errorf(strings.Join(errMsg, "\n"))
-	default:
-		return e
-	}
+func TestSortedMapKeys(t *testing.T) {
+	m := map[string]int{"b": 2, "c": 3, "a": 1}
+	want := []string{"a", "b", "c"}
+	assert.Equal(t, want, util.SortedMapKeys(m))
 }

@@ -34,7 +34,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/nttcom/kuesta/pkg/common"
+	error2 "github.com/nttcom/kuesta/internal/error"
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
@@ -61,12 +63,12 @@ type GitOptions struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (g *GitOptions) Validate() error {
-	g.User = common.Or(g.User, DefaultGitUser)
-	g.Email = common.Or(g.Email, DefaultGitEmail)
-	g.TrunkBranch = common.Or(g.TrunkBranch, DefaultTrunkBranch)
-	g.RemoteName = common.Or(g.RemoteName, DefaultRemoteName)
+	g.User = util.Or(g.User, DefaultGitUser)
+	g.Email = util.Or(g.Email, DefaultGitEmail)
+	g.TrunkBranch = util.Or(g.TrunkBranch, DefaultTrunkBranch)
+	g.RemoteName = util.Or(g.RemoteName, DefaultRemoteName)
 
-	return common.Validate(g)
+	return validator.Validate(g)
 }
 
 func (g *GitOptions) ShouldCloneIfNotExist() *GitOptions {
@@ -471,7 +473,7 @@ func (g *Git) RemoveGoneBranches() error {
 	if err != nil {
 		return err
 	}
-	nameSet := common.NewSet[string]()
+	nameSet := util.NewSet[string]()
 	for _, br := range remoteBrs {
 		nameSet.Add(br.Name().Short())
 	}
@@ -486,7 +488,7 @@ func (g *Git) RemoveGoneBranches() error {
 		}
 	}
 	if err != nil {
-		return common.JoinErr("remote gone branches:", err)
+		return error2.JoinErr("remote gone branches:", err)
 	}
 
 	return nil

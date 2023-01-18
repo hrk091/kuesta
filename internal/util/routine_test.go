@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,38 @@
  THE SOFTWARE.
 */
 
-package common
+package util_test
 
-func Or(args ...string) string {
-	for _, v := range args {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestSetInterval(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		count := 0
+		util.SetInterval(context.Background(), func() {
+			count++
+		}, time.Millisecond)
+
+		assert.Eventually(t, func() bool {
+			return count > 2
+		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("ok: not called after cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		count := 0
+		util.SetInterval(ctx, func() {
+			count++
+			cancel()
+		}, time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
+		assert.Equal(t, 1, count)
+	})
 }

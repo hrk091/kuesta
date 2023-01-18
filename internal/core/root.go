@@ -24,7 +24,7 @@ package core
 
 import (
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 )
 
 type RootCfg struct {
@@ -44,7 +44,7 @@ type RootCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *RootCfg) Validate() error {
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 func (c *RootCfg) ConfigGitOptions() *gogit.GitOptions {

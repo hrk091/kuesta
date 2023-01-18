@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/pkg/errors"
 )
@@ -82,7 +83,7 @@ func NewServicePathList(dir string) ([]*ServicePath, error) {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (p *ServicePath) Validate() error {
-	return common.Validate(p)
+	return validator.Validate(p)
 }
 
 // RootPath returns the path to repository root.
@@ -229,7 +230,7 @@ func NewDevicePathList(dir string) ([]*DevicePath, error) {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (p *DevicePath) Validate() error {
-	return common.Validate(p)
+	return validator.Validate(p)
 }
 
 // RootPath returns the path to repository root.

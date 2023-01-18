@@ -28,7 +28,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
@@ -42,7 +42,7 @@ type DeviceCompositeCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *DeviceCompositeCfg) Validate() error {
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunDeviceComposite runs the main process of the `device composite` command.

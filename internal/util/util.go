@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,13 @@
  THE SOFTWARE.
 */
 
-package common
+package util
 
-import "sort"
-
-func MergeMap[T any](maps ...map[string]T) map[string]T {
-	merged := map[string]T{}
-	for _, m := range maps {
-		for k, v := range m {
-			merged[k] = v
+func Or(args ...string) string {
+	for _, v := range args {
+		if v != "" {
+			return v
 		}
 	}
-	return merged
-}
-
-func SortedMapKeys[T any](m map[string]T) []string {
-	var keys []string
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	return keys
+	return ""
 }

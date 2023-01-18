@@ -36,7 +36,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/rogpeppe/go-internal/modfile"
@@ -53,7 +53,7 @@ func (c *CueGetCfg) Validate() error {
 	if filepath.Ext(c.FilePath) != ".go" {
 		return fmt.Errorf("target is not go file")
 	}
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunCueGet runs the main process of the `cue get` command.
@@ -64,7 +64,7 @@ func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 }
 
 func RunCueGetImpl(ctx context.Context, path string, getter CueGetter) error {
-	_ = common.WriterFromContext(ctx)
+	_ = WriterFromContext(ctx)
 
 	if err := validateIsModuleRoot(); err != nil {
 		return fmt.Errorf("validate: %w", err)

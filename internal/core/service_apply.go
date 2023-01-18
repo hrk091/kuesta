@@ -29,8 +29,10 @@ import (
 	"strings"
 
 	extgogit "github.com/go-git/go-git/v5"
+	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/common"
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/kuesta"
 	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
@@ -42,7 +44,7 @@ type ServiceApplyCfg struct {
 
 // Validate validates exposed fields according to the `validate` tag.
 func (c *ServiceApplyCfg) Validate() error {
-	return common.Validate(c)
+	return validator.Validate(c)
 }
 
 // RunServiceApply runs the main process of the `service apply` command.
@@ -132,7 +134,7 @@ func CheckGitStatus(stmap extgogit.Status) error {
 		err = multierr.Append(err, CheckGitFileStatus(path, *st))
 	}
 	if err != nil {
-		return common.JoinErr("check git status:", err)
+		return error2.JoinErr("check git status:", err)
 	}
 	return nil
 }
@@ -219,7 +221,7 @@ type DeviceCompositePlan struct {
 
 // NewDeviceCompositePlan creates new DeviceCompositePlan from the given git file statuses.
 func NewDeviceCompositePlan(stmap extgogit.Status, root string) *DeviceCompositePlan {
-	updated := common.NewSet[kuesta.DevicePath]()
+	updated := util.NewSet[kuesta.DevicePath]()
 	for path, st := range stmap {
 		if st.Staging == extgogit.Unmodified {
 			continue

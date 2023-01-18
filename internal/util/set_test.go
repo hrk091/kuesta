@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +20,33 @@
  THE SOFTWARE.
 */
 
-package common
+package util_test
 
 import (
-	"log"
-	"os"
+	"testing"
+
+	"github.com/nttcom/kuesta/internal/util"
+	"github.com/stretchr/testify/assert"
 )
 
-func MustGetEnv(name string) string {
-	v := os.Getenv(name)
-	if v == "" {
-		log.Fatalf("Failed to load Env var: %s\n", name)
-	}
-	return v
+func TestSet(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		set := util.NewSet[string]("foo")
+		assert.False(t, set.Add("foo"))
+		assert.True(t, set.Add("bar"))
+		assert.True(t, set.Has("foo"))
+		assert.False(t, set.Has("baz"))
+		assert.Contains(t, set.List(), "foo")
+		assert.Contains(t, set.List(), "bar")
+	})
+
+	t.Run("int", func(t *testing.T) {
+		set := util.NewSet[int](1)
+		assert.False(t, set.Add(1))
+		assert.True(t, set.Add(2))
+		assert.True(t, set.Has(1))
+		assert.False(t, set.Has(3))
+		assert.Contains(t, set.List(), 1)
+		assert.Contains(t, set.List(), 2)
+	})
 }
