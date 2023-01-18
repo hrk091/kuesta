@@ -25,7 +25,7 @@ package cmd_test
 import (
 	"testing"
 
-	"github.com/nttcom/kuesta/cmd"
+	"github.com/nttcom/kuesta/internal/cmd"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -23,35 +23,23 @@
 package cmd_test
 
 import (
+	"os"
 	"testing"
 
-	"github.com/nttcom/kuesta/cmd"
+	"github.com/nttcom/kuesta/internal/cmd"
+	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewRootCmd_DeviceComposite(t *testing.T) {
-	tests := []struct {
-		name    string
-		args    []string
-		wantErr bool
-	}{
-		{
-			"err: device not set",
-			[]string{"service", "compile", "-r=./"},
-			true,
-		},
-	}
+func TestNewRootCmd(t *testing.T) {
+	dummyToken := "dummy-git-token"
+	testhelper.ExitOnErr(t, os.Setenv("KUESTA_GIT_TOKEN", dummyToken))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := cmd.NewRootCmd()
-			c.SetArgs(tt.args)
-			err := c.Execute()
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-		})
-	}
+	dummyRootpath := "dummy-rootpath"
+	testhelper.ExitOnErr(t, os.Setenv("KUESTA_CONFIG_ROOT_PATH", dummyRootpath))
+
+	_ = cmd.NewRootCmd()
+	assert.Equal(t, dummyToken, viper.GetString(cmd.FlagGitToken))
+	assert.Equal(t, dummyRootpath, viper.GetString(cmd.FlagConfigRootPath))
 }
