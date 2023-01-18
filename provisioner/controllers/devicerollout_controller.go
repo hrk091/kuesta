@@ -25,7 +25,7 @@ package controllers
 import (
 	"context"
 
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,7 +70,7 @@ func (r *DeviceRolloutReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (r *DeviceRolloutReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

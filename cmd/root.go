@@ -29,7 +29,7 @@ import (
 
 	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,7 +42,7 @@ var cfgFile string
 func Execute() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		logger.ShowStackTrace(os.Stderr, err)
+		stacktrace.ShowStackTrace(os.Stderr, err)
 		// NOTE add show cmd.UsageString() for the specific error if needed
 		os.Exit(1)
 	}

@@ -27,10 +27,10 @@ import (
 	"fmt"
 
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
 )
 
 type ServiceCompileCfg struct {

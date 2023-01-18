@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -23,43 +23,42 @@
 package logger_test
 
 import (
-	"bytes"
-	"regexp"
+	"context"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/pkg/errors"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zapcore"
 )
 
-func TestShowStackTrace(t *testing.T) {
-	t.Run("nested error", func(t *testing.T) {
-		err1 := errors.New("foo")
-		err2 := errors.Wrap(err1, "bar")
-		err3 := errors.Wrap(err2, "baz")
+func TestConvertLevel(t *testing.T) {
+	tests := []struct {
+		given uint8
+		want  zapcore.Level
+	}{
+		{0, zapcore.WarnLevel},
+		{1, zapcore.InfoLevel},
+		{2, zapcore.DebugLevel},
+		{3, zapcore.DebugLevel},
+	}
 
-		buf := &bytes.Buffer{}
-		logger.ShowStackTrace(buf, err3)
+	for _, tt := range tests {
+		assert.Equal(t, logger.ConvertLevel(tt.given), tt.want)
+	}
+}
 
-		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
-		assert.Equal(t, 1, len(found))
-	})
+func TestFromContext(t *testing.T) {
+	want := logger.NewLogger()
+	ctx := logger.WithLogger(context.Background(), want)
+	assert.Equal(t, want, logger.FromContext(ctx))
+}
 
-	t.Run("single error", func(t *testing.T) {
-		err := errors.New("foo")
+func TestSetup(t *testing.T) {
+	core := logger.NewLogger().Desugar().Core()
+	assert.Equal(t, false, core.Enabled(zapcore.DebugLevel))
 
-		buf := &bytes.Buffer{}
-		logger.ShowStackTrace(buf, err)
-
-		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
-		assert.Equal(t, 1, len(found))
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		buf := &bytes.Buffer{}
-		logger.ShowStackTrace(buf, nil)
-		t.Log(buf)
-
-		assert.Equal(t, 0, len(buf.Bytes()))
-	})
+	logger.Setup(true, 2)
+	core = logger.NewLogger().Desugar().Core()
+	assert.Equal(t, true, core.Enabled(zapcore.DebugLevel))
+	logger.SetDefault()
 }

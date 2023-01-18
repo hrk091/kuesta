@@ -31,10 +31,10 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
 )
 

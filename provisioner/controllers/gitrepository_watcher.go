@@ -31,7 +31,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/nttcom/kuesta/pkg/artifact"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -120,7 +120,7 @@ func (r *GitRepositoryWatcher) Error(ctx context.Context, err error, msg string,
 		return
 	}
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

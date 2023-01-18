@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/internal/logger"
 )
 
 func SetInterval(ctx context.Context, fn func(), dur time.Duration, msgs ...string) {

@@ -34,8 +34,8 @@ import (
 	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gogit"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/validator"
-	"github.com/nttcom/kuesta/pkg/logger"
 	"go.uber.org/multierr"
 )
 

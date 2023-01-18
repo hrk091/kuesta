@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,45 +20,45 @@
  THE SOFTWARE.
 */
 
-package logger
+package logger_test
 
 import (
-	"fmt"
-	"io"
+	"context"
+	"testing"
 
-	"github.com/pkg/errors"
+	"github.com/nttcom/kuesta/internal/logger"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zapcore"
 )
 
-// ShowStackTrace shows the stacktrace of the original error only.
-func ShowStackTrace(w io.Writer, err error) {
-	if st := GetStackTrace(err); st != "" {
-		fmt.Fprintf(w, "StackTrace: %s\n\n", st)
+func TestConvertLevel(t *testing.T) {
+	tests := []struct {
+		given uint8
+		want  zapcore.Level
+	}{
+		{0, zapcore.WarnLevel},
+		{1, zapcore.InfoLevel},
+		{2, zapcore.DebugLevel},
+		{3, zapcore.DebugLevel},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, logger.ConvertLevel(tt.given), tt.want)
 	}
 }
 
-// GetStackTrace returns the stacktrace of the original error only.
-func GetStackTrace(err error) string {
-	st := bottomStackTrace(err)
-	if st != nil {
-		return fmt.Sprintf("%+v", st.StackTrace())
-	}
-	return ""
+func TestFromContext(t *testing.T) {
+	want := logger.NewLogger()
+	ctx := logger.WithLogger(context.Background(), want)
+	assert.Equal(t, want, logger.FromContext(ctx))
 }
 
-type stackTracer interface {
-	StackTrace() errors.StackTrace
-}
+func TestSetup(t *testing.T) {
+	core := logger.NewLogger().Desugar().Core()
+	assert.Equal(t, false, core.Enabled(zapcore.DebugLevel))
 
-func bottomStackTrace(err error) stackTracer {
-	var st stackTracer
-	if errors.Unwrap(err) != nil {
-		st = bottomStackTrace(errors.Unwrap(err))
-		if st != nil {
-			return st
-		}
-	}
-	if e, ok := err.(stackTracer); ok { // nolint
-		return e
-	}
-	return nil
+	logger.Setup(true, 2)
+	core = logger.NewLogger().Desugar().Core()
+	assert.Equal(t, true, core.Enabled(zapcore.DebugLevel))
+	logger.SetDefault()
 }

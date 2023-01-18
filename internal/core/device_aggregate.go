@@ -37,11 +37,12 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/file"
 	"github.com/nttcom/kuesta/internal/gogit"
+	logger2 "github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -89,7 +90,7 @@ func (c *DeviceAggregateCfg) Validate() error {
 
 // RunDeviceAggregate runs the main process of the `device aggregate` command.
 func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 	l.Debug("device aggregate called")
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -145,7 +146,7 @@ func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 
 func (s *DeviceAggregateServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
@@ -181,7 +182,7 @@ func (s *DeviceAggregateServer) Run(ctx context.Context) {
 }
 
 func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	go func() {
 		for {
@@ -189,7 +190,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					logger.Error(ctx, err, "save actual device config")
+					logger2.Error(ctx, err, "save actual device config")
 				}
 			case <-ctx.Done():
 				return
@@ -202,7 +203,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 	util.SetInterval(ctx, func() {
 		if err := s.GitPushDeviceConfig(ctx); err != nil {
-			logger.Error(ctx, err, "push sync branch")
+			logger2.Error(ctx, err, "push sync branch")
 		}
 	}, UpdateCheckDuration)
 }
@@ -218,7 +219,7 @@ func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigReq
 
 // GitPushDeviceConfig runs git-commit all unstaged device config updates as batch commit then git-push to remote origin.
 func (s *DeviceAggregateServer) GitPushDeviceConfig(ctx context.Context) error {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	g, err := gogit.NewGit(s.cfg.StatusGitOptions().ShouldCloneIfNotExist())
 	if err != nil {

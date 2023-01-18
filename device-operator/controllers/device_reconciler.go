@@ -39,7 +39,7 @@ import (
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	device "github.com/nttcom/kuesta/pkg/device"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
@@ -224,7 +224,7 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 
 func (r *DeviceReconciler) Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := log.FromContext(ctx).WithCallDepth(1)
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)

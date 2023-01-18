@@ -20,38 +20,46 @@
  THE SOFTWARE.
 */
 
-package cmd
+package stacktrace_test
 
 import (
-	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/internal/logger"
-	"github.com/spf13/cobra"
+	"bytes"
+	"regexp"
+	"testing"
+
+	"github.com/nttcom/kuesta/pkg/stacktrace"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
-func newServiceApplyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "apply",
-		Short: "Apply all changed service config and generate new device config of affected devices",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := newServiceApplyCfg(cmd, args)
-			if err != nil {
-				return err
-			}
-			logger.Setup(cfg.Devel, cfg.Verbose)
+func TestShowStackTrace(t *testing.T) {
+	t.Run("nested error", func(t *testing.T) {
+		err1 := errors.New("foo")
+		err2 := errors.Wrap(err1, "bar")
+		err3 := errors.Wrap(err2, "baz")
 
-			return core.RunServiceApply(cmd.Context(), cfg)
-		},
-	}
-	return cmd
-}
+		buf := &bytes.Buffer{}
+		stacktrace.ShowStackTrace(buf, err3)
 
-func newServiceApplyCfg(cmd *cobra.Command, args []string) (*core.ServiceApplyCfg, error) {
-	rootCfg, err := newRootCfg(cmd)
-	if err != nil {
-		return nil, err
-	}
-	cfg := &core.ServiceApplyCfg{
-		RootCfg: *rootCfg,
-	}
-	return cfg, cfg.Validate()
+		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
+		assert.Equal(t, 1, len(found))
+	})
+
+	t.Run("single error", func(t *testing.T) {
+		err := errors.New("foo")
+
+		buf := &bytes.Buffer{}
+		stacktrace.ShowStackTrace(buf, err)
+
+		found := regexp.MustCompile("testing.tRunner").FindAllIndex(buf.Bytes(), -1)
+		assert.Equal(t, 1, len(found))
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		stacktrace.ShowStackTrace(buf, nil)
+		t.Log(buf)
+
+		assert.Equal(t, 0, len(buf.Bytes()))
+	})
 }

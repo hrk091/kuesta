@@ -28,10 +28,10 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/validator"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
 )
 
 type DeviceCompositeCfg struct {

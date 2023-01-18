@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2022-2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -81,7 +82,7 @@ func FromContext(ctx context.Context) *zap.SugaredLogger {
 
 func Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
-	if st := GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)

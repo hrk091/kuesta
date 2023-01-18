@@ -20,45 +20,45 @@
  THE SOFTWARE.
 */
 
-package logger_test
+package stacktrace
 
 import (
-	"context"
-	"testing"
+	"fmt"
+	"io"
 
-	"github.com/nttcom/kuesta/pkg/logger"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
+	"github.com/pkg/errors"
 )
 
-func TestConvertLevel(t *testing.T) {
-	tests := []struct {
-		given uint8
-		want  zapcore.Level
-	}{
-		{0, zapcore.WarnLevel},
-		{1, zapcore.InfoLevel},
-		{2, zapcore.DebugLevel},
-		{3, zapcore.DebugLevel},
-	}
-
-	for _, tt := range tests {
-		assert.Equal(t, logger.ConvertLevel(tt.given), tt.want)
+// ShowStackTrace shows the stacktrace of the original error only.
+func ShowStackTrace(w io.Writer, err error) {
+	if st := GetStackTrace(err); st != "" {
+		fmt.Fprintf(w, "StackTrace: %s\n\n", st)
 	}
 }
 
-func TestFromContext(t *testing.T) {
-	want := logger.NewLogger()
-	ctx := logger.WithLogger(context.Background(), want)
-	assert.Equal(t, want, logger.FromContext(ctx))
+// GetStackTrace returns the stacktrace of the original error only.
+func GetStackTrace(err error) string {
+	st := bottomStackTrace(err)
+	if st != nil {
+		return fmt.Sprintf("%+v", st.StackTrace())
+	}
+	return ""
 }
 
-func TestSetup(t *testing.T) {
-	core := logger.NewLogger().Desugar().Core()
-	assert.Equal(t, false, core.Enabled(zapcore.DebugLevel))
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
 
-	logger.Setup(true, 2)
-	core = logger.NewLogger().Desugar().Core()
-	assert.Equal(t, true, core.Enabled(zapcore.DebugLevel))
-	logger.SetDefault()
+func bottomStackTrace(err error) stackTracer {
+	var st stackTracer
+	if errors.Unwrap(err) != nil {
+		st = bottomStackTrace(errors.Unwrap(err))
+		if st != nil {
+			return st
+		}
+	}
+	if e, ok := err.(stackTracer); ok { // nolint
+		return e
+	}
+	return nil
 }

@@ -24,7 +24,7 @@ package cmd
 
 import (
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/spf13/cobra"
 )
 

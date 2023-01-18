@@ -35,10 +35,10 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/nttcom/kuesta/device-subscriber/internal/logger"
 	"github.com/nttcom/kuesta/device-subscriber/internal/model"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
-	"github.com/nttcom/kuesta/pkg/logger"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	"github.com/openconfig/gnmi/proto/gnmi"

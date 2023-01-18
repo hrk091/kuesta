@@ -36,8 +36,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/validator"
-	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/pkg/errors"
 	"github.com/rogpeppe/go-internal/modfile"
 )

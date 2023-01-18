@@ -27,8 +27,8 @@ import (
 	"strings"
 
 	"github.com/nttcom/kuesta/device-subscriber/internal/validator"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/pkg/common"
-	"github.com/nttcom/kuesta/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

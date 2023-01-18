@@ -25,13 +25,13 @@ package main
 import (
 	"os"
 
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 )
 
 func main() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		logger.ShowStackTrace(os.Stderr, err)
+		stacktrace.ShowStackTrace(os.Stderr, err)
 		os.Exit(1)
 	}
 }

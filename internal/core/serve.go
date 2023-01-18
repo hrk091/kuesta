@@ -39,12 +39,13 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nttcom/kuesta/internal/gogit"
+	logger2 "github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/common"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/logger"
+	"github.com/nttcom/kuesta/pkg/stacktrace"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -111,7 +112,7 @@ func (c *ServeCfg) Validate() error {
 }
 
 func RunServe(ctx context.Context, cfg *ServeCfg) error {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 	l.Debug("serve called")
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -198,10 +199,10 @@ func NewNorthboundServerWithGit(cfg *ServeCfg, cGit, sGit *gogit.Git) *Northboun
 func (s *NorthboundServer) RunStatusSyncLoop(ctx context.Context, dur time.Duration) {
 	syncStatusFunc := func() {
 		if _, err := s.sGit.Checkout(); err != nil {
-			logger.Error(ctx, err, "git checkout")
+			logger2.Error(ctx, err, "git checkout")
 		}
 		if err := s.sGit.Pull(); err != nil {
-			logger.Error(ctx, err, "git pull")
+			logger2.Error(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
@@ -212,10 +213,10 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 		s.smu.Lock()
 		defer s.smu.Unlock()
 		if _, err := s.cGit.Checkout(); err != nil {
-			logger.Error(ctx, err, "git checkout")
+			logger2.Error(ctx, err, "git checkout")
 		}
 		if err := s.cGit.Pull(); err != nil {
-			logger.Error(ctx, err, "git pull")
+			logger2.Error(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
@@ -224,7 +225,7 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
@@ -234,7 +235,7 @@ var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
 
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 	l.Debug("Capabilities called")
 
 	return s.impl.Capabilities(ctx, req)
@@ -248,7 +249,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	defer func() {
 		s.mu.RUnlock()
 	}()
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 	l.Debugw("Get called")
 
 	prefix := req.GetPrefix()
@@ -270,7 +271,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 
 // Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
 func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 	l.Debugw("Set called")
 
 	if !s.mu.TryLock() {
@@ -386,7 +387,7 @@ func NewNorthboundServerImpl(cfg *ServeCfg) *NorthboundServerImpl {
 // Error shows an error with stacktrace if attached.
 func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
 	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := logger.GetStackTrace(err); st != "" {
+	if st := stacktrace.GetStackTrace(err); st != "" {
 		l = l.With("stacktrace", st)
 	}
 	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
@@ -394,7 +395,7 @@ func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string
 
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	ver, err := GetGNMIServiceVersion()
 	if err != nil {
@@ -421,7 +422,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 
 // Get returns the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
@@ -472,7 +473,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 
 // Delete deletes the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	// TODO delete partial nested data
 	req, err := s.converter.Convert(prefix, path)
@@ -499,7 +500,7 @@ func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path
 
 // Replace replaces the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	// TODO replace partial nested data
 	req, err := s.converter.Convert(prefix, path)
@@ -555,7 +556,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 
 // Update updates the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
-	l := logger.FromContext(ctx)
+	l := logger2.FromContext(ctx)
 
 	// TODO update partial nested data
 	req, err := s.converter.Convert(prefix, path)
