@@ -26,10 +26,11 @@ package gitrepo_test
 
 import (
 	"context"
-	"github.com/nttcom/kuesta/pkg/gitrepo"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/nttcom/kuesta/internal/gitrepo"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGitHubClientImpl_HealthCheck(t *testing.T) {
