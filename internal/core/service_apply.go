@@ -29,7 +29,6 @@ import (
 	"strings"
 
 	extgogit "github.com/go-git/go-git/v5"
-	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
@@ -134,7 +133,7 @@ func CheckGitStatus(stmap extgogit.Status) error {
 		err = multierr.Append(err, CheckGitFileStatus(path, *st))
 	}
 	if err != nil {
-		return error2.JoinErr("check git status:", err)
+		return util.JoinErr("check git status:", err)
 	}
 	return nil
 }

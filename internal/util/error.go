@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package error
+package util
 
 import (
 	"fmt"

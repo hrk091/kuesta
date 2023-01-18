@@ -34,7 +34,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	gogithttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	error2 "github.com/nttcom/kuesta/internal/error"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/pkg/errors"
@@ -488,7 +487,7 @@ func (g *Git) RemoveGoneBranches() error {
 		}
 	}
 	if err != nil {
-		return error2.JoinErr("remote gone branches:", err)
+		return util.JoinErr("remote gone branches:", err)
 	}
 
 	return nil
