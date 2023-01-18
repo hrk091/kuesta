@@ -27,7 +27,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

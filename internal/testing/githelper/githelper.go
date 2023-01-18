@@ -32,7 +32,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 )
 
 func InitRepo(t *testing.T, branch string) (*extgogit.Repository, string) {

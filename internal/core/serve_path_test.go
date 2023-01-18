@@ -28,7 +28,7 @@ import (
 
 	"github.com/nttcom/kuesta/internal/core"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/stretchr/testify/assert"
 )

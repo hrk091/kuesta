@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 )
 
 func mustGenTgzArchive(path, content string) (string, io.Reader) {

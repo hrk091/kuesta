@@ -32,7 +32,7 @@ import (
 	"path/filepath"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

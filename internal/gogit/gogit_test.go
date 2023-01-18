@@ -31,8 +31,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/internal/testhelper/githelper"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/internal/testing/githelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

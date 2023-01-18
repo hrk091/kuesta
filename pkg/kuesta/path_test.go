@@ -32,7 +32,7 @@ import (
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

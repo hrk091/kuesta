@@ -36,8 +36,8 @@ import (
 	"github.com/nttcom/kuesta/internal/gitrepo"
 	"github.com/nttcom/kuesta/internal/gitrepo/mock"
 	"github.com/nttcom/kuesta/internal/gogit"
-	"github.com/nttcom/kuesta/internal/testhelper/githelper"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/internal/testing/githelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

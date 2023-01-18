@@ -36,8 +36,8 @@ import (
 
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/internal/testhelper/githelper"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/internal/testing/githelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -29,8 +29,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/nttcom/kuesta/internal/testhelper/githelper"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/internal/testing/githelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 )
 
 func SetupGitRepoWithRemote(t *testing.T, remote string) (*git.Repository, string, string) {

@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nttcom/kuesta/pkg/testhelper/gnmihelper"
+	"github.com/nttcom/kuesta/pkg/testing/gnmihelper"
 	gclient "github.com/openconfig/gnmi/client"
 	gnmiclient "github.com/openconfig/gnmi/client/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"

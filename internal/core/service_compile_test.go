@@ -30,7 +30,7 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/nttcom/kuesta/internal/core"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

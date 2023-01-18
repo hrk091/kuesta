@@ -35,7 +35,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -27,7 +27,7 @@ import (
 	"testing"
 
 	"github.com/nttcom/kuesta/internal/cmd"
-	"github.com/nttcom/kuesta/pkg/testhelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )

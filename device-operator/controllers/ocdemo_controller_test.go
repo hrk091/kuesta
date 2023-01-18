@@ -33,8 +33,8 @@ import (
 
 	source "github.com/fluxcd/source-controller/api/v1beta2"
 	deviceoperator "github.com/nttcom/kuesta/device-operator/api/v1alpha1"
-	"github.com/nttcom/kuesta/pkg/testhelper"
-	"github.com/nttcom/kuesta/pkg/testhelper/gnmihelper"
+	"github.com/nttcom/kuesta/pkg/testing/gnmihelper"
+	"github.com/nttcom/kuesta/pkg/testing/testhelper"
 	provisioner "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
