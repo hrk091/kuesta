@@ -56,12 +56,10 @@ command: install: {
 		}
 	}
 
-	wantEmulator: {
-		$dep: gitToken.$done
-		cli.Ask & {
-			prompt:   "Do you need sample driver and emulator for trial?: (yes|no)"
-			response: bool
-		}
+	wantEmulator: cli.Ask & {
+		$dep: [usePrivateRepo.$done, gitToken.$done]
+		prompt:   "Do you need sample driver and emulator for trial?: (yes|no)"
+		response: bool
 	}
 
 	printInputs: cli.Print & {
@@ -129,26 +127,32 @@ command: install: {
 					version: args.version
 				}
 			}
-			if wantEmulator.response {
-				deviceOperator: deployDeviceOperator & {
-					$dep: provisioner.$done
-					var: {
-						"statusRepo":    statusRepo.response
-						image:           "\(args.imageRegistry)/device-operator"
-						subscriberImage: "\(args.imageRegistry)/device-subscriber"
-						version:         args.version
+			deviceOperator: {
+				$dep: provisioner.$done
+				if wantEmulator.response {
+					deployDeviceOperator & {
+						var: {
+							"statusRepo":    statusRepo.response
+							image:           "\(args.imageRegistry)/device-operator"
+							subscriberImage: "\(args.imageRegistry)/device-subscriber"
+							version:         args.version
+						}
 					}
 				}
-				gettingStartedResources: deployGettingStartedResources & {
-					$dep: deviceOperator.$done
-					var: {
-						"configRepo":     configRepo.response
-						"usePrivateRepo": usePrivateRepo.response
-						if usePrivateRepo.response {
-							"gitUsername": gitUsername.response
-							"gitToken":    gitToken.response
+			}
+			gettingStartedResources: {
+				$dep: deviceOperator.$done
+				if wantEmulator.response {
+					deployGettingStartedResources & {
+						var: {
+							"configRepo":     configRepo.response
+							"usePrivateRepo": usePrivateRepo.response
+							if usePrivateRepo.response {
+								"gitUsername": gitUsername.response
+								"gitToken":    gitToken.response
+							}
+							gnmiFakeImage: "\(args.imageRegistry)/gnmi-fake"
 						}
-						gnmiFakeImage: "\(args.imageRegistry)/gnmi-fake"
 					}
 				}
 			}
@@ -254,9 +258,9 @@ deployKuesta: {
 	}
 
 	writeSecret: {
+		$dep: writePatch.$done
 		if var.usePrivateRepo {
 			file.Create & {
-				$dep:     writePatch.$done
 				filename: _secretEnvFile
 				contents: "\(_secretKeyGitToken)=\(var.gitToken)"
 			}
@@ -274,9 +278,9 @@ deployKuesta: {
 	}
 
 	deleteSecret: {
+		$dep: deploy.$done
 		if var.usePrivateRepo {
 			file.RemoveAll & {
-				$dep: deploy.$done
 				path: _secretEnvFile
 			}
 		}
@@ -468,14 +472,16 @@ deployGettingStartedResources: {
 			"""
 	}
 
-	if var.usePrivateRepo {
-		createSecret: exec.Run & {
-			$dep: start.$done
-			cmd: ["bash", "-c", """
+	createSecret: {
+		$dep: start.$done
+		if var.usePrivateRepo {
+			exec.Run & {
+				cmd: ["bash", "-c", """
 				kubectl create ns \(var.namespace)
 				kubectl create secret generic \(_gitTokenSecretName) -n \(var.namespace) \\
 				--from-literal=username=\(var.gitUsername) --from-literal=password=\(var.gitToken)
 				"""]
+			}
 		}
 	}
 
@@ -486,7 +492,7 @@ deployGettingStartedResources: {
 	}
 
 	deploy: exec.Run & {
-		$dep: writeManifest.$done
+		$dep: [writeManifest.$done, createSecret.$done]
 		cmd: ["bash", "-c", "kubectl apply -f \(_manifestFile)"]
 	}
 
