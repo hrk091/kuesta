@@ -37,5 +37,5 @@ jobs:
 
       - name: Run Test
         run: |
-          make test
+          make test-all
           git diff --exit-code

@@ -34,10 +34,20 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: fmt vet ## Run tests.
-	git diff | cat
 	go test ./... -coverprofile cover.out
+
+.PHONY: test-all
+test-all:
+	@echo "*** kuesta ***"
+	make test
+	@echo
+	@echo "*** kuesta-provisioner ***"
 	cd provisioner && make test
+	@echo
+	@echo "*** device-operator ***"
 	cd device-operator && make test
+	@echo
+	@echo "*** device-subscriber ***"
 	cd device-subscriber && make test
 
 ##@ Build Dependencies
