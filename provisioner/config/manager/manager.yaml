@@ -38,6 +38,7 @@ spec:
         - /manager
         args:
         - --leader-elect
+        - -zap-devel=false
         image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager

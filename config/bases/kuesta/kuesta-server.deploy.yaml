@@ -21,10 +21,6 @@ spec:
           args:
             - serve
           env:
-            - name: KUESTA_DEVEL
-              value: "true"
-            - name: KUESTA_VERBOSE
-              value: "2"
             - name: KUESTA_CONFIG_ROOT_PATH
               value: /data/repo_config
             - name: KUESTA_CONFIG_REPO_URL

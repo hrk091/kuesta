@@ -22,10 +22,6 @@ spec:
             - device
             - aggregate
           env:
-            - name: KUESTA_DEVEL
-              value: "true"
-            - name: KUESTA_VERBOSE
-              value: "2"
             - name: KUESTA_STATUS_ROOT_PATH
               value: /data/repo_status
             - name: KUESTA_STATUS_REPO_URL

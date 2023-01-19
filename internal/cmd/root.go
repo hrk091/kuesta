@@ -81,7 +81,7 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.PersistentFlags().StringVar(&cfgFile, FlagConfig, "", "config file (default is $HOME/.kuesta.yaml)")
 
-	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 0, "verbose level")
+	cmd.PersistentFlags().Uint8P(FlagVerbose, "v", 1, "verbose level")
 	cmd.PersistentFlags().BoolP(FlagDevel, "", false, "enable development mode")
 	cmd.PersistentFlags().StringP(FlagConfigRootPath, "p", "", "path to the config repository root")
 	cmd.PersistentFlags().StringP(FlagStatusRootPath, "", "", "path to the status repository root")
