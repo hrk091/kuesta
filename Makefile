@@ -50,6 +50,20 @@ test-all:
 	@echo "*** device-subscriber ***"
 	cd device-subscriber && make test
 
+.PHONY: lint-all
+lint-all:
+	@echo "*** kuesta ***"
+	golangci-lint run -v
+	@echo
+	@echo "*** kuesta-provisioner ***"
+	cd provisioner && golangci-lint run -v
+	@echo
+	@echo "*** device-operator ***"
+	cd device-operator && golangci-lint run -v
+	@echo
+	@echo "*** device-subscriber ***"
+	cd device-subscriber && golangci-lint run -v
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
