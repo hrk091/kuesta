@@ -39,7 +39,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nttcom/kuesta/internal/gogit"
-	logger2 "github.com/nttcom/kuesta/internal/logger"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/credentials"
@@ -87,17 +87,6 @@ func (c *ServeCfg) TLSServerConfig() *credentials.TLSServerConfig {
 	return cfg
 }
 
-type PathType string
-
-const (
-	NodeService              = "service"
-	NodeDevice               = "device"
-	KeyServiceKind           = "kind"
-	KeyDeviceName            = "name"
-	PathTypeService PathType = NodeService
-	PathTypeDevice  PathType = NodeDevice
-)
-
 // Validate validates exposed fields according to the `validate` tag.
 func (c *ServeCfg) Validate() error {
 	if !c.NoTLS {
@@ -111,9 +100,27 @@ func (c *ServeCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *ServeCfg) Mask() *ServeCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
+type PathType string
+
+const (
+	NodeService              = "service"
+	NodeDevice               = "device"
+	KeyServiceKind           = "kind"
+	KeyDeviceName            = "name"
+	PathTypeService PathType = NodeService
+	PathTypeDevice  PathType = NodeDevice
+)
+
 func RunServe(ctx context.Context, cfg *ServeCfg) error {
-	l := logger2.FromContext(ctx)
-	l.Debug("serve called")
+	l := logger.FromContext(ctx)
+	l.Debugw("serve called", "config", cfg.Mask())
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -199,10 +206,10 @@ func NewNorthboundServerWithGit(cfg *ServeCfg, cGit, sGit *gogit.Git) *Northboun
 func (s *NorthboundServer) RunStatusSyncLoop(ctx context.Context, dur time.Duration) {
 	syncStatusFunc := func() {
 		if _, err := s.sGit.Checkout(); err != nil {
-			logger2.Error(ctx, err, "git checkout")
+			logger.Error(ctx, err, "git checkout")
 		}
 		if err := s.sGit.Pull(); err != nil {
-			logger2.Error(ctx, err, "git pull")
+			logger.Error(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
@@ -213,10 +220,10 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 		s.smu.Lock()
 		defer s.smu.Unlock()
 		if _, err := s.cGit.Checkout(); err != nil {
-			logger2.Error(ctx, err, "git checkout")
+			logger.Error(ctx, err, "git checkout")
 		}
 		if err := s.cGit.Pull(); err != nil {
-			logger2.Error(ctx, err, "git pull")
+			logger.Error(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
@@ -235,7 +242,7 @@ var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
 
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 	l.Debug("Capabilities called")
 
 	return s.impl.Capabilities(ctx, req)
@@ -249,7 +256,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	defer func() {
 		s.mu.RUnlock()
 	}()
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 	l.Debugw("Get called")
 
 	prefix := req.GetPrefix()
@@ -271,7 +278,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 
 // Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
 func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 	l.Debugw("Set called")
 
 	if !s.mu.TryLock() {
@@ -395,7 +402,7 @@ func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string
 
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	ver, err := GetGNMIServiceVersion()
 	if err != nil {
@@ -422,7 +429,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 
 // Get returns the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (*pb.Notification, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
@@ -473,7 +480,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 
 // Delete deletes the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path) (*pb.UpdateResult, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	// TODO delete partial nested data
 	req, err := s.converter.Convert(prefix, path)
@@ -500,7 +507,7 @@ func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path
 
 // Replace replaces the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	// TODO replace partial nested data
 	req, err := s.converter.Convert(prefix, path)
@@ -556,7 +563,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 
 // Update updates the service input stored at the supplied path.
 func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path, val *pb.TypedValue) (*pb.UpdateResult, error) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	// TODO update partial nested data
 	req, err := s.converter.Convert(prefix, path)

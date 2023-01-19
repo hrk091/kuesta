@@ -45,10 +45,17 @@ func (c *DeviceCompositeCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *DeviceCompositeCfg) Mask() *DeviceCompositeCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunDeviceComposite runs the main process of the `device composite` command.
 func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	l := logger.FromContext(ctx)
-	l.Debug("device composite called")
+	l.Debugw("device composite called", "config", cfg.Mask())
 
 	cctx := cuecontext.New()
 	sp := kuesta.ServicePath{RootDir: cfg.ConfigRootPath}

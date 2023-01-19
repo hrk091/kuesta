@@ -46,10 +46,17 @@ func (c *ServiceApplyCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *ServiceApplyCfg) Mask() *ServiceApplyCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunServiceApply runs the main process of the `service apply` command.
 func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	l := logger.FromContext(ctx)
-	l.Debug("service apply called")
+	l.Debugw("service apply called", "config", cfg.Mask())
 
 	git, err := gogit.NewGit(cfg.ConfigGitOptions())
 	if err != nil {

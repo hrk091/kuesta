@@ -48,11 +48,18 @@ func (c *GitCommitCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *GitCommitCfg) Mask() *GitCommitCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunGitCommit runs the main process of the `git commit` command.
 func RunGitCommit(ctx context.Context, cfg *GitCommitCfg) error {
 	l := logger.FromContext(ctx)
 	out := WriterFromContext(ctx)
-	l.Debug("git commit called")
+	l.Debugw("git commit called", "config", cfg.Mask())
 
 	git, err := gogit.NewGit(cfg.ConfigGitOptions())
 	if err != nil {

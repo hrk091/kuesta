@@ -71,3 +71,18 @@ func TestRootCfg_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestRootCfg_MaskCopy(t *testing.T) {
+	user := "alice"
+	token := "dummy"
+	want := "***"
+	cfg := &core.RootCfg{
+		GitUser:  user,
+		GitToken: token,
+	}
+	cc := cfg.Mask()
+	assert.Equal(t, user, cfg.GitUser)
+	assert.Equal(t, token, cfg.GitToken)
+	assert.Equal(t, user, cc.GitUser)
+	assert.Equal(t, want, cc.GitToken)
+}

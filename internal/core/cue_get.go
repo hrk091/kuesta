@@ -56,10 +56,17 @@ func (c *CueGetCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *CueGetCfg) Mask() *CueGetCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunCueGet runs the main process of the `cue get` command.
 func RunCueGet(ctx context.Context, cfg *CueGetCfg) error {
 	l := logger.FromContext(ctx)
-	l.Debug("cue get called")
+	l.Debugw("cue get called", "config", cfg.Mask())
 	return RunCueGetImpl(ctx, cfg.FilePath, execCueGet)
 }
 

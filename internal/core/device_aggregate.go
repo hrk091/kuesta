@@ -37,7 +37,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/nttcom/kuesta/internal/file"
 	"github.com/nttcom/kuesta/internal/gogit"
-	logger2 "github.com/nttcom/kuesta/internal/logger"
+	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/credentials"
@@ -88,10 +88,17 @@ func (c *DeviceAggregateCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *DeviceAggregateCfg) Mask() *DeviceAggregateCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunDeviceAggregate runs the main process of the `device aggregate` command.
 func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
-	l := logger2.FromContext(ctx)
-	l.Debug("device aggregate called")
+	l := logger.FromContext(ctx)
+	l.Debugw("device aggregate called", "config", cfg.Mask())
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -182,7 +189,7 @@ func (s *DeviceAggregateServer) Run(ctx context.Context) {
 }
 
 func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	go func() {
 		for {
@@ -190,7 +197,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					logger2.Error(ctx, err, "save actual device config")
+					logger.Error(ctx, err, "save actual device config")
 				}
 			case <-ctx.Done():
 				return
@@ -203,7 +210,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 	util.SetInterval(ctx, func() {
 		if err := s.GitPushDeviceConfig(ctx); err != nil {
-			logger2.Error(ctx, err, "push sync branch")
+			logger.Error(ctx, err, "push sync branch")
 		}
 	}, UpdateCheckDuration)
 }
@@ -219,7 +226,7 @@ func (s *DeviceAggregateServer) SaveConfig(ctx context.Context, r *SaveConfigReq
 
 // GitPushDeviceConfig runs git-commit all unstaged device config updates as batch commit then git-push to remote origin.
 func (s *DeviceAggregateServer) GitPushDeviceConfig(ctx context.Context) error {
-	l := logger2.FromContext(ctx)
+	l := logger.FromContext(ctx)
 
 	g, err := gogit.NewGit(s.cfg.StatusGitOptions().ShouldCloneIfNotExist())
 	if err != nil {

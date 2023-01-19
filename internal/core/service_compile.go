@@ -45,10 +45,17 @@ func (c *ServiceCompileCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *ServiceCompileCfg) Mask() *ServiceCompileCfg {
+	cc := *c
+	cc.RootCfg = *c.RootCfg.Mask()
+	return &cc
+}
+
 // RunServiceCompile runs the main process of the `service compile` command.
 func RunServiceCompile(ctx context.Context, cfg *ServiceCompileCfg) error {
 	l := logger.FromContext(ctx)
-	l.Debug("service compile called")
+	l.Debugw("service compile called", "config", cfg.Mask())
 
 	cctx := cuecontext.New()
 

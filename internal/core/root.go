@@ -47,6 +47,13 @@ func (c *RootCfg) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *RootCfg) Mask() *RootCfg {
+	cc := *c
+	cc.GitToken = "***"
+	return &cc
+}
+
 func (c *RootCfg) ConfigGitOptions() *gogit.GitOptions {
 	return &gogit.GitOptions{
 		RepoUrl:     c.ConfigRepoUrl,
