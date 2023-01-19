@@ -113,17 +113,9 @@ var _ = Describe("GitRepository watcher", func() {
 		config2 := []byte("bar-updated")
 		revision := "test-rev-updated"
 
-		var version string
-
 		BeforeEach(func() {
 			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
 			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2)).NotTo(HaveOccurred())
-
-			var dr kuestav1alpha1.DeviceRollout
-			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
-			}, timeout, interval).Should(Succeed())
-			version = dr.ResourceVersion
 
 			checksum, buf := testhelper.MustGenTgzArchiveDir(dir)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -133,9 +125,7 @@ var _ = Describe("GitRepository watcher", func() {
 			}))
 
 			var gr sourcev1.GitRepository
-			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), &gr)
-			}, timeout, interval).Should(Succeed())
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), &gr)).NotTo(HaveOccurred())
 			gr.Status.Artifact = &sourcev1.Artifact{
 				URL:      h.URL,
 				Checksum: checksum,
@@ -149,10 +139,8 @@ var _ = Describe("GitRepository watcher", func() {
 		It("should update DeviceRollout", func() {
 			var dr kuestav1alpha1.DeviceRollout
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr); err != nil {
-					return err
-				}
-				if dr.ResourceVersion == version {
+				k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
+				if dr.Spec.DeviceConfigMap["device1"].GitRevision != revision {
 					return fmt.Errorf("not updated yet")
 				}
 				return nil

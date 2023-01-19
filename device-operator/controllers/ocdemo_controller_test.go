@@ -339,9 +339,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				}))
 
 				gr := testGr.DeepCopy()
-				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), gr)
-				}, timeout, interval).Should(Succeed())
+				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testGr), gr)).NotTo(HaveOccurred())
 				gr.Status.Artifact = &source.Artifact{
 					URL:      h.URL,
 					Checksum: checksum,
@@ -369,9 +367,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 				var dr provisioner.DeviceRollout
 				Eventually(func() error {
-					if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
-						return err
-					}
+					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 					if dr.Status.GetDeviceStatus(testOpe.Name) == provisioner.DeviceStatusRunning {
 						return fmt.Errorf("status not changed yet")
 					}
@@ -399,9 +395,7 @@ var _ = Describe("DeviceOperator controller", func() {
 
 				var dr provisioner.DeviceRollout
 				Eventually(func() error {
-					if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr); err != nil {
-						return err
-					}
+					Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testDr), &dr)).NotTo(HaveOccurred())
 					if dr.Status.GetDeviceStatus(testOpe.Name) == provisioner.DeviceStatusRunning {
 						return fmt.Errorf("status not changed yet")
 					}
