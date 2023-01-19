@@ -37,7 +37,7 @@ var _ = Describe("DeviceRollout controller", func() {
 	ctx := context.Background()
 
 	var testDr provisioner.DeviceRollout
-	testhelper.MustNil(testhelper.NewTestDataFromFixture("devicerollout", &testDr))
+	Expect(testhelper.NewTestDataFromFixture("devicerollout", &testDr)).NotTo(HaveOccurred())
 	desired := provisioner.DeviceConfigMap{
 		"device1": {Checksum: "desired", GitRevision: "desired"},
 		"device2": {Checksum: "desired", GitRevision: "desired"},

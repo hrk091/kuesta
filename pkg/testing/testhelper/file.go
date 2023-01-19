@@ -62,8 +62,8 @@ func MustGenTgzArchive(path, content string) (string, io.Reader) {
 	if _, err := tw.Write([]byte(content)); err != nil {
 		panic(err)
 	}
-	MustNil(tw.Close())
-	MustNil(gw.Close())
+	must(tw.Close())
+	must(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer
@@ -112,8 +112,8 @@ func MustGenTgzArchiveDir(dir string) (string, io.Reader) {
 		panic(err)
 	}
 
-	MustNil(tw.Close())
-	MustNil(gw.Close())
+	must(tw.Close())
+	must(gw.Close())
 
 	hasher := sha256.New()
 	var out bytes.Buffer

@@ -43,7 +43,7 @@ var _ = Describe("GitRepository watcher", func() {
 	ctx := context.Background()
 
 	var testGr sourcev1.GitRepository
-	testhelper.MustNil(testhelper.NewTestDataFromFixture("gitrepository", &testGr))
+	Expect(testhelper.NewTestDataFromFixture("gitrepository", &testGr)).NotTo(HaveOccurred())
 
 	config1 := []byte("foo")
 	config2 := []byte("bar")
@@ -55,8 +55,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var err error
 		dir, err = os.MkdirTemp("", "git-watcher-test-*")
 		Expect(err).NotTo(HaveOccurred())
-		testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-		testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+		Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
+		Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2)).NotTo(HaveOccurred())
 
 		gr := testGr.DeepCopy()
 		Expect(k8sClient.Create(ctx, gr)).NotTo(HaveOccurred())
@@ -97,11 +97,11 @@ var _ = Describe("GitRepository watcher", func() {
 
 		want := kuestav1alpha1.DeviceConfigMap{
 			"device1": kuestav1alpha1.DeviceConfig{
-				Checksum:    hash(config1),
+				Checksum:    testhelper.Hash(config1),
 				GitRevision: revision,
 			},
 			"device2": kuestav1alpha1.DeviceConfig{
-				Checksum:    hash(config2),
+				Checksum:    testhelper.Hash(config2),
 				GitRevision: revision,
 			},
 		}
@@ -116,8 +116,8 @@ var _ = Describe("GitRepository watcher", func() {
 		var version string
 
 		BeforeEach(func() {
-			testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
-			testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2))
+			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
+			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2)).NotTo(HaveOccurred())
 
 			var dr kuestav1alpha1.DeviceRollout
 			Eventually(func() error {
@@ -160,11 +160,11 @@ var _ = Describe("GitRepository watcher", func() {
 
 			want := kuestav1alpha1.DeviceConfigMap{
 				"device1": kuestav1alpha1.DeviceConfig{
-					Checksum:    hash(config1),
+					Checksum:    testhelper.Hash(config1),
 					GitRevision: revision,
 				},
 				"device2": kuestav1alpha1.DeviceConfig{
-					Checksum:    hash(config2),
+					Checksum:    testhelper.Hash(config2),
 					GitRevision: revision,
 				},
 			}

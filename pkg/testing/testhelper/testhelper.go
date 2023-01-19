@@ -23,6 +23,10 @@
 package testhelper
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 	"testing"
@@ -36,19 +40,27 @@ func ExitOnErr(t *testing.T, err error) {
 	}
 }
 
-func MustNil(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func Chdir(t *testing.T, path string) {
 	t.Helper()
 	cd, err := os.Getwd()
 	t.Log(cd)
-	MustNil(err)
+	must(err)
 	ExitOnErr(t, os.Chdir(path))
 	t.Cleanup(func() {
 		ExitOnErr(t, os.Chdir(cd))
 	})
+}
+
+func Hash(buf []byte) string {
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, bytes.NewBuffer(buf)); err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

@@ -29,6 +29,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 
 	source "github.com/fluxcd/source-controller/api/v1beta2"
@@ -67,11 +68,11 @@ var _ = Describe("DeviceOperator controller", func() {
 	rev2nd := "rev2"
 
 	var testOpe deviceoperator.OcDemo
-	testhelper.MustNil(testhelper.NewTestDataFromFixture("device1.deviceoperator", &testOpe))
+	Expect(testhelper.NewTestDataFromFixture("device1.deviceoperator", &testOpe)).NotTo(HaveOccurred())
 	var testDr provisioner.DeviceRollout
-	testhelper.MustNil(testhelper.NewTestDataFromFixture("devicerollout", &testDr))
+	Expect(testhelper.NewTestDataFromFixture("devicerollout", &testDr)).NotTo(HaveOccurred())
 	var testGr source.GitRepository
-	testhelper.MustNil(testhelper.NewTestDataFromFixture("gitrepository", &testGr))
+	Expect(testhelper.NewTestDataFromFixture("gitrepository", &testGr)).NotTo(HaveOccurred())
 
 	BeforeEach(func() {
 		Expect(k8sClient.Create(ctx, testOpe.DeepCopy())).NotTo(HaveOccurred())
@@ -112,7 +113,7 @@ var _ = Describe("DeviceOperator controller", func() {
 				dr.Status.DesiredDeviceConfigMap = map[string]provisioner.DeviceConfig{}
 			}
 			dr.Status.DesiredDeviceConfigMap[testOpe.Name] = provisioner.DeviceConfig{
-				Checksum:    hash(config),
+				Checksum:    testhelper.Hash(config),
 				GitRevision: rev,
 			}
 			fmt.Fprintf(GinkgoWriter, "device rollout status, %+v\n", dr.Status)
@@ -126,12 +127,12 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing without baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write(data)
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			gr := testGr.DeepCopy()
@@ -180,7 +181,7 @@ var _ = Describe("DeviceOperator controller", func() {
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
@@ -206,12 +207,12 @@ var _ = Describe("DeviceOperator controller", func() {
 	Context("when initializing with baseRevision", func() {
 		BeforeEach(func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1))
+				Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
 			})
 			data, _ := io.ReadAll(buf)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write(data)
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			gr := testGr.DeepCopy()
@@ -269,7 +270,7 @@ var _ = Describe("DeviceOperator controller", func() {
 			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(&testOpe), &ope)).NotTo(HaveOccurred())
 			Expect(ope.Status.BaseRevision).To(Equal(rev1st))
 			Expect(ope.Status.LastApplied).To(Equal(config1))
-			Expect(ope.Status.Checksum).To(Equal(hash(config1)))
+			Expect(ope.Status.Checksum).To(Equal(testhelper.Hash(config1)))
 		})
 
 		It("should change rollout status to Completed when checksum is the same", func() {
@@ -291,11 +292,11 @@ var _ = Describe("DeviceOperator controller", func() {
 
 		It("should change rollout status to ChecksumError when checksum is mismatched", func() {
 			checksum, buf := newGitRepoArtifact(func(dir string) {
-				testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched")))
+				Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), []byte("mismatched"))).NotTo(HaveOccurred())
 			})
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_, err := io.Copy(w, buf)
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 			}))
 
 			gr := testGr.DeepCopy()
@@ -330,11 +331,11 @@ var _ = Describe("DeviceOperator controller", func() {
 		Context("when device config updated", func() {
 			BeforeEach(func() {
 				checksum, buf := newGitRepoArtifact(func(dir string) {
-					testhelper.MustNil(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2))
+					Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config2)).NotTo(HaveOccurred())
 				})
 				h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, err := io.Copy(w, buf)
-					testhelper.MustNil(err)
+					Expect(err).NotTo(HaveOccurred())
 				}))
 
 				gr := testGr.DeepCopy()
@@ -360,7 +361,7 @@ var _ = Describe("DeviceOperator controller", func() {
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
@@ -390,7 +391,7 @@ var _ = Describe("DeviceOperator controller", func() {
 					},
 				}
 				lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", testOpe.Spec.Address, testOpe.Spec.Port))
-				testhelper.MustNil(err)
+				Expect(err).NotTo(HaveOccurred())
 				gs := gnmihelper.NewGnmiServerWithListener(m, lis)
 				defer gs.Stop()
 
@@ -413,3 +414,13 @@ var _ = Describe("DeviceOperator controller", func() {
 		})
 	})
 })
+
+func newGitRepoArtifact(fn func(dir string)) (string, io.Reader) {
+	dir, err := os.MkdirTemp("", "git-watcher-test-*")
+	defer os.RemoveAll(dir)
+	if err != nil {
+		panic(err)
+	}
+	fn(dir)
+	return testhelper.MustGenTgzArchiveDir(dir)
+}
