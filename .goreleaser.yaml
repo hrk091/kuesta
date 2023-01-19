@@ -15,6 +15,8 @@ builds:
     goarch:
       - amd64
       - arm64
+    flags:
+      - -trimpath
     ldflags:
       - -w -s
       - -X github.com/nttcom/kuesta/cmd.date={{.Date}}
@@ -29,6 +31,8 @@ builds:
       - linux
     goarch:
       - amd64
+    flags:
+      - -trimpath
   - id: device-operator
     binary: device-operator
     dir: ./device-operator
@@ -38,6 +42,8 @@ builds:
       - linux
     goarch:
       - amd64
+    flags:
+      - -trimpath
   - id: device-subscriber
     binary: device-subscriber
     dir: ./device-subscriber
@@ -47,6 +53,8 @@ builds:
       - linux
     goarch:
       - amd64
+    flags:
+      - -trimpath
 release:
   prerelease: "true"
 archives:
