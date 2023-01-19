@@ -71,19 +71,19 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 
 	scPlan := NewServiceCompilePlan(stmap, cfg.ConfigRootPath)
 	if scPlan.IsEmpty() {
-		fmt.Printf("No services updated.\n")
+		l.Info("no services updated")
 		return nil
 	}
 	err = scPlan.Do(ctx,
 		func(ctx context.Context, sp kuesta.ServicePath) error {
-			fmt.Printf("Delete service config: service=%s keys=%v\n", sp.Service, sp.Keys)
+			l.Infow("deleting service config", "service", sp.Service, "keys", sp.Keys)
 			if _, err := w.Remove(sp.ServiceComputedDirPath(kuesta.ExcludeRoot)); err != nil {
 				return fmt.Errorf("git remove: %w", err)
 			}
 			return nil
 		},
 		func(ctx context.Context, sp kuesta.ServicePath) error {
-			fmt.Printf("Compile service config: service=%s keys=%v\n", sp.Service, sp.Keys)
+			l.Infow("compiling service config", "service", sp.Service, "keys", sp.Keys)
 			cfg := &ServiceCompileCfg{RootCfg: cfg.RootCfg, Service: sp.Service, Keys: sp.Keys}
 			if err := RunServiceCompile(ctx, cfg); err != nil {
 				return fmt.Errorf("service updating: %w", err)
@@ -103,13 +103,13 @@ func RunServiceApply(ctx context.Context, cfg *ServiceApplyCfg) error {
 	}
 	dcPlan := NewDeviceCompositePlan(stmap, cfg.ConfigRootPath)
 	if dcPlan.IsEmpty() {
-		fmt.Printf("No devices updated.\n")
+		l.Info("no devices updated")
 		return nil
 	}
 
 	err = dcPlan.Do(ctx,
 		func(ctx context.Context, dp kuesta.DevicePath) error {
-			fmt.Printf("Update device config: device=%s\n", dp.Device)
+			l.Infow("updating device config", "device", dp.Device)
 			cfg := &DeviceCompositeCfg{RootCfg: cfg.RootCfg, Device: dp.Device}
 			if err := RunDeviceComposite(ctx, cfg); err != nil {
 				return fmt.Errorf("device composite: %w", err)

@@ -39,6 +39,17 @@ import (
 )
 
 func main() {
+	flag.Usage = func() {
+		usage := `Convert cue data to RFC87951-style JSON.
+
+Usage:
+  converter [flags]
+
+Flags:
+`
+		fmt.Fprintf(flag.CommandLine.Output(), usage)
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	args := flag.Args()
 	path := validateArgs(args)

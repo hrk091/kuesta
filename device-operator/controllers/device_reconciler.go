@@ -307,13 +307,14 @@ func (r *DeviceReconciler) createSubscriberPodIfNotExist(ctx context.Context, ns
 }
 
 func (r *DeviceReconciler) findObjectForDeviceRollout(deviceRollout client.Object) []reconcile.Request {
+	l := log.FromContext(nil)
 	attachedDevices := deviceoperator.NewDeviceList()
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(device.RefField, deviceRollout.GetName()),
 		Namespace:     deviceRollout.GetNamespace(),
 	}
 	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
-		fmt.Printf("unable to list effected devices: %v\n", err)
+		l.Error(err, "unable to list effected devices")
 		return []reconcile.Request{}
 	}
 
