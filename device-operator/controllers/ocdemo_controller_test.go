@@ -67,11 +67,11 @@ var _ = Describe("DeviceOperator controller", func() {
 	rev2nd := "rev2"
 
 	var testOpe deviceoperator.OcDemo
-	testhelper.MustNil(newTestDataFromFixture("device1.deviceoperator", &testOpe))
+	testhelper.MustNil(testhelper.NewTestDataFromFixture("device1.deviceoperator", &testOpe))
 	var testDr provisioner.DeviceRollout
-	testhelper.MustNil(newTestDataFromFixture("devicerollout", &testDr))
+	testhelper.MustNil(testhelper.NewTestDataFromFixture("devicerollout", &testDr))
 	var testGr source.GitRepository
-	testhelper.MustNil(newTestDataFromFixture("gitrepository", &testGr))
+	testhelper.MustNil(testhelper.NewTestDataFromFixture("gitrepository", &testGr))
 
 	BeforeEach(func() {
 		Expect(k8sClient.Create(ctx, testOpe.DeepCopy())).NotTo(HaveOccurred())

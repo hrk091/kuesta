@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,39 +20,26 @@
  THE SOFTWARE.
 */
 
-package artifact_test
+package testhelper
 
 import (
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
-	"crypto/sha256"
 	"fmt"
-	"io"
+	"io/ioutil"
 
-	"github.com/nttcom/kuesta/pkg/testing/testhelper"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func mustGenTgzArchive(path, content string) (string, io.Reader) {
-	var buf bytes.Buffer
-
-	gw := gzip.NewWriter(&buf)
-	tw := tar.NewWriter(gw)
-	if err := tw.WriteHeader(&tar.Header{Name: path, Mode: 0o600, Size: int64(len(content))}); err != nil {
-		panic(err)
+// NewTestDataFromFixture loads test fixture from ./fixtures dir and unmarshal as v1.Object.
+func NewTestDataFromFixture(name string, o v1.Object) error {
+	buf, err := ioutil.ReadFile(fmt.Sprintf("./fixtures/%s.yaml", name))
+	if err != nil {
+		return err
 	}
-	if _, err := tw.Write([]byte(content)); err != nil {
-		panic(err)
-	}
-	testhelper.MustNil(tw.Close())
-	testhelper.MustNil(gw.Close())
+	// TODO GVK validation
 
-	hasher := sha256.New()
-	var out bytes.Buffer
-	if _, err := io.Copy(io.MultiWriter(hasher, &out), &buf); err != nil {
-		panic(err)
+	if err := yaml.Unmarshal(buf, o); err != nil {
+		return err
 	}
-	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
-
-	return checksum, &out
+	return nil
 }

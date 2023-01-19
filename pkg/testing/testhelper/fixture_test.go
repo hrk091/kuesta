@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2022 NTT Communications Corporation
+ Copyright (c) 2023 NTT Communications Corporation
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -20,35 +20,28 @@
  THE SOFTWARE.
 */
 
-package controllers_test
+package testhelper_test
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"fmt"
-	"io"
-	"os"
+	"testing"
 
 	"github.com/nttcom/kuesta/pkg/testing/testhelper"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/api/core/v1"
 )
 
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+func TestNewTestDataFromFixture(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		var cm v1.ConfigMap
+		err := testhelper.NewTestDataFromFixture("test-cm", &cm)
+		assert.Nil(t, err)
+		assert.Equal(t, cm.Name, "test-cm")
+		assert.Equal(t, cm.Namespace, "test-ns")
+	})
 
-func newGitRepoArtifact(fn func(dir string)) (string, io.Reader) {
-	dir, err := os.MkdirTemp("", "git-watcher-test-*")
-	must(err)
-	fn(dir)
-	return testhelper.MustGenTgzArchiveDir(dir)
-}
-
-func hash(buf []byte) string {
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, bytes.NewBuffer(buf)); err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	t.Run("err: file not found", func(t *testing.T) {
+		var cm v1.ConfigMap
+		err := testhelper.NewTestDataFromFixture("not-found", &cm)
+		assert.Error(t, err)
+	})
 }

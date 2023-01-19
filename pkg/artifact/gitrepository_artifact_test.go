@@ -41,7 +41,7 @@ import (
 func TestFetchArtifact(t *testing.T) {
 	dir := t.TempDir()
 	want := []byte("dummy")
-	checksum, buf := mustGenTgzArchive("test.txt", string(want))
+	checksum, buf := testhelper.MustGenTgzArchive("test.txt", string(want))
 
 	tests := []struct {
 		name     string

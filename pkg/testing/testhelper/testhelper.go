@@ -24,11 +24,8 @@ package testhelper
 
 import (
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 func ExitOnErr(t *testing.T, err error) {
@@ -54,18 +51,4 @@ func Chdir(t *testing.T, path string) {
 	t.Cleanup(func() {
 		ExitOnErr(t, os.Chdir(cd))
 	})
-}
-
-// WriteFileWithMkdir writes data to the named file, along with any necessary parent directories.
-func WriteFileWithMkdir(path string, buf []byte) error {
-	dir, _ := filepath.Split(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err = os.MkdirAll(dir, 0o750); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-	if err := os.WriteFile(path, buf, 0o644); err != nil { // nolint: gosec
-		return errors.WithStack(err)
-	}
-	return nil
 }

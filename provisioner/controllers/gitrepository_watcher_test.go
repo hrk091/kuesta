@@ -43,7 +43,7 @@ var _ = Describe("GitRepository watcher", func() {
 	ctx := context.Background()
 
 	var testGr sourcev1.GitRepository
-	testhelper.MustNil(newTestDataFromFixture("gitrepository", &testGr))
+	testhelper.MustNil(testhelper.NewTestDataFromFixture("gitrepository", &testGr))
 
 	config1 := []byte("foo")
 	config2 := []byte("bar")
@@ -61,7 +61,7 @@ var _ = Describe("GitRepository watcher", func() {
 		gr := testGr.DeepCopy()
 		Expect(k8sClient.Create(ctx, gr)).NotTo(HaveOccurred())
 
-		checksum, buf := mustGenTgzArchiveDir(dir)
+		checksum, buf := testhelper.MustGenTgzArchiveDir(dir)
 		h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if _, err := io.Copy(w, buf); err != nil {
 				panic(err)
@@ -125,7 +125,7 @@ var _ = Describe("GitRepository watcher", func() {
 			}, timeout, interval).Should(Succeed())
 			version = dr.ResourceVersion
 
-			checksum, buf := mustGenTgzArchiveDir(dir)
+			checksum, buf := testhelper.MustGenTgzArchiveDir(dir)
 			h := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if _, err := io.Copy(w, buf); err != nil {
 					panic(err)

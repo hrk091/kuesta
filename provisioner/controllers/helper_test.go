@@ -23,87 +23,11 @@
 package controllers_test
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing"
-
-	"github.com/nttcom/kuesta/pkg/testing/testhelper"
-	kuestav1alpha1 "github.com/nttcom/kuesta/provisioner/api/v1alpha1"
-	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 )
-
-func newTestDataFromFixture(name string, o metav1.Object) error {
-	buf, err := ioutil.ReadFile(fmt.Sprintf("./fixtures/%s.yaml", name))
-	if err != nil {
-		return err
-	}
-	// TODO GVK validation
-
-	if err := yaml.Unmarshal(buf, o); err != nil {
-		return err
-	}
-	return nil
-}
-
-func mustGenTgzArchiveDir(dir string) (string, io.Reader) {
-	var buf bytes.Buffer
-	gw := gzip.NewWriter(&buf)
-	tw := tar.NewWriter(gw)
-
-	walkDirFunc := func(path string, info os.FileInfo, err error) error {
-		relPath := strings.TrimPrefix(path, dir+string(filepath.Separator))
-
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name:    relPath,
-			Mode:    int64(info.Mode()),
-			ModTime: info.ModTime(),
-			Size:    info.Size(),
-		}); err != nil {
-			return err
-		}
-
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		if _, err := io.Copy(tw, f); err != nil {
-			return err
-		}
-		return nil
-	}
-	if err := filepath.Walk(dir, walkDirFunc); err != nil {
-		panic(err)
-	}
-
-	testhelper.MustNil(tw.Close())
-	testhelper.MustNil(gw.Close())
-
-	hasher := sha256.New()
-	var out bytes.Buffer
-	if _, err := io.Copy(io.MultiWriter(hasher, &out), &buf); err != nil {
-		panic(err)
-	}
-	checksum := fmt.Sprintf("%x", hasher.Sum(nil))
-
-	return checksum, &out
-}
 
 func hash(buf []byte) string {
 	hasher := sha256.New()
@@ -111,20 +35,4 @@ func hash(buf []byte) string {
 		panic(err)
 	}
 	return fmt.Sprintf("%x", hasher.Sum(nil))
-}
-
-func TestNewTestDataFromFixture(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		var dr kuestav1alpha1.DeviceRollout
-		err := newTestDataFromFixture("devicerollout", &dr)
-		assert.Nil(t, err)
-		assert.Equal(t, dr.Name, "test-devicerollout")
-		assert.Equal(t, dr.Namespace, "test-ns")
-	})
-
-	t.Run("err: file not found", func(t *testing.T) {
-		var dr kuestav1alpha1.DeviceRollout
-		err := newTestDataFromFixture("not-found", &dr)
-		assert.Error(t, err)
-	})
 }
