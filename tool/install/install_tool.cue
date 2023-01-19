@@ -15,6 +15,8 @@ command: install: {
 		// TODO replace to nttcom
 		imageRegistry: string | *"ghcr.io/nttcom-ic/kuesta" @tag(imageRegistry)
 		version:       string | *"latest"                   @tag(version)
+		_debug:        string | *"false"                    @tag(debug)
+		debug:         _debug != "false"
 	}
 
 	$usage: "cue install"
@@ -118,6 +120,7 @@ command: install: {
 					}
 					image:   "\(args.imageRegistry)/kuesta"
 					version: args.version
+					debug:   args.debug
 				}
 			}
 			provisioner: deployProvisioner & {
@@ -125,6 +128,7 @@ command: install: {
 				var: {
 					image:   "\(args.imageRegistry)/provisioner"
 					version: args.version
+					debug:   args.debug
 				}
 			}
 			deviceOperator: {
@@ -136,6 +140,7 @@ command: install: {
 							image:           "\(args.imageRegistry)/device-operator"
 							subscriberImage: "\(args.imageRegistry)/device-subscriber"
 							version:         args.version
+							debug:           args.debug
 						}
 					}
 				}
@@ -212,6 +217,7 @@ deployKuesta: {
 		gitToken:       string | *""
 		image:          string
 		version:        string | *"latest"
+		debug:          bool
 	}
 
 	// private variables
@@ -224,6 +230,7 @@ deployKuesta: {
 			usePrivateRepo:    var.usePrivateRepo
 			secretEnvFileName: _secretEnvFileName
 			secretKeyGitToken: _secretKeyGitToken
+			debug:             var.debug
 		}
 	}
 	let _kustomizationFile = strings.Join([_k.path, "kustomization.yaml"], "/")
@@ -296,10 +303,17 @@ deployProvisioner: {
 	var: {
 		image:   string
 		version: string | *"latest"
+		debug:   bool
 	}
 
 	// private variables
-	let _k = kustomizations.provisioner
+	let _k = kustomizations.provisioner & {
+		"var": {
+			debug: var.debug
+		}
+	}
+	let _kustomizationFile = strings.Join([_k.path, "kustomization.yaml"], "/")
+	let _patchFile = strings.Join([_k.path, "patch.yaml"], "/")
 
 	// tasks
 	start: cli.Print & {
@@ -309,6 +323,23 @@ deployProvisioner: {
 			==============================
 			Deploy kuesta-provisioner\n
 			"""
+	}
+
+	mkdir: file.MkdirAll & {
+		$dep: start.$done
+		path: _k.path
+	}
+
+	writeKustomization: file.Create & {
+		$dep:     mkdir.$done
+		filename: _kustomizationFile
+		contents: yaml.Marshal(_k.kustomization)
+	}
+
+	writePatch: file.Create & {
+		$dep:     mkdir.$done
+		filename: _patchFile
+		contents: yaml.MarshalStream([ for _, v in _k.patches {v}])
 	}
 
 	installCRD: exec.Run & {
@@ -339,6 +370,7 @@ deployDeviceOperator: {
 		image:           string
 		subscriberImage: string
 		version:         string | *"latest"
+		debug:           bool
 	}
 
 	// private variables
@@ -347,6 +379,7 @@ deployDeviceOperator: {
 			statusRepo:      var.statusRepo
 			version:         var.version
 			subscriberImage: var.subscriberImage
+			debug:           var.debug
 		}
 	}
 	let _kustomizationFile = strings.Join([_k.path, "kustomization.yaml"], "/")

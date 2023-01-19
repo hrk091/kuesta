@@ -12,6 +12,7 @@ kustomizations: {
 			statusRepo:      string
 			version:         string
 			subscriberImage: string
+			debug:           bool | *false
 		}
 
 		// path
@@ -40,6 +41,9 @@ kustomizations: {
 				}
 				spec: template: spec: containers: [{
 					name: "manager"
+					if var.debug {
+						args: ["--leader-elect"]
+					}
 					env: [{
 						name:  "KUESTA_AGGREGATOR_URL"
 						value: "https://kuesta-aggregator.kuesta-system:8000"

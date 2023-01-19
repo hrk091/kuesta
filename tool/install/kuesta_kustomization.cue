@@ -14,6 +14,7 @@ kustomizations: {
 			usePrivateRepo:    bool
 			secretEnvFileName: string | *""
 			secretKeyGitToken: string | *""
+			debug:             bool | *false
 		}
 
 		// variables
@@ -52,6 +53,18 @@ kustomizations: {
 				spec: template: spec: containers: [{
 					name: "kuesta"
 					env: [
+						if var.debug {
+							{
+								name:  "KUESTA_DEVEL"
+								value: "true"
+							}
+						},
+						if var.debug {
+							{
+								name:  "KUESTA_VERBOSE"
+								value: "2"
+							}
+						},
 						{
 							name:  "KUESTA_CONFIG_REPO_URL"
 							value: var.configRepo
@@ -80,6 +93,18 @@ kustomizations: {
 				spec: template: spec: containers: [{
 					name: "kuesta"
 					env: [
+						if var.debug {
+							{
+								name:  "KUESTA_DEVEL"
+								value: "true"
+							}
+						},
+						if var.debug {
+							{
+								name:  "KUESTA_VERBOSE"
+								value: "2"
+							}
+						},
 						{
 							name:  "KUESTA_STATUS_REPO_URL"
 							value: var.statusRepo
