@@ -114,6 +114,11 @@ var _ = Describe("GitRepository watcher", func() {
 		revision := "test-rev-updated"
 
 		BeforeEach(func() {
+			var dr kuestav1alpha1.DeviceRollout
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
+			}, timeout, interval).Should(Succeed())
+
 			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device1", "config.cue"), config1)).NotTo(HaveOccurred())
 			Expect(testhelper.WriteFileWithMkdir(filepath.Join(dir, "devices", "device2", "config.cue"), config2)).NotTo(HaveOccurred())
 
@@ -141,7 +146,7 @@ var _ = Describe("GitRepository watcher", func() {
 			Eventually(func() error {
 				k8sClient.Get(ctx, client.ObjectKey{Namespace: testGr.Namespace, Name: testGr.Name}, &dr)
 				if dr.Spec.DeviceConfigMap["device1"].GitRevision != revision {
-					return fmt.Errorf("not updated yet")
+					return fmt.Errorf("not updated yet: %+v\n", dr.Spec.DeviceConfigMap)
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
