@@ -25,13 +25,12 @@ package main
 import (
 	"os"
 
-	cmd2 "github.com/nttcom/kuesta/device-subscriber/internal/cmd"
+	"github.com/nttcom/kuesta/device-subscriber/internal/cmd"
 	"github.com/nttcom/kuesta/pkg/stacktrace"
 )
 
 func main() {
-	cmd := cmd2.NewRootCmd()
-	if err := cmd.Execute(); err != nil {
+	if err := cmd.NewRootCmd().Execute(); err != nil {
 		stacktrace.Show(os.Stderr, err)
 		os.Exit(1)
 	}

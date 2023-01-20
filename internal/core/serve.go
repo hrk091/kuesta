@@ -46,10 +46,8 @@ import (
 	"github.com/nttcom/kuesta/pkg/credentials"
 	kcue "github.com/nttcom/kuesta/pkg/cue"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/stacktrace"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -244,6 +242,8 @@ func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityR
 		l.Infow("CapabilityRequest failed with", "request", req)
 		return nil, err
 	}
+
+	l.Info("CapabilityRequest completed")
 	return resp, grpcerr
 }
 
@@ -253,7 +253,7 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	l.Info("GetRequest called")
 	if !s.mu.TryRLock() {
 		l.Info("GetRequest locked")
-		return nil, status.Error(codes.Unavailable, "GetRequest is locked")
+		return nil, status.Error(codes.Unavailable, "GetRequest is locked. Try again later.")
 	}
 	defer s.mu.RUnlock()
 
@@ -264,6 +264,8 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 		l.Infow("GetRequest failed with", "request", req)
 		return nil, err
 	}
+
+	l.Info("GetRequest completed")
 	return resp, grpcerr
 }
 
@@ -293,7 +295,7 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 
 	if !s.mu.TryLock() {
 		l.Info("SetRequest locked")
-		return nil, status.Error(codes.Unavailable, "SetRequest is locked")
+		return nil, status.Error(codes.Unavailable, "SetRequest is locked. Try again later.")
 	}
 	s.smu.Lock()
 	defer func() {
@@ -305,9 +307,11 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	grpcerr, werr := derrors.ToGRPCError(err)
 	if werr != nil {
 		logger.ErrorWithStack(ctx, err, "gnmi SetRequest")
-		l.Info("SetRequest failed with", "request", req)
+		l.Infow("SetRequest failed with", "request", req)
 		return nil, err
 	}
+
+	l.Info("SetRequest completed")
 	return resp, grpcerr
 }
 
@@ -327,21 +331,21 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git reset hard: %w", err),
 			codes.Internal,
-			"failed to perform 'git reset --hard'",
+			"Failed to perform 'git reset --hard'.",
 		)
 	}
 	if _, err := s.cGit.Checkout(); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git checkout to %s: %w", s.cfg.GitTrunk, err),
 			codes.Internal,
-			"failed to perform 'git checkout' to %s", s.cfg.GitTrunk,
+			"Failed to perform 'git checkout' to %s.", s.cfg.GitTrunk,
 		)
 	}
 	if err := s.cGit.Pull(); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git pull: %w", err),
 			codes.Internal,
-			"failed to perform 'git pull'",
+			"Failed to perform 'git pull'.",
 		)
 	}
 
@@ -377,7 +381,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git add: %w", err),
 			codes.Internal,
-			"failed to perform 'git add'",
+			"Failed to perform 'git add'.",
 		)
 	}
 
@@ -386,7 +390,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("service apply: %w", err),
 			codes.Internal,
-			"failed to apply service template mapping",
+			"Failed to apply service template mapping.",
 		)
 	}
 
@@ -395,7 +399,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git commit"),
 			codes.Internal,
-			"failed to create PullRequest",
+			"Failed to create PullRequest.",
 		)
 	}
 
@@ -436,28 +440,23 @@ func NewNorthboundServerImpl(cfg *ServeCfg) *NorthboundServerImpl {
 	}
 }
 
-// Error shows an error with stacktrace if attached.
-func (s *NorthboundServerImpl) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
-	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.Get(err); st != "" {
-		l = l.With("stacktrace", st)
-	}
-	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
-}
-
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
-	l := logger.FromContext(ctx)
-
 	ver, err := GetGNMIServiceVersion()
 	if err != nil {
-		s.Error(l, err, "get gnmi service version")
-		return nil, status.Errorf(codes.Internal, "failed to get gnmi service version: %v", err)
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("get gnmi service version: %w", err),
+			codes.Internal,
+			"Failed to get gnmi service version.",
+		)
 	}
 	mlist, err := kuesta.ReadServiceMetaAll(s.cfg.ConfigRootPath)
 	if err != nil {
-		s.Error(l, err, "get gnmi service version")
-		return nil, err
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("get service metadata: %w", err),
+			codes.Internal,
+			"Failed to get service metadata.",
+		)
 	}
 
 	models := make([]*pb.ModelData, len(mlist))
@@ -478,11 +477,10 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		s.Error(l, err, "convert path request")
-		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path")
+		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %s", err.Error())
 	}
 	l = l.With("path", req.String())
-	l.Info("get")
+	l.Info("getting")
 
 	var buf []byte
 	switch r := req.(type) {
@@ -493,26 +491,34 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 	}
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, status.Errorf(codes.NotFound, "not found: %s", req.String())
+			return nil, status.Errorf(codes.NotFound, "Not found: %s", req.String())
 		} else {
-			s.Error(l, err, "open file")
-			return nil, status.Errorf(codes.Internal, err.Error())
+			return nil, derrors.GRPCErrorf(
+				fmt.Errorf("open file: %w", err),
+				codes.Internal,
+				"Failed to get resource on requested path: %s", req.String(),
+			)
 		}
 	}
 
 	cctx := cuecontext.New()
 	val, err := kcue.NewValueFromBytes(cctx, buf)
 	if err != nil {
-		s.Error(l, err, "load cue")
-		return nil, status.Errorf(codes.Internal, "failed to read file: %s", req.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("convert to cue.Value: %w", err),
+			codes.Internal,
+			"Failed to get convert to cue: %s", req.String(),
+		)
 	}
 
 	// TODO get only nested tree
-
 	jsonDump, err := val.MarshalJSON()
 	if err != nil {
-		s.Error(l, err, "encode json")
-		return nil, status.Errorf(codes.Internal, "failed to encode to json: %s", req.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("encode to json: %w", err),
+			codes.Internal,
+			"Failed to encode to json: %s", req.String(),
+		)
 	}
 
 	update := &pb.Update{
@@ -530,21 +536,23 @@ func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path
 	// TODO delete partial nested data
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		s.Error(l, err, "convert path request")
-		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path")
+		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %s", err.Error())
 	}
 	r, ok := req.(ServicePathReq)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Info("delete")
+	l.Info("deleting")
 
 	sp := r.Path()
 	if err = os.Remove(sp.ServiceInputPath(kuesta.IncludeRoot)); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			s.Error(l, err, "delete file")
-			return nil, status.Errorf(codes.Internal, "failed to delete file: %s", r.String())
+			return nil, derrors.GRPCErrorf(
+				fmt.Errorf("delete file: %w", err),
+				codes.Internal,
+				"Failed to delete file: %s", r.String(),
+			)
 		}
 	}
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_DELETE}, nil
@@ -557,41 +565,45 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	// TODO replace partial nested data
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		s.Error(l, err, "convert path request")
-		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path")
+		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %s", err.Error())
 	}
 	r, ok := req.(ServicePathReq)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Info("replace")
+	l.Info("replacing")
 
 	cctx := cuecontext.New()
 	sp := r.Path()
 
-	// new input
 	input := map[string]any{}
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to decode request payload: %s", r.String())
 	}
 
-	// path keys
+	// resolve unique keys
 	transformer, err := sp.ReadServiceTransform(cctx)
 	if err != nil {
-		s.Error(l, err, "load transform file")
-		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("load transform file: %w", err),
+			codes.Internal,
+			"Failed to load service transform file: %s", r.String(),
+		)
 	}
 	convertedKeys, err := transformer.ConvertInputType(r.Keys())
 	if err != nil {
-		s.Error(l, err, "convert types of path keys")
-		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("convert types of path keys: %w", err),
+			codes.InvalidArgument,
+			"Failed to convert types of path keys: %s", r.String(),
+		)
 	}
 
 	expr := kcue.NewAstExpr(util.MergeMap(input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "encode to cue value: %v", inputVal.Err())
+		return nil, status.Errorf(codes.InvalidArgument, "Request payload is invalid: %v", inputVal.Err())
 	}
 
 	b, err := kcue.FormatCue(inputVal, cue.Final())
@@ -599,8 +611,11 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
 	}
 	if err := sp.WriteServiceInputFile(b); err != nil {
-		s.Error(l, err, "write service input")
-		return nil, status.Errorf(codes.Internal, "failed to write service input: %s", req.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("write service input: %w", err),
+			codes.Internal,
+			"Failed to write service input: %s", r.String(),
+		)
 	}
 
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_REPLACE}, nil
@@ -613,15 +628,14 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	// TODO update partial nested data
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		s.Error(l, err, "convert path request")
-		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path")
+		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %s", err.Error())
 	}
 	r, ok := req.(ServicePathReq)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Info("update")
+	l.Info("updating")
 
 	cctx := cuecontext.New()
 	sp := r.Path()
@@ -630,35 +644,48 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 	buf, err := sp.ReadServiceInput()
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, status.Errorf(codes.NotFound, "not found: %s", req.String())
+			return nil, status.Errorf(codes.NotFound, "Not found: %s", r.String())
 		} else {
-			s.Error(l, err, "open file")
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, derrors.GRPCErrorf(
+				fmt.Errorf("open file: %w", err),
+				codes.Internal,
+				"Failed to get resource on requested path: %s", r.String(),
+			)
 		}
 	}
 	curInputVal := cctx.CompileBytes(buf)
 
 	curInput := map[string]any{}
 	if err := curInputVal.Decode(&curInput); err != nil {
-		return nil, status.Errorf(codes.Internal, "decode current input")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("decode current input: %w", err),
+			codes.Internal,
+			"Failed to decode current input cue: %s", r.String(),
+		)
 	}
 
 	// new input
 	input := map[string]any{}
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to decode input: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to decode request payload: %s", r.String())
 	}
 
-	// path keys
+	// resolve unique keys
 	transformer, err := sp.ReadServiceTransform(cctx)
 	if err != nil {
-		s.Error(l, err, "load transform file")
-		return nil, status.Errorf(codes.Internal, "load transform file: %s", r.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("load transform file: %w", err),
+			codes.Internal,
+			"Failed to load service transform file: %s", r.String(),
+		)
 	}
 	convertedKeys, err := transformer.ConvertInputType(r.Keys())
 	if err != nil {
-		s.Error(l, err, "convert types of path keys")
-		return nil, status.Errorf(codes.InvalidArgument, "convert types of path keys")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("convert types of path keys: %w", err),
+			codes.InvalidArgument,
+			"Failed to convert types of path keys: %s", r.String(),
+		)
 	}
 
 	expr := kcue.NewAstExpr(util.MergeMap(curInput, input, convertedKeys))
@@ -672,8 +699,11 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
 	}
 	if err := sp.WriteServiceInputFile(b); err != nil {
-		s.Error(l, err, "write service input")
-		return nil, status.Errorf(codes.Internal, "failed to write service input: %s", req.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("write service input: %w", err),
+			codes.Internal,
+			"Failed to write service input: %s", r.String(),
+		)
 	}
 
 	return &pb.UpdateResult{Path: path, Op: pb.UpdateResult_UPDATE}, nil
