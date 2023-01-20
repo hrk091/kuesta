@@ -45,7 +45,7 @@ func GRPCErrorf(err error, c codes.Code, format string, a ...interface{}) error 
 }
 
 func (e *GRPCWrapError) Error() string {
-	return e.s.String()
+	return e.werr.Error()
 }
 
 func (e *GRPCWrapError) Unwrap() error {

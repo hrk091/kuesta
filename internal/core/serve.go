@@ -52,6 +52,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -238,13 +239,15 @@ func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityR
 	resp, err := s.impl.Capabilities(ctx, req)
 	grpcerr, werr := derrors.ToGRPCError(err)
 	if werr != nil {
-		logger.ErrorWithStack(ctx, werr, "gnmi CapabilityRequest")
-		l.Infow("CapabilityRequest failed with", "request", req)
-		return nil, err
+		logger.ErrorWithStack(ctx, err, "gnmi CapabilityRequest")
+		l.Infof("CapabilityRequest failed with request: \n%s", prototext.Format(req))
+	}
+	if grpcerr != nil {
+		return nil, grpcerr
 	}
 
 	l.Info("CapabilityRequest completed")
-	return resp, grpcerr
+	return resp, nil
 }
 
 // Get responds the multiple service inputs requested by GetRequest.
@@ -260,13 +263,15 @@ func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	resp, err := s.get(ctx, req)
 	grpcerr, werr := derrors.ToGRPCError(err)
 	if werr != nil {
-		logger.ErrorWithStack(ctx, werr, "gnmi GetRequest")
-		l.Infow("GetRequest failed with", "request", req)
-		return nil, err
+		logger.ErrorWithStack(ctx, err, "gnmi GetRequest")
+		l.Infof("GetRequest failed with request: \n%s", prototext.Format(req))
+	}
+	if grpcerr != nil {
+		return nil, grpcerr
 	}
 
 	l.Info("GetRequest completed")
-	return resp, grpcerr
+	return resp, nil
 }
 
 func (s *NorthboundServer) get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -307,12 +312,14 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	grpcerr, werr := derrors.ToGRPCError(err)
 	if werr != nil {
 		logger.ErrorWithStack(ctx, err, "gnmi SetRequest")
-		l.Infow("SetRequest failed with", "request", req)
-		return nil, err
+		l.Infof("SetRequest failed with request: \n%s", prototext.Format(req))
+	}
+	if grpcerr != nil {
+		return nil, grpcerr
 	}
 
 	l.Info("SetRequest completed")
-	return resp, grpcerr
+	return resp, nil
 }
 
 func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
@@ -331,21 +338,21 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git reset hard: %w", err),
 			codes.Internal,
-			"Failed to perform 'git reset --hard'.",
+			"Failed to perform 'git reset --hard'",
 		)
 	}
 	if _, err := s.cGit.Checkout(); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git checkout to %s: %w", s.cfg.GitTrunk, err),
 			codes.Internal,
-			"Failed to perform 'git checkout' to %s.", s.cfg.GitTrunk,
+			"Failed to perform 'git checkout' to %s", s.cfg.GitTrunk,
 		)
 	}
 	if err := s.cGit.Pull(); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git pull: %w", err),
 			codes.Internal,
-			"Failed to perform 'git pull'.",
+			"Failed to perform 'git pull'",
 		)
 	}
 
@@ -381,7 +388,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git add: %w", err),
 			codes.Internal,
-			"Failed to perform 'git add'.",
+			"Failed to perform 'git add'",
 		)
 	}
 
@@ -390,7 +397,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("service apply: %w", err),
 			codes.Internal,
-			"Failed to apply service template mapping.",
+			"Failed to apply service template mapping: %v", err,
 		)
 	}
 
@@ -399,7 +406,7 @@ func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("git commit"),
 			codes.Internal,
-			"Failed to create PullRequest.",
+			"Failed to create PullRequest",
 		)
 	}
 
@@ -447,7 +454,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("get gnmi service version: %w", err),
 			codes.Internal,
-			"Failed to get gnmi service version.",
+			"Failed to get gnmi service version",
 		)
 	}
 	mlist, err := kuesta.ReadServiceMetaAll(s.cfg.ConfigRootPath)
@@ -455,7 +462,7 @@ func (s *NorthboundServerImpl) Capabilities(ctx context.Context, req *pb.Capabil
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("get service metadata: %w", err),
 			codes.Internal,
-			"Failed to get service metadata.",
+			"Failed to get service metadata",
 		)
 	}
 
@@ -565,21 +572,21 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 	// TODO replace partial nested data
 	req, err := s.converter.Convert(prefix, path)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Path is invalid: %v", err)
 	}
 	r, ok := req.(ServicePathReq)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "Only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Info("replacing")
+	l.Infow("replacing", "input", string(val.GetJsonVal()))
 
 	cctx := cuecontext.New()
 	sp := r.Path()
 
 	input := map[string]any{}
 	if err := json.Unmarshal(val.GetJsonVal(), &input); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Failed to decode request payload: %s", r.String())
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to decode request payload: path=%s: %v", r.String(), err)
 	}
 
 	// resolve unique keys
@@ -588,7 +595,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("load transform file: %w", err),
 			codes.Internal,
-			"Failed to load service transform file: %s", r.String(),
+			"Failed to load service transform file: path=%s: %v", r.String(), err,
 		)
 	}
 	convertedKeys, err := transformer.ConvertInputType(r.Keys())
@@ -596,25 +603,33 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("convert types of path keys: %w", err),
 			codes.InvalidArgument,
-			"Failed to convert types of path keys: %s", r.String(),
+			"Path keys are invalid: path=%s: %v", r.String(), err,
 		)
 	}
 
 	expr := kcue.NewAstExpr(util.MergeMap(input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Request payload is invalid: %v", inputVal.Err())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("create input cue value: %w", inputVal.Err()),
+			codes.Internal,
+			"Failed to create input cue value: path=%s: %v", r.String(), inputVal.Err(),
+		)
 	}
 
 	b, err := kcue.FormatCue(inputVal, cue.Final())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("format input cue to bytes: %w", err),
+			codes.Internal,
+			"Failed to format input cue to bytes: path=%s: %v", r.String(), err,
+		)
 	}
 	if err := sp.WriteServiceInputFile(b); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("write service input: %w", err),
 			codes.Internal,
-			"Failed to write service input: %s", r.String(),
+			"Failed to write service input: path=%s: %v", r.String(), err,
 		)
 	}
 
@@ -635,7 +650,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.InvalidArgument, "Only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Info("updating")
+	l.Infow("updating", "input", string(val.GetJsonVal()))
 
 	cctx := cuecontext.New()
 	sp := r.Path()
@@ -657,11 +672,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 
 	curInput := map[string]any{}
 	if err := curInputVal.Decode(&curInput); err != nil {
-		return nil, derrors.GRPCErrorf(
-			fmt.Errorf("decode current input: %w", err),
-			codes.Internal,
-			"Failed to decode current input cue: %s", r.String(),
-		)
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to decode request payload: path=%s: %v", r.String(), err)
 	}
 
 	// new input
@@ -676,7 +687,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("load transform file: %w", err),
 			codes.Internal,
-			"Failed to load service transform file: %s", r.String(),
+			"Failed to load service transform file: path=%s: %v", r.String(), err,
 		)
 	}
 	convertedKeys, err := transformer.ConvertInputType(r.Keys())
@@ -684,25 +695,33 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("convert types of path keys: %w", err),
 			codes.InvalidArgument,
-			"Failed to convert types of path keys: %s", r.String(),
+			"Path keys are invalid: path=%s: %v", r.String(), err,
 		)
 	}
 
 	expr := kcue.NewAstExpr(util.MergeMap(curInput, input, convertedKeys))
 	inputVal := cctx.BuildExpr(expr)
 	if inputVal.Err() != nil {
-		return nil, status.Errorf(codes.Internal, "failed to encode to cue: %s", r.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("create input cue value: %w", inputVal.Err()),
+			codes.Internal,
+			"Failed to create input cue value: path=%s: %v", r.String(), inputVal.Err(),
+		)
 	}
 
 	b, err := kcue.FormatCue(inputVal, cue.Final())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to format cue to bytes: %s", r.String())
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("format input cue to bytes: %w", err),
+			codes.Internal,
+			"Failed to format input cue to bytes: path=%s: %v", r.String(), err,
+		)
 	}
 	if err := sp.WriteServiceInputFile(b); err != nil {
 		return nil, derrors.GRPCErrorf(
 			fmt.Errorf("write service input: %w", err),
 			codes.Internal,
-			"Failed to write service input: %s", r.String(),
+			"Failed to write service input: path=%s: %v", r.String(), err,
 		)
 	}
 
