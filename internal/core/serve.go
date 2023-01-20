@@ -38,6 +38,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/nttcom/kuesta/internal/derrors"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/internal/logger"
 	"github.com/nttcom/kuesta/internal/util"
@@ -206,10 +207,10 @@ func NewNorthboundServerWithGit(cfg *ServeCfg, cGit, sGit *gogit.Git) *Northboun
 func (s *NorthboundServer) RunStatusSyncLoop(ctx context.Context, dur time.Duration) {
 	syncStatusFunc := func() {
 		if _, err := s.sGit.Checkout(); err != nil {
-			logger.Error(ctx, err, "git checkout")
+			logger.ErrorWithStack(ctx, err, "git checkout")
 		}
 		if err := s.sGit.Pull(); err != nil {
-			logger.Error(ctx, err, "git pull")
+			logger.ErrorWithStack(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncStatusFunc, dur, "sync from status repo")
@@ -220,22 +221,13 @@ func (s *NorthboundServer) RunConfigSyncLoop(ctx context.Context, dur time.Durat
 		s.smu.Lock()
 		defer s.smu.Unlock()
 		if _, err := s.cGit.Checkout(); err != nil {
-			logger.Error(ctx, err, "git checkout")
+			logger.ErrorWithStack(ctx, err, "git checkout")
 		}
 		if err := s.cGit.Pull(); err != nil {
-			logger.Error(ctx, err, "git pull")
+			logger.ErrorWithStack(ctx, err, "git pull")
 		}
 	}
 	util.SetInterval(ctx, syncConfigFunc, dur, "sync from config repo")
-}
-
-// Error shows an error with stacktrace if attached.
-func (s *NorthboundServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
-	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.Get(err); st != "" {
-		l = l.With("stacktrace", st)
-	}
-	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
 }
 
 var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
@@ -243,68 +235,114 @@ var supportedEncodings = []pb.Encoding{pb.Encoding_JSON}
 // Capabilities responds the server capabilities containing the available services.
 func (s *NorthboundServer) Capabilities(ctx context.Context, req *pb.CapabilityRequest) (*pb.CapabilityResponse, error) {
 	l := logger.FromContext(ctx)
-	l.Debug("Capabilities called")
+	l.Info("CapabilityRequest called")
 
-	return s.impl.Capabilities(ctx, req)
+	resp, err := s.impl.Capabilities(ctx, req)
+	grpcerr, werr := derrors.ToGRPCError(err)
+	if werr != nil {
+		logger.ErrorWithStack(ctx, werr, "gnmi CapabilityRequest")
+		l.Infow("CapabilityRequest failed with", "request", req)
+		return nil, err
+	}
+	return resp, grpcerr
 }
 
 // Get responds the multiple service inputs requested by GetRequest.
 func (s *NorthboundServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	if !s.mu.TryRLock() {
-		return nil, status.Error(codes.Unavailable, "locked")
-	}
-	defer func() {
-		s.mu.RUnlock()
-	}()
 	l := logger.FromContext(ctx)
-	l.Debugw("Get called")
+	l.Info("GetRequest called")
+	if !s.mu.TryRLock() {
+		l.Info("GetRequest locked")
+		return nil, status.Error(codes.Unavailable, "GetRequest is locked")
+	}
+	defer s.mu.RUnlock()
 
+	resp, err := s.get(ctx, req)
+	grpcerr, werr := derrors.ToGRPCError(err)
+	if werr != nil {
+		logger.ErrorWithStack(ctx, werr, "gnmi GetRequest")
+		l.Infow("GetRequest failed with", "request", req)
+		return nil, err
+	}
+	return resp, grpcerr
+}
+
+func (s *NorthboundServer) get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	prefix := req.GetPrefix()
 	paths := req.GetPath()
 	var notifications []*pb.Notification
 
 	// TODO support wildcard
 	for _, path := range paths {
-		n, grpcerr := s.impl.Get(ctx, prefix, path)
-		if grpcerr != nil {
-			return nil, grpcerr
+		n, err := s.impl.Get(ctx, prefix, path)
+		if err != nil {
+			return nil, err
 		}
+		n.Timestamp = s.getCommitTimeOrNow()
 		notifications = append(notifications, n)
 	}
 
-	notifications[0].Timestamp = s.getCommitTimeOrNow()
 	return &pb.GetResponse{Notification: notifications}, nil
+
 }
 
 // Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.
 func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
 	l := logger.FromContext(ctx)
-	l.Debugw("Set called")
+	l.Info("SetRequest called")
 
 	if !s.mu.TryLock() {
-		return nil, status.Error(codes.Unavailable, "locked")
+		l.Info("SetRequest locked")
+		return nil, status.Error(codes.Unavailable, "SetRequest is locked")
 	}
 	s.smu.Lock()
 	defer func() {
-		if !s.cfg.PersistGitState {
-			if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
-				s.Error(l, err, "git reset")
-			}
-			if _, err := s.cGit.Checkout(); err != nil {
-				s.Error(l, err, "git checkout")
-			}
-		}
 		s.smu.Unlock()
 		s.mu.Unlock()
 	}()
+
+	resp, err := s.set(ctx, req)
+	grpcerr, werr := derrors.ToGRPCError(err)
+	if werr != nil {
+		logger.ErrorWithStack(ctx, err, "gnmi SetRequest")
+		l.Info("SetRequest failed with", "request", req)
+		return nil, err
+	}
+	return resp, grpcerr
+}
+
+func (s *NorthboundServer) set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
+	defer func() {
+		if !s.cfg.PersistGitState {
+			if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
+				logger.ErrorWithStack(ctx, err, "deferred git reset")
+			}
+			if _, err := s.cGit.Checkout(); err != nil {
+				logger.ErrorWithStack(ctx, err, "deferred git checkout")
+			}
+		}
+	}()
+
 	if err := s.cGit.Reset(gogit.ResetOptsHard()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to perform 'git reset --hard'")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("git reset hard: %w", err),
+			codes.Internal,
+			"failed to perform 'git reset --hard'",
+		)
 	}
 	if _, err := s.cGit.Checkout(); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to perform 'git checkout' to %s", s.cfg.GitTrunk)
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("git checkout to %s: %w", s.cfg.GitTrunk, err),
+			codes.Internal,
+			"failed to perform 'git checkout' to %s", s.cfg.GitTrunk,
+		)
 	}
 	if err := s.cGit.Pull(); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to perform 'git pull'")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("git pull: %w", err),
+			codes.Internal,
+			"failed to perform 'git pull'",
+		)
 	}
 
 	prefix := req.GetPrefix()
@@ -313,45 +351,52 @@ func (s *NorthboundServer) Set(ctx context.Context, req *pb.SetRequest) (*pb.Set
 	// TODO performance enhancement
 	// TODO support wildcard
 	for _, path := range req.GetDelete() {
-		res, grpcerr := s.impl.Delete(ctx, prefix, path)
-		if grpcerr != nil {
-			return nil, grpcerr
+		res, err := s.impl.Delete(ctx, prefix, path)
+		if err != nil {
+			return nil, err
 		}
 		results = append(results, res)
 	}
 	for _, upd := range req.GetReplace() {
-		res, grpcerr := s.impl.Replace(ctx, prefix, upd.GetPath(), upd.GetVal())
-		if grpcerr != nil {
-			return nil, grpcerr
+		res, err := s.impl.Replace(ctx, prefix, upd.GetPath(), upd.GetVal())
+		if err != nil {
+			return nil, err
 		}
 		results = append(results, res)
 	}
 	for _, upd := range req.GetUpdate() {
-		res, grpcerr := s.impl.Update(ctx, prefix, upd.GetPath(), upd.GetVal())
-		if grpcerr != nil {
-			return nil, grpcerr
+		res, err := s.impl.Update(ctx, prefix, upd.GetPath(), upd.GetVal())
+		if err != nil {
+			return nil, err
 		}
 		results = append(results, res)
 	}
 
 	sp := kuesta.ServicePath{RootDir: s.cfg.ConfigRootPath}
 	if err := s.cGit.Add(sp.ServiceDirPath(kuesta.ExcludeRoot)); err != nil {
-		s.Error(l, err, "git add")
-		return nil, status.Errorf(codes.Internal, "failed to git-add")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("git add: %w", err),
+			codes.Internal,
+			"failed to perform 'git add'",
+		)
 	}
 
 	serviceApplyCfg := ServiceApplyCfg{RootCfg: s.cfg.RootCfg}
 	if err := RunServiceApply(ctx, &serviceApplyCfg); err != nil {
-		s.Error(l, err, "service apply")
-		return nil, status.Errorf(codes.Internal, "failed to apply service template")
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("service apply: %w", err),
+			codes.Internal,
+			"failed to apply service template mapping",
+		)
 	}
 
-	gitCommitCfg := GitCommitCfg{
-		RootCfg: s.cfg.RootCfg,
-	}
+	gitCommitCfg := GitCommitCfg{RootCfg: s.cfg.RootCfg}
 	if err := RunGitCommit(ctx, &gitCommitCfg); err != nil {
-		s.Error(l, err, "git commit")
-		return nil, status.Errorf(codes.Internal, "failed to git push to %s", s.cfg.GitTrunk)
+		return nil, derrors.GRPCErrorf(
+			fmt.Errorf("git commit"),
+			codes.Internal,
+			"failed to create PullRequest",
+		)
 	}
 
 	return &pb.SetResponse{
@@ -437,7 +482,7 @@ func (s *NorthboundServerImpl) Get(ctx context.Context, prefix, path *pb.Path) (
 		return nil, status.Errorf(codes.InvalidArgument, "failed to convert path")
 	}
 	l = l.With("path", req.String())
-	l.Debugw("get")
+	l.Info("get")
 
 	var buf []byte
 	switch r := req.(type) {
@@ -493,7 +538,7 @@ func (s *NorthboundServerImpl) Delete(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Debugw("delete")
+	l.Info("delete")
 
 	sp := r.Path()
 	if err = os.Remove(sp.ServiceInputPath(kuesta.IncludeRoot)); err != nil {
@@ -520,7 +565,7 @@ func (s *NorthboundServerImpl) Replace(ctx context.Context, prefix, path *pb.Pat
 		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Debugw("replace")
+	l.Info("replace")
 
 	cctx := cuecontext.New()
 	sp := r.Path()
@@ -576,7 +621,7 @@ func (s *NorthboundServerImpl) Update(ctx context.Context, prefix, path *pb.Path
 		return nil, status.Errorf(codes.InvalidArgument, "only service mutation is supported: %s", r.String())
 	}
 	l = l.With("path", req.String())
-	l.Debugw("update")
+	l.Info("update")
 
 	cctx := cuecontext.New()
 	sp := r.Path()
