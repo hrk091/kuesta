@@ -290,7 +290,6 @@ func (s *NorthboundServer) get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	}
 
 	return &pb.GetResponse{Notification: notifications}, nil
-
 }
 
 // Set executes specified Replace/Update/Delete operations and responds what is done by SetRequest.

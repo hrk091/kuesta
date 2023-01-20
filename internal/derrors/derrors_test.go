@@ -43,10 +43,11 @@ func TestGRPCErrorf(t *testing.T) {
 	got := derrors.GRPCErrorf(origErr, codes.Internal, grpcErrMsg)
 	want := status.New(codes.Internal, grpcErrMsg)
 
-	err, ok := got.(*derrors.GRPCWrapError)
+	var we *derrors.GRPCWrapError
+	ok := errors.As(got, &we)
 	assert.True(t, ok)
-	assert.Equal(t, want, err.Status())
-	assert.Equal(t, origErr.Error(), err.Error())
+	assert.Equal(t, want, we.Status())
+	assert.Equal(t, origErr.Error(), we.Error())
 }
 
 func TestToGRPCError(t *testing.T) {
@@ -105,5 +106,4 @@ func TestToGRPCError(t *testing.T) {
 			assert.Equal(t, tt.wantWrapErr, e2)
 		})
 	}
-
 }

@@ -314,8 +314,9 @@ func (r *DeviceReconciler) findObjectForDeviceRollout(deviceRollout client.Objec
 		Namespace:     deviceRollout.GetNamespace(),
 	}
 
-	if err := r.List(context.TODO(), attachedDevices, listOps); err != nil {
-		r.Error(nil, err, "unable to list effected devices")
+	ctx := context.TODO()
+	if err := r.List(ctx, attachedDevices, listOps); err != nil {
+		r.Error(ctx, err, "unable to list effected devices")
 		return []reconcile.Request{}
 	}
 

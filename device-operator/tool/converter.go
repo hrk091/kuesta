@@ -47,7 +47,7 @@ Usage:
 
 Flags:
 `
-		fmt.Fprintf(flag.CommandLine.Output(), usage)
+		fmt.Fprint(flag.CommandLine.Output(), usage)
 		flag.PrintDefaults()
 	}
 	flag.Parse()
