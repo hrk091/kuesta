@@ -80,7 +80,8 @@ func FromContext(ctx context.Context) *zap.SugaredLogger {
 	}
 }
 
-func Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
+// ErrorWithStack shows error log along with its stacktrace.
+func ErrorWithStack(ctx context.Context, err error, msg string, kvs ...interface{}) {
 	l := FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
 	if st := stacktrace.Get(err); st != "" {
 		l = l.With("stacktrace", st)

@@ -24,9 +24,7 @@ package logger
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -78,12 +76,4 @@ func FromContext(ctx context.Context) *zap.SugaredLogger {
 	} else {
 		return v
 	}
-}
-
-func Error(ctx context.Context, err error, msg string, kvs ...interface{}) {
-	l := FromContext(ctx).WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.Get(err); st != "" {
-		l = l.With("stacktrace", st)
-	}
-	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
 }

@@ -42,9 +42,7 @@ import (
 	"github.com/nttcom/kuesta/internal/validator"
 	"github.com/nttcom/kuesta/pkg/credentials"
 	"github.com/nttcom/kuesta/pkg/kuesta"
-	"github.com/nttcom/kuesta/pkg/stacktrace"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 var UpdateCheckDuration = 5 * time.Second // TODO parameterize
@@ -151,14 +149,6 @@ func NewDeviceAggregateServer(cfg *DeviceAggregateCfg) *DeviceAggregateServer {
 	}
 }
 
-func (s *DeviceAggregateServer) Error(l *zap.SugaredLogger, err error, msg string, kvs ...interface{}) {
-	l = l.WithOptions(zap.AddCallerSkip(1))
-	if st := stacktrace.Get(err); st != "" {
-		l = l.With("stacktrace", st)
-	}
-	l.Errorw(fmt.Sprintf("%s: %v", msg, err), kvs...)
-}
-
 // HandleFunc handles API call to persist actual device config.
 func (s *DeviceAggregateServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -197,7 +187,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					logger.Error(ctx, err, "save actual device config")
+					logger.ErrorWithStack(ctx, err, "save actual device config")
 				}
 			case <-ctx.Done():
 				return
@@ -210,7 +200,7 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
 	util.SetInterval(ctx, func() {
 		if err := s.GitPushDeviceConfig(ctx); err != nil {
-			logger.Error(ctx, err, "push sync branch")
+			logger.ErrorWithStack(ctx, err, "push sync branch")
 		}
 	}, UpdateCheckDuration)
 }

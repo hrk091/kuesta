@@ -46,5 +46,5 @@ func SetInterval(ctx context.Context, fn func(), dur time.Duration, msgs ...stri
 			}
 		}
 	}()
-	l.Infof(fmt.Sprintf("start interval loop: %s", msg))
+	l.Infof(fmt.Sprintf("interval loop started: %s", msg))
 }
