@@ -81,6 +81,13 @@ func (c *Config) Validate() error {
 	return validator.Validate(c)
 }
 
+// Mask returns the copy whose sensitive data are masked.
+func (c *Config) Mask() *Config {
+	cc := *c
+	cc.Password = "***"
+	return &cc
+}
+
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "kuesta-subscribe",

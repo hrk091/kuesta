@@ -156,7 +156,7 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 		r.Error(ctx, err, "make gnmi SetRequest")
 		return ctrl.Result{}, err
 	}
-	l.V(1).Info("gNMI notification", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
+	l.V(1).Info("gnmi SetRequest payload", "updated", sr.GetUpdate(), "deleted", sr.GetDelete())
 
 	var secret core.Secret
 	var tlsData, credData map[string][]byte
@@ -206,7 +206,7 @@ func (r *DeviceReconciler) DoReconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, nil
 	}
 
-	l.Info(fmt.Sprintf("succeeded SetRequest: response=%s", prototext.Format(resp)))
+	l.V(1).Info("succeeded SetRequest", "response", prototext.Format(resp))
 	oldDevice := device.DeepCopy()
 	device.Status.Checksum = next.Checksum
 	device.Status.LastApplied = newBuf
@@ -228,6 +228,7 @@ func (r *DeviceReconciler) Error(ctx context.Context, err error, msg string, kvs
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)
+	// TODO Event emission
 }
 
 func (r *DeviceReconciler) updateRolloutStatus(ctx context.Context, dr provisioner.DeviceRollout, name string, status provisioner.DeviceStatus) error {

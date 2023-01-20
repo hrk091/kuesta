@@ -74,6 +74,7 @@ func (r *DeviceRolloutReconciler) Error(ctx context.Context, err error, msg stri
 		l = l.WithValues("stacktrace", st)
 	}
 	l.Error(err, msg, kvs...)
+	// TODO Event emission
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -48,7 +48,7 @@ import (
 func Run(cfg Config) error {
 	ctx := context.Background()
 	l := logger.FromContext(ctx)
-	l.Infow("start main run", "cfg", cfg)
+	l.Infow("start main run", "cfg", cfg.Mask())
 
 	dest, err := gNMIDestination(cfg)
 	if err != nil {
@@ -64,7 +64,7 @@ func Run(cfg Config) error {
 		return Sync(ctx, cfg, c.(*gnmiclient.Client))
 	}
 	if err := fn(); err != nil {
-		l.Errorw("initial sync", "err", err)
+		logger.ErrorWithStack(ctx, err, "initial sync")
 	}
 	if err := Subscribe(ctx, c, fn); err != nil {
 		return err
@@ -86,7 +86,7 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 		},
 	}
 
-	l.Infow("subscribe starting...")
+	l.Infow("subscribe starting")
 	if err := c.Subscribe(ctx, query); err != nil {
 		return fmt.Errorf("open subscribe channel: %w", errors.WithStack(err))
 	}
@@ -102,11 +102,11 @@ func Subscribe(ctx context.Context, c gclient.Impl, fn func() error) error {
 		recvErr := c.Recv()
 		l.Infow("recv hooked")
 		if err := fn(); err != nil {
-			l.Errorw("handle notification", "err", err)
+			logger.ErrorWithStack(ctx, err, "handle notification")
 		}
 
 		if errors.Is(recvErr, io.EOF) {
-			l.Infow("EOF")
+			l.Debugw("EOF received")
 			return nil
 		} else if recvErr != nil {
 			return fmt.Errorf("error received on gNMI subscribe channel: %w", recvErr)
@@ -189,7 +189,7 @@ func PostDeviceConfig(ctx context.Context, cfg Config, data []byte) error {
 
 	var bodyBuf []byte
 	if _, err := io.ReadFull(resp.Body, bodyBuf); err != nil {
-		l.Errorw("read body", "error", err)
+		l.Errorw("reading response body", "error", err)
 	}
 	if resp.StatusCode != 200 {
 		return errors.WithStack(fmt.Errorf("error code=%d: %s", resp.StatusCode, bodyBuf))

@@ -104,7 +104,7 @@ func RunDeviceAggregate(ctx context.Context, cfg *DeviceAggregateCfg) error {
 	s := NewDeviceAggregateServer(cfg)
 	s.Run(ctx)
 
-	l.Infof("Start simple api server on %s", cfg.Addr)
+	l.Infof("starting simple api server on %s", cfg.Addr)
 	http.HandleFunc("/commit", s.HandleFunc)
 	if cfg.NoTLS {
 		hs := &http.Server{
@@ -187,14 +187,14 @@ func (s *DeviceAggregateServer) runSaver(ctx context.Context) {
 			case r := <-s.ch:
 				l.Infof("update received: device=%s", r.Device)
 				if err := s.SaveConfig(ctx, r); err != nil {
-					logger.ErrorWithStack(ctx, err, "save actual device config")
+					logger.ErrorWithStack(ctx, err, "save actual device config", "device", r.Device)
 				}
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
-	l.Info("Start saver loop")
+	l.Info("saver loop started")
 }
 
 func (s *DeviceAggregateServer) runCommitter(ctx context.Context) {
@@ -279,7 +279,7 @@ func (r *SaveConfigRequest) Validate() error {
 func DecodeSaveConfigRequest(r io.Reader) (*SaveConfigRequest, error) {
 	var req SaveConfigRequest
 	if err := json.NewDecoder(r).Decode(&req); err != nil {
-		return nil, fmt.Errorf("decode: %w", err)
+		return nil, fmt.Errorf("failed to decode request: %w", err)
 	}
 	return &req, req.Validate()
 }

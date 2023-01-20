@@ -33,6 +33,7 @@ import (
 	extgogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/nttcom/kuesta/internal/core"
+	"github.com/nttcom/kuesta/internal/derrors"
 	"github.com/nttcom/kuesta/internal/gogit"
 	"github.com/nttcom/kuesta/internal/testing/githelper"
 	"github.com/nttcom/kuesta/pkg/testing/testhelper"
@@ -429,7 +430,8 @@ func TestNorthboundServerImpl_Get(t *testing.T) {
 			got, err := s.Get(context.Background(), tt.prefix, tt.path)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, status.Code(err))
+				gnmierr, _ := derrors.ToGRPCError(err)
+				assert.Equal(t, tt.wantErr, status.Code(gnmierr))
 			} else {
 				assert.Nil(t, err)
 				assert.Equal(t, tt.want, got)
@@ -506,9 +508,9 @@ func TestNorthboundServerImpl_Delete(t *testing.T) {
 			got, err := s.Delete(context.Background(), nil, tt.path)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, status.Code(err))
+				gnmierr, _ := derrors.ToGRPCError(err)
+				assert.Equal(t, tt.wantErr, status.Code(gnmierr))
 			} else {
-				t.Log(err)
 				assert.Nil(t, err)
 				tt.want.Path = tt.path
 				assert.Equal(t, tt.want.String(), got.String())
@@ -640,7 +642,8 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 			got, err := s.Replace(context.Background(), nil, tt.path, tt.val)
 			if tt.wantErr != codes.OK {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, status.Code(err))
+				gnmierr, _ := derrors.ToGRPCError(err)
+				assert.Equal(t, tt.wantErr, status.Code(gnmierr))
 			} else {
 				assert.Nil(t, err)
 				want := &pb.UpdateResult{
@@ -651,7 +654,6 @@ func TestNorthboundServerImpl_Replace(t *testing.T) {
 
 				buf, err := os.ReadFile(filepath.Join(dir, tt.inputPath))
 				assert.Nil(t, err)
-				t.Log(string(buf))
 				assert.Equal(t, tt.wantVal, buf)
 			}
 		})
@@ -774,9 +776,9 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 
 			got, err := s.Update(context.Background(), nil, tt.path, tt.val)
 			if tt.wantErr != codes.OK {
-				t.Log(err)
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, status.Code(err))
+				gnmierr, _ := derrors.ToGRPCError(err)
+				assert.Equal(t, tt.wantErr, status.Code(gnmierr))
 			} else {
 				assert.Nil(t, err)
 				want := &pb.UpdateResult{
@@ -787,7 +789,6 @@ func TestNorthboundServerImpl_Update(t *testing.T) {
 
 				buf, err := os.ReadFile(filepath.Join(dir, tt.inputPath))
 				assert.Nil(t, err)
-				t.Log(string(buf))
 				assert.Equal(t, tt.wantVal, buf)
 			}
 		})

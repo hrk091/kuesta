@@ -65,14 +65,13 @@ func RunDeviceComposite(ctx context.Context, cfg *DeviceCompositeCfg) error {
 	if err != nil {
 		return fmt.Errorf("collect files: %w", err)
 	}
-	l.Debug("files: ", files)
+	l.Debugw("merging partial device configs", "files", files)
 
 	// composite all partial device configs into one CUE instance
 	deviceConfig, err := kcue.NewValueWithInstance(cctx, files, nil)
 	if err != nil {
 		return fmt.Errorf("composite files: %w", err)
 	}
-	l.Debug("merged device config cue instance: ", deviceConfig)
 
 	buf, err := kcue.FormatCue(deviceConfig, cue.Concrete(true))
 	if err != nil {
