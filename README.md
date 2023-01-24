@@ -37,13 +37,13 @@ Documentation is available at https://nttcom.github.io/kuesta/docs.
 
 ## Contact
 
-Ask questions via [GitHub Discussions](https://github.com/nttcom-ic/kuesta/discussions).
+Ask questions via [GitHub Discussions](https://github.com/nttcom/kuesta/discussions).
 
 
 ## Contributing
 
 - To contribute, please read the [Contribution Guide](https://nttcom.github.io/kuesta/docs/contribution-guidelines/).
-- To report issues or make a feature request, use the [GitHub Issues](https://github.com/nttcom-ic/kuesta/issues).
+- To report issues or make a feature request, use the [GitHub Issues](https://github.com/nttcom/kuesta/issues).
 
 
 ## License

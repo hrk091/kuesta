@@ -13,9 +13,9 @@ command: install: {
 
 	args: {
 		// TODO replace to nttcom
-		imageRegistry: string | *"ghcr.io/nttcom-ic/kuesta" @tag(imageRegistry)
-		version:       string | *"latest"                   @tag(version)
-		_debug:        string | *"false"                    @tag(debug)
+		imageRegistry: string | *"ghcr.io/nttcom/kuesta" @tag(imageRegistry)
+		version:       string | *"latest"                @tag(version)
+		_debug:        string | *"false"                 @tag(debug)
 		debug:         _debug != "false"
 	}
 
