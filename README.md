@@ -20,6 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 
+## This repo has moved to https://github.com/nttcom/kuesta.
+
 # kuesta
 
 **kuesta** is an open source framework for network configuration, enabling operators
